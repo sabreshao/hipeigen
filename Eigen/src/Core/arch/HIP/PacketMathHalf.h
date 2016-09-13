@@ -7,15 +7,24 @@
 // Public License v. 2.0. If a copy of the MPL was not distributed
 // with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#ifndef EIGEN_PACKET_MATH_HALF_CUDA_H
-#define EIGEN_PACKET_MATH_HALF_CUDA_H
+#ifndef EIGEN_PACKET_MATH_HALF_HIP_H
+#define EIGEN_PACKET_MATH_HALF_HIP_H
 
+#if defined(__HIP_DEVICE_COMPILE__) && (__HIP_DEVICE_COMPILE__ == 1)
+  #if defined(__NVCC__) && (__CUDA_ARCH__ >= 530)
+    #define __HIP_ARCH_HAS_HALF_PRECISION_SUPPORT__
+  #elif defined(__HCC__)
+    #define __HIP_ARCH_HAS_HALF_PRECISION_SUPPORT__
+  #endif
+#endif
 
 namespace Eigen {
 namespace internal {
 
 // Most of the following operations require arch >= 3.0
-#if defined(EIGEN_HAS_CUDA_FP16) && defined(__CUDA_ARCH__) && __CUDA_ARCH__ >= 300
+#if defined(EIGEN_HAS_HIP_FP16) && \
+    (defined(__HIP_DEVICE__COMPILE__) && (__HIP_DEVICE_COMPILE__ == 1)) && \
+    defined(__HIP_ARCH_HAS_WARP_SHUFFLE__)
 
 template<> struct is_arithmetic<half2> { enum { value = true }; };
 
@@ -68,7 +77,8 @@ template<> EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void pstoreu<Eigen::half>(Eigen
 
 template<>
  EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE half2 ploadt_ro<half2, Aligned>(const Eigen::half* from) {
-#if __CUDA_ARCH__ >= 350
+#if defined(__HIP_DEVICE_COMPILE__) && (HIP_DEVICE_COMPILE__ == 1) && \
+    defined(__HIP_ARCH_HAS_WARP_FUNNEL_SHIFT__) && defined(__HIP_ARCH_HAS_DYNAMIC_PARALLEL__)
    return __ldg((const half2*)from);
 #else
   return __halves2half2(*(from+0), *(from+1));
@@ -77,7 +87,8 @@ template<>
 
 template<>
 EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE half2 ploadt_ro<half2, Unaligned>(const Eigen::half* from) {
-#if __CUDA_ARCH__ >= 350
+#if defined(__HIP_DEVICE_COMPILE__) && (HIP_DEVICE_COMPILE__ == 1) && \
+    defined(__HIP_ARCH_HAS_WARP_FUNNEL_SHIFT__) && defined(__HIP_ARCH_HAS_DYNAMIC_PARALLEL__)
    return __halves2half2(__ldg(from+0), __ldg(from+1));
 #else
   return __halves2half2(*(from+0), *(from+1));
@@ -115,7 +126,7 @@ ptranspose(PacketBlock<half2,2>& kernel) {
 }
 
 template<> EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE half2 plset<half2>(const Eigen::half& a) {
-#if __CUDA_ARCH__ >= 530
+#ifdef __HIP_ARCH_HAS_HALF_PRECISION_SUPPORT__
   return __halves2half2(a, __hadd(a, __float2half(1.0f)));
 #else
   float f = __half2float(a) + 1.0f;
@@ -124,7 +135,7 @@ template<> EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE half2 plset<half2>(const Eigen:
 }
 
 template<> EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE half2 padd<half2>(const half2& a, const half2& b) {
-#if __CUDA_ARCH__ >= 530
+#ifdef __HIP_ARCH_HAS_HALF_PRECISION_SUPPORT__
   return __hadd2(a, b);
 #else
   float a1 = __low2float(a);
@@ -138,7 +149,7 @@ template<> EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE half2 padd<half2>(const half2& 
 }
 
 template<> EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE half2 psub<half2>(const half2& a, const half2& b) {
-#if __CUDA_ARCH__ >= 530
+#ifdef __HIP_ARCH_HAS_HALF_PRECISION_SUPPORT__
   return __hsub2(a, b);
 #else
   float a1 = __low2float(a);
@@ -152,7 +163,7 @@ template<> EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE half2 psub<half2>(const half2& 
 }
 
 template<> EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE half2 pnegate(const half2& a) {
-#if __CUDA_ARCH__ >= 530
+#ifdef __HIP_ARCH_HAS_HALF_PRECISION_SUPPORT__
   return __hneg2(a);
 #else
   float a1 = __low2float(a);
@@ -164,7 +175,7 @@ template<> EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE half2 pnegate(const half2& a) {
 template<> EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE half2 pconj(const half2& a) { return a; }
 
 template<> EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE half2 pmul<half2>(const half2& a, const half2& b) {
-#if __CUDA_ARCH__ >= 530
+#ifdef __HIP_ARCH_HAS_HALF_PRECISION_SUPPORT__
   return __hmul2(a, b);
 #else
   float a1 = __low2float(a);
@@ -178,7 +189,7 @@ template<> EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE half2 pmul<half2>(const half2& 
 }
 
 template<> EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE half2 pmadd<half2>(const half2& a, const half2& b, const half2& c) {
-#if __CUDA_ARCH__ >= 530
+#ifdef __HIP_ARCH_HAS_HALF_PRECISION_SUPPORT__
    return __hfma2(a, b, c);
 #else
   float a1 = __low2float(a);
@@ -224,7 +235,7 @@ template<> EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE half2 pmax<half2>(const half2& 
 }
 
 template<> EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE Eigen::half predux<half2>(const half2& a) {
-#if __CUDA_ARCH__ >= 530
+#ifdef __HIP_ARCH_HAS_HALF_PRECISION_SUPPORT__
   return __hadd(__low2half(a), __high2half(a));
 #else
   float a1 = __low2float(a);
@@ -234,7 +245,7 @@ template<> EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE Eigen::half predux<half2>(const
 }
 
 template<> EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE Eigen::half predux_max<half2>(const half2& a) {
-#if __CUDA_ARCH__ >= 530
+#ifdef __HIP_ARCH_HAS_HALF_PRECISION_SUPPORT__
   __half first = __low2half(a);
   __half second = __high2half(a);
   return __hgt(first, second) ? first : second;
@@ -246,7 +257,7 @@ template<> EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE Eigen::half predux_max<half2>(c
 }
 
 template<> EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE Eigen::half predux_min<half2>(const half2& a) {
-#if __CUDA_ARCH__ >= 530
+#ifdef __HIP_ARCH_HAS_HALF_PRECISION_SUPPORT__
   __half first = __low2half(a);
   __half second = __high2half(a);
   return __hlt(first, second) ? first : second;
@@ -258,7 +269,7 @@ template<> EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE Eigen::half predux_min<half2>(c
 }
 
 template<> EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE Eigen::half predux_mul<half2>(const half2& a) {
-#if __CUDA_ARCH__ >= 530
+#ifdef __HIP_ARCH_HAS_HALF_PRECISION_SUPPORT__
   return __hmul(__low2half(a), __high2half(a));
 #else
   float a1 = __low2float(a);
@@ -275,7 +286,8 @@ template<> EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE half2 plog1p<half2>(const half2
   return __floats2half2_rn(r1, r2);
 }
 
-#if defined __CUDACC_VER__ && __CUDACC_VER__ >= 80000 && defined __CUDA_ARCH__ && __CUDA_ARCH__ >= 530
+#if defined(__HIP_ARCH_HAS_HALF_PRECISION_SUPPORT__) && (defined(__HCC__) || \
+    (defined(__NVCC__) && defined __CUDACC_VER__ && __CUDACC_VER__ >= 80000))
 
 template<>  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE
 half2 plog<half2>(const half2& a) {
@@ -728,4 +740,4 @@ ptranspose(PacketBlock<Packet4h,4>& kernel) {
 }
 }
 
-#endif // EIGEN_PACKET_MATH_HALF_CUDA_H
+#endif // EIGEN_PACKET_MATH_HALF_HIP_H
