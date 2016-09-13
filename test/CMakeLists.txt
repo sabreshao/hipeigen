@@ -354,31 +354,6 @@ if(EIGEN_TEST_CUDA_CLANG AND NOT CMAKE_CXX_COMPILER MATCHES "clang")
   message(WARNING "EIGEN_TEST_CUDA_CLANG is set, but CMAKE_CXX_COMPILER does not appear to be clang.")
 endif()
 
-if (FALSE)
-if(EIGEN_TEST_CUDA)
-
-find_package(CUDA 5.0)
-if(CUDA_FOUND)
-  
-  set(CUDA_PROPAGATE_HOST_FLAGS OFF)
-  if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang") 
-    set(CUDA_NVCC_FLAGS "-ccbin /usr/bin/clang" CACHE STRING "nvcc flags" FORCE)
-  endif()
-  if(EIGEN_TEST_CUDA_CLANG)
-   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 --cuda-gpu-arch=sm_30")
-  endif()
-  cuda_include_directories(${CMAKE_CURRENT_BINARY_DIR})
-  set(EIGEN_ADD_TEST_FILENAME_EXTENSION  "cu")
-  
-  ei_add_test(cuda_basic)
-  
-  unset(EIGEN_ADD_TEST_FILENAME_EXTENSION)
-
-endif(CUDA_FOUND)
-
-endif(EIGEN_TEST_CUDA)
-endif (FALSE)
-
 # HIP PATH
 if(EIGEN_TEST_CUDA)
   find_package(HIP REQUIRED)
@@ -439,7 +414,6 @@ if(EIGEN_TEST_CUDA)
         include_directories(${HIP_PATH}/include)
         include_directories(/usr/local/cuda/targets/x86_64-linux/include)
 
-        #set(EIGEN_ADD_TEST_FILENAME  "hip_cpp")
         set(EIGEN_ADD_TEST_FILENAME_EXTENSION  "cu")
         ei_add_test(cuda_basic)
         unset(EIGEN_ADD_TEST_FILENAME_EXTENSION)

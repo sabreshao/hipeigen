@@ -188,57 +188,59 @@ if(EIGEN_TEST_CXX11)
 endif()
 
 # These tests needs nvcc
-find_package(CUDA 7.0)
-if(CUDA_FOUND AND EIGEN_TEST_CUDA)
-  # Make sure to compile without the -pedantic, -Wundef, -Wnon-virtual-dtor
-  # and -fno-check-new flags since they trigger thousands of compilation warnings
-  # in the CUDA runtime
-  # Also remove -ansi that is incompatible with std=c++11.
-  string(REPLACE "-pedantic" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
-  string(REPLACE "-Wundef" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
-  string(REPLACE "-Wnon-virtual-dtor" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
-  string(REPLACE "-fno-check-new" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
-  string(REPLACE "-ansi" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+if(FALSE)
+  find_package(CUDA 7.0)
+  if(CUDA_FOUND AND EIGEN_TEST_CUDA)
+    # Make sure to compile without the -pedantic, -Wundef, -Wnon-virtual-dtor
+    # and -fno-check-new flags since they trigger thousands of compilation warnings
+    # in the CUDA runtime
+    # Also remove -ansi that is incompatible with std=c++11.
+    string(REPLACE "-pedantic" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+    string(REPLACE "-Wundef" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+    string(REPLACE "-Wnon-virtual-dtor" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+    string(REPLACE "-fno-check-new" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+    string(REPLACE "-ansi" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 
-  message(STATUS "Flags used to compile cuda code: " ${CMAKE_CXX_FLAGS})
+    message(STATUS "Flags used to compile cuda code: " ${CMAKE_CXX_FLAGS})
 
-  if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-    set(CUDA_NVCC_FLAGS "-ccbin /usr/bin/clang" CACHE STRING "nvcc flags" FORCE)
+    if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+      set(CUDA_NVCC_FLAGS "-ccbin /usr/bin/clang" CACHE STRING "nvcc flags" FORCE)
+    endif()
+    if(EIGEN_TEST_CUDA_CLANG)
+     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 --cuda-gpu-arch=sm_${EIGEN_CUDA_COMPUTE_ARCH}")
+    endif()
+
+    set(EIGEN_CUDA_RELAXED_CONSTEXPR "--expt-relaxed-constexpr")
+    if (${CUDA_VERSION} STREQUAL "7.0")
+      set(EIGEN_CUDA_RELAXED_CONSTEXPR "--relaxed-constexpr")
+    endif()
+
+    if( (NOT EIGEN_TEST_CXX11) OR (CMAKE_VERSION VERSION_LESS 3.3))
+      set(EIGEN_CUDA_CXX11_FLAG "-std=c++11")
+    else()
+      # otherwise the flag has already been added because of the above set(CMAKE_CXX_STANDARD 11)
+      set(EIGEN_CUDA_CXX11_FLAG "")
+    endif()
+
+    set(CUDA_NVCC_FLAGS  "${EIGEN_CUDA_CXX11_FLAG} ${EIGEN_CUDA_RELAXED_CONSTEXPR} -arch compute_${EIGEN_CUDA_COMPUTE_ARCH} -Xcudafe \"--display_error_number\" ${CUDA_NVCC_FLAGS}")
+    cuda_include_directories("${CMAKE_CURRENT_BINARY_DIR}" "${CUDA_TOOLKIT_ROOT_DIR}/include")
+    set(EIGEN_ADD_TEST_FILENAME_EXTENSION "cu")
+
+    ei_add_test(cxx11_tensor_device)
+    ei_add_test(cxx11_tensor_cuda)
+    ei_add_test(cxx11_tensor_contract_cuda)
+    ei_add_test(cxx11_tensor_reduction_cuda)
+    ei_add_test(cxx11_tensor_argmax_cuda)
+    ei_add_test(cxx11_tensor_cast_float16_cuda)
+    ei_add_test(cxx11_tensor_scan_cuda)
+
+    # The random number generation code requires arch 3.5 or greater.
+    if (${EIGEN_CUDA_COMPUTE_ARCH} GREATER 34)
+      ei_add_test(cxx11_tensor_random_cuda)
+    endif()
+
+    ei_add_test(cxx11_tensor_of_float16_cuda)
+
+    unset(EIGEN_ADD_TEST_FILENAME_EXTENSION)
   endif()
-  if(EIGEN_TEST_CUDA_CLANG)
-   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 --cuda-gpu-arch=sm_${EIGEN_CUDA_COMPUTE_ARCH}")
-  endif()
-
-  set(EIGEN_CUDA_RELAXED_CONSTEXPR "--expt-relaxed-constexpr")
-  if (${CUDA_VERSION} STREQUAL "7.0")
-    set(EIGEN_CUDA_RELAXED_CONSTEXPR "--relaxed-constexpr")
-  endif()
-
-  if( (NOT EIGEN_TEST_CXX11) OR (CMAKE_VERSION VERSION_LESS 3.3))
-    set(EIGEN_CUDA_CXX11_FLAG "-std=c++11")
-  else()
-    # otherwise the flag has already been added because of the above set(CMAKE_CXX_STANDARD 11)
-    set(EIGEN_CUDA_CXX11_FLAG "")
-  endif()
-
-  set(CUDA_NVCC_FLAGS  "${EIGEN_CUDA_CXX11_FLAG} ${EIGEN_CUDA_RELAXED_CONSTEXPR} -arch compute_${EIGEN_CUDA_COMPUTE_ARCH} -Xcudafe \"--display_error_number\" ${CUDA_NVCC_FLAGS}")
-  cuda_include_directories("${CMAKE_CURRENT_BINARY_DIR}" "${CUDA_TOOLKIT_ROOT_DIR}/include")
-  set(EIGEN_ADD_TEST_FILENAME_EXTENSION "cu")
-
-  ei_add_test(cxx11_tensor_device)
-  ei_add_test(cxx11_tensor_cuda)
-  ei_add_test(cxx11_tensor_contract_cuda)
-  ei_add_test(cxx11_tensor_reduction_cuda)
-  ei_add_test(cxx11_tensor_argmax_cuda)
-  ei_add_test(cxx11_tensor_cast_float16_cuda)
-  ei_add_test(cxx11_tensor_scan_cuda)
-
-  # The random number generation code requires arch 3.5 or greater.
-  if (${EIGEN_CUDA_COMPUTE_ARCH} GREATER 34)
-    ei_add_test(cxx11_tensor_random_cuda)
-  endif()
-
-  ei_add_test(cxx11_tensor_of_float16_cuda)
-
-  unset(EIGEN_ADD_TEST_FILENAME_EXTENSION)
-endif()
+endif(FALSE)
