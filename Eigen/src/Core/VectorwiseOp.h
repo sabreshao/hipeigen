@@ -481,7 +481,7 @@ template<typename ExpressionType, int Direction> class VectorwiseOp
       * \sa VectorwiseOp::replicate(Index), DenseBase::replicate(), class Replicate
       */
     // NOTE implemented here because of sunstudio's compilation errors
-    // isVertical*Factor+isHorizontal instead of (isVertical?Factor:1) to handle CUDA bug with ternary operator
+    // isVertical*Factor+isHorizontal instead of (isVertical?Factor:1) to handle HIP bug with ternary operator
     template<int Factor> const Replicate<ExpressionType,isVertical*Factor+isHorizontal,isHorizontal*Factor+isVertical>
     EIGEN_DEVICE_FUNC
     replicate(Index factor = Factor) const
@@ -660,7 +660,7 @@ template<typename ExpressionType, int Direction> class VectorwiseOp
     ExpressionTypeNested m_matrix;
 };
 
-//const colwise moved to DenseBase.h due to CUDA compiler bug
+//const colwise moved to DenseBase.h due to HIP compiler bug
 
 
 /** \returns a writable VectorwiseOp wrapper of *this providing additional partial reduction operations
@@ -674,7 +674,7 @@ DenseBase<Derived>::colwise()
   return ColwiseReturnType(derived());
 }
 
-//const rowwise moved to DenseBase.h due to CUDA compiler bug
+//const rowwise moved to DenseBase.h due to HIP compiler bug
 
 
 /** \returns a writable VectorwiseOp wrapper of *this providing additional partial reduction operations

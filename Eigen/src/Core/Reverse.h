@@ -121,7 +121,7 @@ DenseBase<Derived>::reverse()
 }
 
 
-//reverse const overload moved DenseBase.h due to a CUDA compiler bug
+//reverse const overload moved DenseBase.h due to a HIP compiler bug
 
 /** This is the "in place" version of reverse: it reverses \c *this.
   *

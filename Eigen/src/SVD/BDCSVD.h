@@ -1210,7 +1210,7 @@ void BDCSVD<MatrixType>::deflation(Index firstCol, Index lastCol, Index k, Index
 #endif
 }//end deflation
 
-#ifndef __CUDACC__
+#ifndef __HIPCC__
 /** \svd_module
   *
   * \return the singular value decomposition of \c *this computed by Divide & Conquer algorithm
