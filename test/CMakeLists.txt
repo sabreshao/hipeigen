@@ -346,16 +346,16 @@ endif()
 
 endif(FALSE)
 
-# CUDA unit tests
-option(EIGEN_TEST_CUDA "Enable CUDA support in unit tests" ON)
-option(EIGEN_TEST_CUDA_CLANG "Use clang instead of nvcc to compile the CUDA tests" OFF)
+# HIP unit tests
+option(EIGEN_TEST_HIP "Enable HIP support in unit tests" ON)
+option(EIGEN_TEST_HIP_CLANG "Use clang instead of hipcc to compile the HIP tests" OFF)
 
-if(EIGEN_TEST_CUDA_CLANG AND NOT CMAKE_CXX_COMPILER MATCHES "clang")
-  message(WARNING "EIGEN_TEST_CUDA_CLANG is set, but CMAKE_CXX_COMPILER does not appear to be clang.")
+if(EIGEN_TEST_HIP_CLANG AND NOT CMAKE_CXX_COMPILER MATCHES "clang")
+  message(WARNING "EIGEN_TEST_HIP_CLANG is set, but CMAKE_CXX_COMPILER does not appear to be clang.")
 endif()
 
 # HIP PATH
-if(EIGEN_TEST_CUDA)
+if(EIGEN_TEST_HIP)
   find_package(HIP REQUIRED)
   if(HIP_FOUND)
     set(HIP_PATH $ENV{HIP_PATH})
@@ -394,7 +394,7 @@ if(EIGEN_TEST_CUDA)
 
         set(EIGEN_ADD_TEST_FILENAME  "hip_cpp")
         set(EIGEN_ADD_TEST_FILENAME_EXTENSION  "cpp")
-        ei_add_test(cuda_basic)
+        ei_add_test(hip_basic)
         unset(EIGEN_ADD_TEST_FILENAME_EXTENSION)
         unset(EIGEN_ADD_TEST_FILENAME)
 
@@ -415,7 +415,7 @@ if(EIGEN_TEST_CUDA)
         include_directories(/usr/local/cuda/targets/x86_64-linux/include)
 
         set(EIGEN_ADD_TEST_FILENAME_EXTENSION  "cu")
-        ei_add_test(cuda_basic)
+        ei_add_test(hip_basic)
         unset(EIGEN_ADD_TEST_FILENAME_EXTENSION)
       else()
         message(FATAL_ERROR "UNKNOWN HIP_PLATFORM=" ${HIP_PLATFORM})
@@ -431,7 +431,7 @@ else()
    MESSAGE(STATUS "***********************************HIP Not Found****************************")
 endif()
 
-endif(EIGEN_TEST_CUDA)
+endif(EIGEN_TEST_HIP)
 
 
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/failtests)    

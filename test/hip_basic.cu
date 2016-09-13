@@ -15,19 +15,23 @@
 
 #define EIGEN_TEST_NO_LONGDOUBLE
 #define EIGEN_TEST_NO_COMPLEX
-#define EIGEN_TEST_FUNC cuda_basic
+#define EIGEN_TEST_FUNC hip_basic
 #define EIGEN_DEFAULT_DENSE_INDEX_TYPE int
 
-#include <math_constants.h>
-#include <cuda.h>
-#if defined __CUDACC_VER__ && __CUDACC_VER__ >= 70500
-#include <cuda_fp16.h>
+#include <hip_runtime.h>
+#ifdef __NVCC__
+  #include <math_constants.h>
+  #if defined __CUDACC_VER__ && __CUDACC_VER__ >= 70500
+    #include <cuda_fp16.h>
+  #endif
+#else
+  #include "intrinsics.h"
 #endif
+
 #include "main.h"
-//#include "cuda_common.h"
 #include "hip_common.h"
 
-// Check that dense modules can be properly parsed by nvcc
+// Check that dense modules can be properly parsed by hipcc
 #include <Eigen/Dense>
 
 // struct Foo{
@@ -140,9 +144,9 @@ struct eigenvalues {
   }
 };
 
-void test_cuda_basic()
+void test_hip_basic()
 {
-  ei_test_init_cuda();
+  ei_test_init_hip();
   
   int nthreads = 100;
   Eigen::VectorXf in, out;
@@ -153,22 +157,22 @@ void test_cuda_basic()
   out.setRandom(data_size);
   #endif
   
-  CALL_SUBTEST( run_and_compare_to_cuda(coeff_wise<Vector3f>(), nthreads, in, out) );
-  CALL_SUBTEST( run_and_compare_to_cuda(coeff_wise<Array44f>(), nthreads, in, out) );
+  CALL_SUBTEST( run_and_compare_to_hip(coeff_wise<Vector3f>(), nthreads, in, out) );
+  CALL_SUBTEST( run_and_compare_to_hip(coeff_wise<Array44f>(), nthreads, in, out) );
   
-  CALL_SUBTEST( run_and_compare_to_cuda(replicate<Array4f>(), nthreads, in, out) );
-  CALL_SUBTEST( run_and_compare_to_cuda(replicate<Array33f>(), nthreads, in, out) );
+  CALL_SUBTEST( run_and_compare_to_hip(replicate<Array4f>(), nthreads, in, out) );
+  CALL_SUBTEST( run_and_compare_to_hip(replicate<Array33f>(), nthreads, in, out) );
   
-  CALL_SUBTEST( run_and_compare_to_cuda(redux<Array4f>(), nthreads, in, out) );
-  CALL_SUBTEST( run_and_compare_to_cuda(redux<Matrix3f>(), nthreads, in, out) );
+  CALL_SUBTEST( run_and_compare_to_hip(redux<Array4f>(), nthreads, in, out) );
+  CALL_SUBTEST( run_and_compare_to_hip(redux<Matrix3f>(), nthreads, in, out) );
   
-  CALL_SUBTEST( run_and_compare_to_cuda(prod_test<Matrix3f,Matrix3f>(), nthreads, in, out) );
-  CALL_SUBTEST( run_and_compare_to_cuda(prod_test<Matrix4f,Vector4f>(), nthreads, in, out) );
+  CALL_SUBTEST( run_and_compare_to_hip(prod_test<Matrix3f,Matrix3f>(), nthreads, in, out) );
+  CALL_SUBTEST( run_and_compare_to_hip(prod_test<Matrix4f,Vector4f>(), nthreads, in, out) );
   
-  CALL_SUBTEST( run_and_compare_to_cuda(diagonal<Matrix3f,Vector3f>(), nthreads, in, out) );
-  CALL_SUBTEST( run_and_compare_to_cuda(diagonal<Matrix4f,Vector4f>(), nthreads, in, out) );
+  CALL_SUBTEST( run_and_compare_to_hip(diagonal<Matrix3f,Vector3f>(), nthreads, in, out) );
+  CALL_SUBTEST( run_and_compare_to_hip(diagonal<Matrix4f,Vector4f>(), nthreads, in, out) );
   
-  CALL_SUBTEST( run_and_compare_to_cuda(eigenvalues<Matrix3f>(), nthreads, in, out) );
-  CALL_SUBTEST( run_and_compare_to_cuda(eigenvalues<Matrix2f>(), nthreads, in, out) );
+  CALL_SUBTEST( run_and_compare_to_hip(eigenvalues<Matrix3f>(), nthreads, in, out) );
+  CALL_SUBTEST( run_and_compare_to_hip(eigenvalues<Matrix2f>(), nthreads, in, out) );
 
 }

@@ -1,8 +1,7 @@
 
-#ifndef EIGEN_TEST_CUDA_COMMON_H
-#define EIGEN_TEST_CUDA_COMMON_H
+#ifndef EIGEN_TEST_HIP_COMMON_H
+#define EIGEN_TEST_HIP_COMMON_H
 
-#include <cuda.h>
 #include "hip_runtime.h"
 #include "hip_runtime_api.h"
 #include <iostream>
@@ -21,7 +20,7 @@ void run_on_cpu(const Kernel& ker, int n, const Input& in, Output& out)
 
 template<typename Kernel, typename Input, typename Output>
 __global__
-void run_on_cuda_meta_kernel(hipLaunchParm lp, const Kernel ker, int n, const Input* in, Output* out)
+void run_on_hip_meta_kernel(hipLaunchParm lp, const Kernel ker, int n, const Input* in, Output* out)
 {
   int i = hipThreadIdx_x + hipBlockIdx_x*hipBlockDim_x;
   if(i<n) {
@@ -31,7 +30,7 @@ void run_on_cuda_meta_kernel(hipLaunchParm lp, const Kernel ker, int n, const In
 
 
 template<typename Kernel, typename Input, typename Output>
-void run_on_cuda(const Kernel& ker, int n, const Input& in, Output& out)
+void run_on_hip(const Kernel& ker, int n, const Input& in, Output& out)
 {
   typename Input::Scalar*  d_in;
   typename Output::Scalar* d_out;
@@ -50,7 +49,7 @@ void run_on_cuda(const Kernel& ker, int n, const Input& in, Output& out)
   dim3 Grids( (n+int(Blocks.x)-1)/int(Blocks.x) );
 
   hipDeviceSynchronize();
-  hipLaunchKernel(HIP_KERNEL_NAME(run_on_cuda_meta_kernel), dim3(Grids), dim3(Blocks), 0, 0, ker, n, d_in, d_out);
+  hipLaunchKernel(HIP_KERNEL_NAME(run_on_hip_meta_kernel), dim3(Grids), dim3(Blocks), 0, 0, ker, n, d_in, d_out);
   hipDeviceSynchronize();
   
   // check inputs have not been modified
@@ -63,29 +62,29 @@ void run_on_cuda(const Kernel& ker, int n, const Input& in, Output& out)
 
 
 template<typename Kernel, typename Input, typename Output>
-void run_and_compare_to_cuda(const Kernel& ker, int n, const Input& in, Output& out)
+void run_and_compare_to_hip(const Kernel& ker, int n, const Input& in, Output& out)
 {
-  Input  in_ref,  in_cuda;
-  Output out_ref, out_cuda;
-  #ifndef __CUDA_ARCH__
-  in_ref = in_cuda = in;
-  out_ref = out_cuda = out;
+  Input  in_ref,  in_hip;
+  Output out_ref, out_hip;
+  #if (__HIP_DEVICE_COMPILE__ == 0)
+  in_ref = in_hip = in;
+  out_ref = out_hip = out;
   #endif
   run_on_cpu (ker, n, in_ref,  out_ref);
-  run_on_cuda(ker, n, in_cuda, out_cuda);
-  #ifndef __CUDA_ARCH__
-  VERIFY_IS_APPROX(in_ref, in_cuda);
-  VERIFY_IS_APPROX(out_ref, out_cuda);
+  run_on_hip(ker, n, in_hip, out_hip);
+  #if (__HIP_DEVICE_COMPILE__ == 0)
+  VERIFY_IS_APPROX(in_ref, in_hip);
+  VERIFY_IS_APPROX(out_ref, out_hip);
   #endif
 }
 
 
-void ei_test_init_cuda()
+void ei_test_init_hip()
 {
   int device = 0;
   hipDeviceProp_t deviceProp;
   hipGetDeviceProperties(&deviceProp, device);
-  std::cout << "CUDA device info:\n";
+  std::cout << "HIP device info:\n";
   std::cout << "  name:                        " << deviceProp.name << "\n";
   std::cout << "  capability:                  " << deviceProp.major << "." << deviceProp.minor << "\n";
   std::cout << "  multiProcessorCount:         " << deviceProp.multiProcessorCount << "\n";
@@ -98,4 +97,4 @@ void ei_test_init_cuda()
   std::cout << "  computeMode:                 " << deviceProp.computeMode << "\n";
 }
 
-#endif // EIGEN_TEST_CUDA_COMMON_H
+#endif // EIGEN_TEST_HIP_COMMON_H

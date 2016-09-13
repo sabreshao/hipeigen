@@ -138,7 +138,8 @@ namespace Eigen
 
 #define EIGEN_DEFAULT_IO_FORMAT IOFormat(4, 0, "  ", "\n", "", "", "", "")
 
-#if (defined(_CPPUNWIND) || defined(__EXCEPTIONS)) && !defined(__CUDA_ARCH__)
+#if (defined(_CPPUNWIND) || defined(__EXCEPTIONS)) && \
+    !(defined(__HIP_DEVICE_COMPILE__) && (__HIP_DEVICE_COMPILE__ == 1))
   #define EIGEN_EXCEPTIONS
 #endif
 
@@ -211,7 +212,7 @@ namespace Eigen
       }
     #endif //EIGEN_EXCEPTIONS
 
-  #elif !defined(__CUDACC__) // EIGEN_DEBUG_ASSERTS
+  #elif !defined(__HIPCC__) // EIGEN_DEBUG_ASSERTS
     // see bug 89. The copy_bool here is working around a bug in gcc <= 4.3
     #define eigen_assert(a) \
       if( (!Eigen::internal::copy_bool(a)) && (!no_more_assert) )\
@@ -241,7 +242,7 @@ namespace Eigen
     std::cout << "Can't VERIFY_RAISES_ASSERT( " #a " ) with exceptions disabled\n";
 #endif
     
-  #if !defined(__CUDACC__)
+  #if !defined(__HIPCC__)
   #define EIGEN_USE_CUSTOM_ASSERT
   #endif
 
