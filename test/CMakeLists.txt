@@ -139,6 +139,10 @@ endif(TEST_LIB)
 set_property(GLOBAL PROPERTY EIGEN_CURRENT_SUBPROJECT "Official")
 add_custom_target(BuildOfficial)
 
+# Temporarily comment all CPU tests to reduce build time
+#TODO: Remove the IF(FALSE) construct
+if(FALSE)
+
 ei_add_test(rand)
 ei_add_test(meta)
 ei_add_test(sizeof)
@@ -261,6 +265,8 @@ ei_add_test(mpl2only)
 ei_add_test(inplace_decomposition)
 ei_add_test(half_float)
 ei_add_test(array_of_string)
+
+endif(FALSE)
 
 add_executable(bug1213 bug1213.cpp bug1213_main.cpp)
 
