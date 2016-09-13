@@ -24,7 +24,8 @@
 #include <cuda_fp16.h>
 #endif
 #include "main.h"
-#include "cuda_common.h"
+//#include "cuda_common.h"
+#include "hip_common.h"
 
 // Check that dense modules can be properly parsed by nvcc
 #include <Eigen/Dense>
@@ -146,7 +147,7 @@ void test_cuda_basic()
   int nthreads = 100;
   Eigen::VectorXf in, out;
   
-  #ifndef __CUDA_ARCH__
+  #if (__HIP_DEVICE_COMPILE == 0)
   int data_size = nthreads * 512;
   in.setRandom(data_size);
   out.setRandom(data_size);

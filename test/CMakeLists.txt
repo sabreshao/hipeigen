@@ -266,7 +266,6 @@ ei_add_test(inplace_decomposition)
 ei_add_test(half_float)
 ei_add_test(array_of_string)
 
-endif(FALSE)
 
 add_executable(bug1213 bug1213.cpp bug1213_main.cpp)
 
@@ -345,6 +344,7 @@ else()
   ei_add_property(EIGEN_MISSING_BACKENDS "Boost.Multiprecision, ")
 endif()
 
+endif(FALSE)
 
 # CUDA unit tests
 option(EIGEN_TEST_CUDA "Enable CUDA support in unit tests" ON)
@@ -354,6 +354,7 @@ if(EIGEN_TEST_CUDA_CLANG AND NOT CMAKE_CXX_COMPILER MATCHES "clang")
   message(WARNING "EIGEN_TEST_CUDA_CLANG is set, but CMAKE_CXX_COMPILER does not appear to be clang.")
 endif()
 
+if (FALSE)
 if(EIGEN_TEST_CUDA)
 
 find_package(CUDA 5.0)
@@ -374,6 +375,85 @@ if(CUDA_FOUND)
   unset(EIGEN_ADD_TEST_FILENAME_EXTENSION)
 
 endif(CUDA_FOUND)
+
+endif(EIGEN_TEST_CUDA)
+endif (FALSE)
+
+# HIP PATH
+if(EIGEN_TEST_CUDA)
+
+set(HIP_PATH $ENV{HIP_PATH})
+if(NOT DEFINED HIP_PATH)
+  message(WARNING "HIP not available OR HIP_PATH env variable not set")
+endif()
+
+if(DEFINED HIP_PATH)
+  #store the original g++ settings before changing the compiler to hipcc
+  set(CPU_CMAKE_COMPILER_SETTINGS ${CMAKE_CXX_COMPILER})
+  set(CPU_CMAKE_FLAGS ${CMAKE_CXX_FLAGS})
+
+  execute_process(COMMAND ${HIP_PATH}/bin/hipconfig --platform OUTPUT_VARIABLE HIP_PLATFORM)
+  message("HIP_PATH=" ${HIP_PATH})
+
+  if(${HIP_PLATFORM} STREQUAL "hcc")
+    message("HIP_PLATFORM=hcc")
+
+    set (HSA_PATH $ENV{HSA_PATH})
+    if (NOT DEFINED HSA_PATH)
+        set (HSA_PATH /opt/rocm/hsa)
+    endif()
+
+    add_library(hsa-runtime64 SHARED IMPORTED)
+    set_property(TARGET hsa-runtime64 PROPERTY IMPORTED_LOCATION "${HSA_PATH}/lib/libhsa-runtime64.so")
+
+    set(CMAKE_SHARED_LIBRARY_LINK_CXX_FLAGS)
+    set(CMAKE_SHARED_LIBRARY_LINK_C_FLAGS)
+
+    set(HIPCC ${HIP_PATH}/bin/hipcc)
+    set(CMAKE_CXX_COMPILER ${HIPCC} CACHE FILEPATH "CXX Compiler" FORCE)
+
+    set(HIP_PROPAGATE_HOST_FLAGS OFF)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -gencode -Wno-deprecated-register")
+
+    include_directories(${HIP_PATH}/include)
+
+    set(EIGEN_ADD_TEST_FILENAME  "hip_cpp")
+    set(EIGEN_ADD_TEST_FILENAME_EXTENSION  "cpp")
+    ei_add_test(cuda_basic)
+    unset(EIGEN_ADD_TEST_FILENAME_EXTENSION)
+    unset(EIGEN_ADD_TEST_FILENAME)
+
+  elseif(${HIP_PLATFORM} STREQUAL "nvcc")
+    message("HIP_PLATFORM=nvcc")
+
+    set(CMAKE_SHARED_LIBRARY_LINK_CXX_FLAGS)
+    set(CMAKE_SHARED_LIBRARY_LINK_C_FLAGS)
+
+    set(HIPCC ${HIP_PATH}/bin/hipcc)
+    set(CMAKE_CXX_COMPILER ${HIPCC} CACHE FILEPATH "CXX Compiler" FORCE)
+
+    set(HIP_PROPAGATE_HOST_FLAGS OFF)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -gencode arch=compute_35,code=sm_35")
+
+    include_directories(${CMAKE_CURRENT_BINARY_DIR})
+    include_directories(${HIP_PATH}/include)
+    include_directories(/usr/local/cuda/targets/x86_64-linux/include)
+
+    #set(EIGEN_ADD_TEST_FILENAME  "hip_cpp")
+    set(EIGEN_HIP_TEST_FILENAME  "cuda_basic")
+    #set(EIGEN_ADD_TEST_FILENAME_EXTENSION  "cpp")
+    ei_add_test(cuda_basic)
+    #unset(EIGEN_ADD_TEST_FILENAME_EXTENSION)
+    unset(EIGEN_HIP_TEST_FILENAME)
+
+  else()
+    message(FATAL_ERROR "UNKNOWN HIP_PLATFORM=" ${HIP_PLATFORM})
+  endif()
+
+  #restore back the original g++ settings
+  set(CMAKE_CXX_COMPILER ${CPU_CMAKE_COMPILER_SETTINGS} CACHE FILEPATH "CXX Compiler" FORCE)
+  set(CMAKE_CXX_FLAGS ${CPU_CMAKE_FLAGS})
+endif()
 
 endif(EIGEN_TEST_CUDA)
 
