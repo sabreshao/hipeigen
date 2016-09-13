@@ -14,9 +14,9 @@
 // first thing Eigen does: stop the compiler from committing suicide
 #include "src/Core/util/DisableStupidWarnings.h"
 
-// Handle NVCC/CUDA
-#ifdef __CUDACC__
-  // Do not try asserts on CUDA!
+// Handle HIPCC/HIP
+#ifdef __HIPCC__
+  // Do not try asserts on HIP!
   #ifndef EIGEN_NO_DEBUG
   #define EIGEN_NO_DEBUG
   #endif
@@ -25,7 +25,7 @@
   #undef EIGEN_INTERNAL_DEBUGGING
   #endif
 
-  // Do not try to vectorize on CUDA!
+  // Do not try to vectorize on HIP!
   #ifndef EIGEN_DONT_VECTORIZE
   #define EIGEN_DONT_VECTORIZE
   #endif
@@ -34,7 +34,7 @@
   #undef EIGEN_EXCEPTIONS
   #endif
 
-  // All functions callable from CUDA code must be qualified with __device__
+  // All functions callable from HIP code must be qualified with __device__
   #define EIGEN_DEVICE_FUNC __host__ __device__
 
 #else
@@ -42,16 +42,18 @@
 
 #endif
 
-// When compiling CUDA device code with NVCC, pull in math functions from the
+// When compiling HIP device code with HIPCC, pull in math functions from the
 // global namespace.  In host mode, and when device doee with clang, use the
 // std versions.
-#if defined(__CUDA_ARCH__) && defined(__NVCC__)
+#if (defined(__HIP_DEVICE_COMPILE__) && (__HIP_DEVICE_COMPILE__ == 1)) && defined(__HIPCC__)
   #define EIGEN_USING_STD_MATH(FUNC) using ::FUNC;
 #else
   #define EIGEN_USING_STD_MATH(FUNC) using std::FUNC;
 #endif
 
-#if (defined(_CPPUNWIND) || defined(__EXCEPTIONS)) && !defined(__CUDA_ARCH__) && !defined(EIGEN_EXCEPTIONS)
+#if (defined(_CPPUNWIND) || defined(__EXCEPTIONS)) && \
+    (!defined(__HIP_DEVICE_COMPILE__) || (__HIP_DEVICE_COMPILE__ == 0)) && \
+    !defined(EIGEN_EXCEPTIONS)
   #define EIGEN_EXCEPTIONS
 #endif
 
@@ -210,17 +212,23 @@
   #define EIGEN_HAS_FP16_C
 #endif
 
-#if defined __CUDACC__
+#if defined __HIPCC__
   #define EIGEN_VECTORIZE_CUDA
-  #include <vector_types.h>
-  #if defined __CUDACC_VER__ && __CUDACC_VER__ >= 70500
-    #define EIGEN_HAS_CUDA_FP16
+  #define EIGEN_VECTORIZE_HIP
+  #ifdef __NVCC__
+    #include <vector_types.h>
+    #if defined __CUDACC_VER__ && __CUDACC_VER__ >= 70500
+      #define EIGEN_HAS_CUDA_FP16
+      #define EIGEN_HAS_HIP_FP16
+    #endif
   #endif
 #endif
 
-#if defined EIGEN_HAS_CUDA_FP16
-  #include <host_defines.h>
-  #include <cuda_fp16.h>
+#if defined(EIGEN_HAS_CUDA_FP16) || defined(EIGEN_HAS_HIP_FP16)
+  #ifdef __NVCC__
+    #include <host_defines.h>
+    #include <cuda_fp16.h>
+  #endif
 #endif
 
 #if (defined _OPENMP) && (!defined EIGEN_DONT_PARALLELIZE)
@@ -364,7 +372,7 @@ using std::ptrdiff_t;
 #include "src/Core/arch/CUDA/PacketMathHalf.h"
 #include "src/Core/arch/CUDA/TypeCasting.h"
 
-#if defined EIGEN_VECTORIZE_CUDA
+#if defined(EIGEN_VECTORIZE_CUDA) || defined(EIGEN_VECTORIZE_HIP)
   #include "src/Core/arch/CUDA/PacketMath.h"
   #include "src/Core/arch/CUDA/MathFunctions.h"
 #endif
