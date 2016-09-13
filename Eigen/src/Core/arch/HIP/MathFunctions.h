@@ -7,8 +7,8 @@
 // Public License v. 2.0. If a copy of the MPL was not distributed
 // with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#ifndef EIGEN_MATH_FUNCTIONS_CUDA_H
-#define EIGEN_MATH_FUNCTIONS_CUDA_H
+#ifndef EIGEN_MATH_FUNCTIONS_HIP_H
+#define EIGEN_MATH_FUNCTIONS_HIP_H
 
 namespace Eigen {
 
@@ -88,4 +88,4 @@ double2 prsqrt<double2>(const double2& a)
 
 } // end namespace Eigen
 
-#endif // EIGEN_MATH_FUNCTIONS_CUDA_H
+#endif // EIGEN_MATH_FUNCTIONS_HIP_H

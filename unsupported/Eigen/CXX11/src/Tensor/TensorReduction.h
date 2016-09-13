@@ -1,4 +1,4 @@
-#include "hip/hip_runtime.h"
+//#include "hip/hip_runtime.h"
 // This file is part of Eigen, a lightweight C++ template library
 // for linear algebra.
 //

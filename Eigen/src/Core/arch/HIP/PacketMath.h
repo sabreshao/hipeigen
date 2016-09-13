@@ -7,8 +7,8 @@
 // Public License v. 2.0. If a copy of the MPL was not distributed
 // with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#ifndef EIGEN_PACKET_MATH_CUDA_H
-#define EIGEN_PACKET_MATH_CUDA_H
+#ifndef EIGEN_PACKET_MATH_HIP_H
+#define EIGEN_PACKET_MATH_HIP_H
 
 namespace Eigen {
 
@@ -196,7 +196,8 @@ template<> EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void pstoreu<double>(double* to
 
 template<>
 EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE float4 ploadt_ro<float4, Aligned>(const float* from) {
-#if defined(__CUDA_ARCH__) && __CUDA_ARCH__ >= 350
+#if (defined(__HIP_DEVICE_COMPILE__) && (__HIP_DEVICE_COMPILE__ == 1)) && \
+    (defined(__HIP_ARCH_HAS_WARP_FUNNEL_SHIFT__) && defined(__HIP_ARCH_HAS_DYNAMIC_PARALLEL__))
   return __ldg((const float4*)from);
 #else
   return make_float4(from[0], from[1], from[2], from[3]);
@@ -204,7 +205,8 @@ EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE float4 ploadt_ro<float4, Aligned>(const fl
 }
 template<>
 EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE double2 ploadt_ro<double2, Aligned>(const double* from) {
-#if defined(__CUDA_ARCH__) && __CUDA_ARCH__ >= 350
+#if (defined(__HIP_DEVICE_COMPILE__) && (__HIP_DEVICE_COMPILE__ == 1)) && \
+    (defined(__HIP_ARCH_HAS_WARP_FUNNEL_SHIFT__) && defined(__HIP_ARCH_HAS_DYNAMIC_PARALLEL__))
   return __ldg((const double2*)from);
 #else
   return make_double2(from[0], from[1]);
@@ -213,7 +215,8 @@ EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE double2 ploadt_ro<double2, Aligned>(const 
 
 template<>
 EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE float4 ploadt_ro<float4, Unaligned>(const float* from) {
-#if defined(__CUDA_ARCH__) && __CUDA_ARCH__ >= 350
+#if (defined(__HIP_DEVICE_COMPILE__) && (__HIP_DEVICE_COMPILE__ == 1)) && \
+    (defined(__HIP_ARCH_HAS_WARP_FUNNEL_SHIFT__) && defined(__HIP_ARCH_HAS_DYNAMIC_PARALLEL__))
   return make_float4(__ldg(from+0), __ldg(from+1), __ldg(from+2), __ldg(from+3));
 #else
   return make_float4(from[0], from[1], from[2], from[3]);
@@ -221,7 +224,8 @@ EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE float4 ploadt_ro<float4, Unaligned>(const 
 }
 template<>
 EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE double2 ploadt_ro<double2, Unaligned>(const double* from) {
-#if defined(__CUDA_ARCH__) && __CUDA_ARCH__ >= 350
+#if (defined(__HIP_DEVICE_COMPILE__) && (__HIP_DEVICE_COMPILE__ == 1)) && \
+    (defined(__HIP_ARCH_HAS_WARP_FUNNEL_SHIFT__) && defined(__HIP_ARCH_HAS_DYNAMIC_PARALLEL__))
   return make_double2(__ldg(from+0), __ldg(from+1));
 #else
   return make_double2(from[0], from[1]);
@@ -330,4 +334,4 @@ ptranspose(PacketBlock<double2,2>& kernel) {
 } // end namespace Eigen
 
 
-#endif // EIGEN_PACKET_MATH_CUDA_H
+#endif // EIGEN_PACKET_MATH_HIP_H

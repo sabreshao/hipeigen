@@ -60,8 +60,8 @@ typedef unsigned __int64 uint64_t;
 
 #ifdef EIGEN_USE_GPU
 #include <iostream>
-#include <cuda_runtime.h>
-#if defined(__CUDACC__)
+#include <hip/hip_runtime.h>
+#if defined(__HIPCC__) && defined(__NVCC__)
 #include <curand_kernel.h>
 #endif
 #endif
