@@ -1,3 +1,4 @@
+#include "hip/hip_runtime.h"
 // This file is part of Eigen, a lightweight C++ template library
 // for linear algebra.
 //
@@ -201,7 +202,7 @@ class TensorExecutor<Expression, GpuDevice, Vectorizable> {
 };
 
 
-#if defined(__CUDACC__)
+#if defined(__HIPCC__)
 template <typename Evaluator, typename Index, bool Vectorizable>
 struct EigenMetaKernelEval {
   static __device__ EIGEN_ALWAYS_INLINE
@@ -234,10 +235,10 @@ struct EigenMetaKernelEval<Evaluator, Index, true> {
 template <typename Evaluator, typename Index>
 __global__ void
 __launch_bounds__(1024)
-EigenMetaKernel(Evaluator memcopied_eval, Index size) {
+EigenMetaKernel(hipLaunchParm lp, Evaluator memcopied_eval, Index size) {
 
-  const Index first_index = blockIdx.x * blockDim.x + threadIdx.x;
-  const Index step_size = blockDim.x * gridDim.x;
+  const Index first_index = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
+  const Index step_size = hipBlockDim_x * hipGridDim_x;
 
   // Cuda memcopies the kernel arguments. That's fine for POD, but for more
   // complex types such as evaluators we should really conform to the C++
@@ -269,7 +270,7 @@ inline void TensorExecutor<Expression, GpuDevice, Vectorizable>::run(
   evaluator.cleanup();
 }
 
-#endif  // __CUDACC__
+#endif  // __HIPCC__
 #endif  // EIGEN_USE_GPU
 
 } // end namespace internal

@@ -1,3 +1,4 @@
+#include "hip/hip_runtime.h"
 // This file is part of Eigen, a lightweight C++ template library
 // for linear algebra.
 //
@@ -12,7 +13,7 @@
 #ifndef EIGEN_CXX11_TENSOR_TENSOR_CONTRACTION_CUDA_H
 #define EIGEN_CXX11_TENSOR_TENSOR_CONTRACTION_CUDA_H
 
-#if defined(EIGEN_USE_GPU) && defined(__CUDACC__)
+#if defined(EIGEN_USE_GPU) && defined(__HIPCC__)
 
 namespace Eigen {
 
@@ -23,8 +24,8 @@ EigenContractionKernelInternal(const LhsMapper lhs, const RhsMapper rhs,
                                const OutputMapper output, Scalar* lhs_shmem, Scalar* rhs_shmem,
                        const Index m_size, const Index n_size, const Index k_size) {
 
-  const Index m_block_idx = blockIdx.x;
-  const Index n_block_idx = blockIdx.y;
+  const Index m_block_idx = hipBlockIdx_x;
+  const Index n_block_idx = hipBlockIdx_y;
 
   const Index base_m = 64 * m_block_idx;
   const Index base_n = 64 * n_block_idx;
@@ -54,7 +55,7 @@ EigenContractionKernelInternal(const LhsMapper lhs, const RhsMapper rhs,
   // (contract idx in block, nocontract idx in block, block idx)
   // where block idx is column major. This transposition limits the number of
   // bank conflicts when reading the LHS. The core idea is that since the contracting
-  // index is shared by both sides, then the contracting index should be in threadIdx.x.
+  // index is shared by both sides, then the contracting index should be in hipThreadIdx_x.
 
   // On the LHS, we pad each row inside of each block with an extra element. This makes
   // each block 8 rows of 9 elements, which is 72 elements. This gives no bank conflicts
@@ -64,8 +65,8 @@ EigenContractionKernelInternal(const LhsMapper lhs, const RhsMapper rhs,
   // conflicts on writes and also none on reads.
 
   // storage indices
-  const Index lhs_store_idx_base = threadIdx.y * 72 + threadIdx.x * 9 + threadIdx.z;
-  const Index rhs_store_idx_base = threadIdx.y * 72 + threadIdx.z * 8 + threadIdx.x;
+  const Index lhs_store_idx_base = hipThreadIdx_y * 72 + hipThreadIdx_x * 9 + hipThreadIdx_z;
+  const Index rhs_store_idx_base = hipThreadIdx_y * 72 + hipThreadIdx_z * 8 + hipThreadIdx_x;
 
   const Index lhs_store_idx_0 = lhs_store_idx_base + 576 * 0;
   const Index lhs_store_idx_1 = lhs_store_idx_base + 576 * 1;
@@ -86,15 +87,15 @@ EigenContractionKernelInternal(const LhsMapper lhs, const RhsMapper rhs,
   const Index rhs_store_idx_7 = rhs_store_idx_base + 576 * 7;
 
   // in the loading code, the following variables are important:
-  // threadIdx.x: the vertical position in an 8x8 block
-  // threadIdx.y: the vertical index of the 8x8 block in the grid
-  // threadIdx.z: the horizontal position in an 8x8 block
+  // hipThreadIdx_x: the vertical position in an 8x8 block
+  // hipThreadIdx_y: the vertical index of the 8x8 block in the grid
+  // hipThreadIdx_z: the horizontal position in an 8x8 block
   // k: the horizontal index of the 8x8 block in the grid
   //
   // The k parameter is implicit (it was the loop counter for a loop that went
   // from 0 to <8, but now that loop is unrolled in the below code.
 
-  const Index load_idx_vert = threadIdx.x + 8 * threadIdx.y;
+  const Index load_idx_vert = hipThreadIdx_x + 8 * hipThreadIdx_y;
   const Index lhs_vert = base_m + load_idx_vert;
 
 #define prefetchIntoRegisters(base_k)                           \
@@ -118,14 +119,14 @@ EigenContractionKernelInternal(const LhsMapper lhs, const RhsMapper rhs,
     rhs_pf7 = conv(0);                                          \
                                                                 \
     if (!needs_edge_check || lhs_vert < m_size) {               \
-      const Index lhs_horiz_0 = base_k + threadIdx.z + 0 * 8;   \
-      const Index lhs_horiz_1 = base_k + threadIdx.z + 1 * 8;   \
-      const Index lhs_horiz_2 = base_k + threadIdx.z + 2 * 8;   \
-      const Index lhs_horiz_3 = base_k + threadIdx.z + 3 * 8;   \
-      const Index lhs_horiz_4 = base_k + threadIdx.z + 4 * 8;   \
-      const Index lhs_horiz_5 = base_k + threadIdx.z + 5 * 8;   \
-      const Index lhs_horiz_6 = base_k + threadIdx.z + 6 * 8;   \
-      const Index lhs_horiz_7 = base_k + threadIdx.z + 7 * 8;   \
+      const Index lhs_horiz_0 = base_k + hipThreadIdx_z + 0 * 8;   \
+      const Index lhs_horiz_1 = base_k + hipThreadIdx_z + 1 * 8;   \
+      const Index lhs_horiz_2 = base_k + hipThreadIdx_z + 2 * 8;   \
+      const Index lhs_horiz_3 = base_k + hipThreadIdx_z + 3 * 8;   \
+      const Index lhs_horiz_4 = base_k + hipThreadIdx_z + 4 * 8;   \
+      const Index lhs_horiz_5 = base_k + hipThreadIdx_z + 5 * 8;   \
+      const Index lhs_horiz_6 = base_k + hipThreadIdx_z + 6 * 8;   \
+      const Index lhs_horiz_7 = base_k + hipThreadIdx_z + 7 * 8;   \
                                                                 \
       if (!needs_edge_check || lhs_horiz_7 < k_size) {          \
         lhs_pf0 = lhs(lhs_vert, lhs_horiz_0);                   \
@@ -176,14 +177,14 @@ EigenContractionKernelInternal(const LhsMapper lhs, const RhsMapper rhs,
                                                                 \
     const Index rhs_vert = base_k + load_idx_vert;              \
     if (!needs_edge_check || rhs_vert < k_size) {               \
-      const Index rhs_horiz_0 = base_n + threadIdx.z + 0 * 8;   \
-      const Index rhs_horiz_1 = base_n + threadIdx.z + 1 * 8;   \
-      const Index rhs_horiz_2 = base_n + threadIdx.z + 2 * 8;   \
-      const Index rhs_horiz_3 = base_n + threadIdx.z + 3 * 8;   \
-      const Index rhs_horiz_4 = base_n + threadIdx.z + 4 * 8;   \
-      const Index rhs_horiz_5 = base_n + threadIdx.z + 5 * 8;   \
-      const Index rhs_horiz_6 = base_n + threadIdx.z + 6 * 8;   \
-      const Index rhs_horiz_7 = base_n + threadIdx.z + 7 * 8;   \
+      const Index rhs_horiz_0 = base_n + hipThreadIdx_z + 0 * 8;   \
+      const Index rhs_horiz_1 = base_n + hipThreadIdx_z + 1 * 8;   \
+      const Index rhs_horiz_2 = base_n + hipThreadIdx_z + 2 * 8;   \
+      const Index rhs_horiz_3 = base_n + hipThreadIdx_z + 3 * 8;   \
+      const Index rhs_horiz_4 = base_n + hipThreadIdx_z + 4 * 8;   \
+      const Index rhs_horiz_5 = base_n + hipThreadIdx_z + 5 * 8;   \
+      const Index rhs_horiz_6 = base_n + hipThreadIdx_z + 6 * 8;   \
+      const Index rhs_horiz_7 = base_n + hipThreadIdx_z + 7 * 8;   \
                                                                 \
       if (rhs_horiz_7 < n_size) {                               \
         rhs_pf0 = rhs(rhs_vert, rhs_horiz_0);                   \
@@ -319,8 +320,8 @@ EigenContractionKernelInternal(const LhsMapper lhs, const RhsMapper rhs,
     Scalar rrow(7);
 
     // Now x corresponds to k, y to m, and z to n
-    const Scalar* lhs_block = &lhs_shmem[threadIdx.x + 9 * threadIdx.y];
-    const Scalar* rhs_block = &rhs_shmem[threadIdx.x + 8 * threadIdx.z];
+    const Scalar* lhs_block = &lhs_shmem[hipThreadIdx_x + 9 * hipThreadIdx_y];
+    const Scalar* rhs_block = &rhs_shmem[hipThreadIdx_x + 8 * hipThreadIdx_z];
 
 #define lhs_element(i, j) lhs_block[72 * ((i) + 8 * (j))]
 #define rhs_element(i, j) rhs_block[72 * ((i) + 8 * (j))]
@@ -436,7 +437,7 @@ EigenContractionKernelInternal(const LhsMapper lhs, const RhsMapper rhs,
   __syncthreads();
 
 #define writeResultShmem(i, j)                                          \
-  lhs_shmem[i + 8 * threadIdx.y + 64 * threadIdx.z + 512 * j] = res(i, j); \
+  lhs_shmem[i + 8 * hipThreadIdx_y + 64 * hipThreadIdx_z + 512 * j] = res(i, j); \
 
 #define writeRow(i)                             \
   writeResultShmem(i, 0);                       \
@@ -448,7 +449,7 @@ EigenContractionKernelInternal(const LhsMapper lhs, const RhsMapper rhs,
   writeResultShmem(i, 6);                       \
   writeResultShmem(i, 7);                       \
 
-  if (threadIdx.x == 0) {
+  if (hipThreadIdx_x == 0) {
     writeRow(0);
     writeRow(1);
     writeRow(2);
@@ -461,34 +462,34 @@ EigenContractionKernelInternal(const LhsMapper lhs, const RhsMapper rhs,
 #undef writeResultShmem
 #undef writeRow
 
-  const int max_i_write = numext::mini((int)((m_size - base_m - threadIdx.y + 7) / 8), 8);
-  const int max_j_write = numext::mini((int)((n_size - base_n - threadIdx.z + 7) / 8), 8);
+  const int max_i_write = numext::mini((int)((m_size - base_m - hipThreadIdx_y + 7) / 8), 8);
+  const int max_j_write = numext::mini((int)((n_size - base_n - hipThreadIdx_z + 7) / 8), 8);
 
-  if (threadIdx.x < max_i_write) {
+  if (hipThreadIdx_x < max_i_write) {
     if (max_j_write == 8) {
       // TODO: can i trade bank conflicts for coalesced writes?
-      Scalar val0 = lhs_shmem[threadIdx.x + 8 * threadIdx.y + 64 * threadIdx.z + 512 * 0];
-      Scalar val1 = lhs_shmem[threadIdx.x + 8 * threadIdx.y + 64 * threadIdx.z + 512 * 1];
-      Scalar val2 = lhs_shmem[threadIdx.x + 8 * threadIdx.y + 64 * threadIdx.z + 512 * 2];
-      Scalar val3 = lhs_shmem[threadIdx.x + 8 * threadIdx.y + 64 * threadIdx.z + 512 * 3];
-      Scalar val4 = lhs_shmem[threadIdx.x + 8 * threadIdx.y + 64 * threadIdx.z + 512 * 4];
-      Scalar val5 = lhs_shmem[threadIdx.x + 8 * threadIdx.y + 64 * threadIdx.z + 512 * 5];
-      Scalar val6 = lhs_shmem[threadIdx.x + 8 * threadIdx.y + 64 * threadIdx.z + 512 * 6];
-      Scalar val7 = lhs_shmem[threadIdx.x + 8 * threadIdx.y + 64 * threadIdx.z + 512 * 7];
+      Scalar val0 = lhs_shmem[hipThreadIdx_x + 8 * hipThreadIdx_y + 64 * hipThreadIdx_z + 512 * 0];
+      Scalar val1 = lhs_shmem[hipThreadIdx_x + 8 * hipThreadIdx_y + 64 * hipThreadIdx_z + 512 * 1];
+      Scalar val2 = lhs_shmem[hipThreadIdx_x + 8 * hipThreadIdx_y + 64 * hipThreadIdx_z + 512 * 2];
+      Scalar val3 = lhs_shmem[hipThreadIdx_x + 8 * hipThreadIdx_y + 64 * hipThreadIdx_z + 512 * 3];
+      Scalar val4 = lhs_shmem[hipThreadIdx_x + 8 * hipThreadIdx_y + 64 * hipThreadIdx_z + 512 * 4];
+      Scalar val5 = lhs_shmem[hipThreadIdx_x + 8 * hipThreadIdx_y + 64 * hipThreadIdx_z + 512 * 5];
+      Scalar val6 = lhs_shmem[hipThreadIdx_x + 8 * hipThreadIdx_y + 64 * hipThreadIdx_z + 512 * 6];
+      Scalar val7 = lhs_shmem[hipThreadIdx_x + 8 * hipThreadIdx_y + 64 * hipThreadIdx_z + 512 * 7];
 
-      output(base_m + threadIdx.y + 8 * threadIdx.x, base_n + threadIdx.z + 8 * 0) = val0;
-      output(base_m + threadIdx.y + 8 * threadIdx.x, base_n + threadIdx.z + 8 * 1) = val1;
-      output(base_m + threadIdx.y + 8 * threadIdx.x, base_n + threadIdx.z + 8 * 2) = val2;
-      output(base_m + threadIdx.y + 8 * threadIdx.x, base_n + threadIdx.z + 8 * 3) = val3;
-      output(base_m + threadIdx.y + 8 * threadIdx.x, base_n + threadIdx.z + 8 * 4) = val4;
-      output(base_m + threadIdx.y + 8 * threadIdx.x, base_n + threadIdx.z + 8 * 5) = val5;
-      output(base_m + threadIdx.y + 8 * threadIdx.x, base_n + threadIdx.z + 8 * 6) = val6;
-      output(base_m + threadIdx.y + 8 * threadIdx.x, base_n + threadIdx.z + 8 * 7) = val7;
+      output(base_m + hipThreadIdx_y + 8 * hipThreadIdx_x, base_n + hipThreadIdx_z + 8 * 0) = val0;
+      output(base_m + hipThreadIdx_y + 8 * hipThreadIdx_x, base_n + hipThreadIdx_z + 8 * 1) = val1;
+      output(base_m + hipThreadIdx_y + 8 * hipThreadIdx_x, base_n + hipThreadIdx_z + 8 * 2) = val2;
+      output(base_m + hipThreadIdx_y + 8 * hipThreadIdx_x, base_n + hipThreadIdx_z + 8 * 3) = val3;
+      output(base_m + hipThreadIdx_y + 8 * hipThreadIdx_x, base_n + hipThreadIdx_z + 8 * 4) = val4;
+      output(base_m + hipThreadIdx_y + 8 * hipThreadIdx_x, base_n + hipThreadIdx_z + 8 * 5) = val5;
+      output(base_m + hipThreadIdx_y + 8 * hipThreadIdx_x, base_n + hipThreadIdx_z + 8 * 6) = val6;
+      output(base_m + hipThreadIdx_y + 8 * hipThreadIdx_x, base_n + hipThreadIdx_z + 8 * 7) = val7;
     } else {
 #pragma unroll 7
       for (int j = 0; j < max_j_write; j++) {
-        Scalar val = lhs_shmem[threadIdx.x + 8 * threadIdx.y + 64 * threadIdx.z + 512 * j];
-        output(base_m + threadIdx.y + 8 * threadIdx.x, base_n + threadIdx.z + 8 * j) = val;
+        Scalar val = lhs_shmem[hipThreadIdx_x + 8 * hipThreadIdx_y + 64 * hipThreadIdx_z + 512 * j];
+        output(base_m + hipThreadIdx_y + 8 * hipThreadIdx_x, base_n + hipThreadIdx_z + 8 * j) = val;
       }
     }
   }
@@ -500,14 +501,14 @@ template<typename Scalar, typename Index, typename LhsMapper,
          typename RhsMapper, typename OutputMapper>
 __global__ void
 __launch_bounds__(512)
-EigenContractionKernel(const LhsMapper lhs, const RhsMapper rhs,
+EigenContractionKernel(hipLaunchParm lp, const LhsMapper lhs, const RhsMapper rhs,
                        const OutputMapper output,
                        const Index m_size, const Index n_size, const Index k_size) {
   __shared__ Scalar lhs_shmem[72 * 64];
   __shared__ Scalar rhs_shmem[72 * 64];
 
-  const Index m_block_idx = blockIdx.x;
-  const Index n_block_idx = blockIdx.y;
+  const Index m_block_idx = hipBlockIdx_x;
+  const Index n_block_idx = hipBlockIdx_y;
 
   const Index base_m = 64 * m_block_idx;
   const Index base_n = 64 * n_block_idx;
@@ -563,17 +564,17 @@ EigenFloatContractionKernelInternal16x16(const LhsMapper lhs, const RhsMapper rh
     }                                                 \
 
 
-  Index lhs_vert = base_m+threadIdx.x*4;
+  Index lhs_vert = base_m+hipThreadIdx_x*4;
 
   for (Index k = 0; k < k_size; k += 16) {
     lhs_pf0 = internal::pset1<float4>(0);
     rhs_pf0 = internal::pset1<float4>(0);
 
-    Index lhs_horiz = threadIdx.y+k;
+    Index lhs_horiz = hipThreadIdx_y+k;
     prefetch_lhs(lhs_pf0, lhs_vert, lhs_horiz)
 
-    Index rhs_vert = k+(threadIdx.x%4)*4;
-    Index rhs_horiz0 = (threadIdx.x>>2)+threadIdx.y*4+base_n;
+    Index rhs_vert = k+(hipThreadIdx_x%4)*4;
+    Index rhs_horiz0 = (hipThreadIdx_x>>2)+hipThreadIdx_y*4+base_n;
 
     if (!CHECK_RHS_BOUNDARY) {
       if ((rhs_vert + 3) < k_size) {
@@ -608,7 +609,7 @@ EigenFloatContractionKernelInternal16x16(const LhsMapper lhs, const RhsMapper rh
     }
     float x1, x2 ;
     // the following can be a bitwise operation..... some day.
-    if((threadIdx.x%8) < 4) {
+    if((hipThreadIdx_x%8) < 4) {
       x1 = rhs_pf0.y;
       x2 = rhs_pf0.w;
     } else {
@@ -617,7 +618,7 @@ EigenFloatContractionKernelInternal16x16(const LhsMapper lhs, const RhsMapper rh
     }
     x1 = __shfl_xor(x1, 4);
     x2 = __shfl_xor(x2, 4);
-    if((threadIdx.x%8) < 4) {
+    if((hipThreadIdx_x%8) < 4) {
       rhs_pf0.y = x1;
       rhs_pf0.w = x2;
     } else {
@@ -632,8 +633,8 @@ EigenFloatContractionKernelInternal16x16(const LhsMapper lhs, const RhsMapper rh
     // Row 31 -> times (0, 4, 8, 12, 1, 5, 9, 13) for features 62, 63
     // Row 32 -> times (2, 6, 10, 14, 3, 7, 11, 15) for features 0, 1
     // ...
-    rhs_shmem2[(threadIdx.x>>3)+ threadIdx.y*2][threadIdx.x%8] = make_float2(rhs_pf0.x, rhs_pf0.y);
-    rhs_shmem2[(threadIdx.x>>3)+ threadIdx.y*2+32][threadIdx.x%8] = make_float2(rhs_pf0.z, rhs_pf0.w);
+    rhs_shmem2[(hipThreadIdx_x>>3)+ hipThreadIdx_y*2][hipThreadIdx_x%8] = make_float2(rhs_pf0.x, rhs_pf0.y);
+    rhs_shmem2[(hipThreadIdx_x>>3)+ hipThreadIdx_y*2+32][hipThreadIdx_x%8] = make_float2(rhs_pf0.z, rhs_pf0.w);
 
     // Row 0 (time 0) -> features (0, 1), (4, 5), .. (28, 29), (32, 33), ..  (60, 61)
     // Row 1 (time 1) -> features (0, 1), (4, 5), .. (28, 29), (32, 33), ..  (60, 61)
@@ -642,8 +643,8 @@ EigenFloatContractionKernelInternal16x16(const LhsMapper lhs, const RhsMapper rh
     // Row 16 (time 0) -> features (2, 3), (6, 7), .. (30, 31), (34, 35), ..  (62, 63)
     // ...
 
-    lhs_shmem2[threadIdx.y][threadIdx.x] = make_float2(lhs_pf0.x, lhs_pf0.y);
-    lhs_shmem2[threadIdx.y+16][threadIdx.x] = make_float2(lhs_pf0.z, lhs_pf0.w);
+    lhs_shmem2[hipThreadIdx_y][hipThreadIdx_x] = make_float2(lhs_pf0.x, lhs_pf0.y);
+    lhs_shmem2[hipThreadIdx_y+16][hipThreadIdx_x] = make_float2(lhs_pf0.z, lhs_pf0.w);
 
 
 #define add_vals(fl1, fl2, fr1, fr2)\
@@ -673,10 +674,10 @@ EigenFloatContractionKernelInternal16x16(const LhsMapper lhs, const RhsMapper rh
     #pragma unroll
     for (int koff = 0; koff < 16; koff ++) {
       // 32 x threads.
-      float2 fl1 = lhs_shmem2[koff][threadIdx.x];
-      float2 fl2 = lhs_shmem2[koff + 16][threadIdx.x];
+      float2 fl1 = lhs_shmem2[koff][hipThreadIdx_x];
+      float2 fl2 = lhs_shmem2[koff + 16][hipThreadIdx_x];
 
-      int start_feature = threadIdx.y * 4;
+      int start_feature = hipThreadIdx_y * 4;
       float2 fr1 = rhs_shmem2[(start_feature>>1) + 32*((koff%4)/2)][koff/4 + (koff%2)*4];
       float2 fr2 = rhs_shmem2[(start_feature>>1) + 1 + 32*((koff%4)/2)][koff/4 + (koff%2)*4];
 
@@ -688,7 +689,7 @@ EigenFloatContractionKernelInternal16x16(const LhsMapper lhs, const RhsMapper rh
 #undef prefetch_lhs
 #undef add_vals
 
-  Index horiz_base = threadIdx.y*4+base_n;
+  Index horiz_base = hipThreadIdx_y*4+base_n;
   if (!CHECK_LHS_BOUNDARY && !CHECK_RHS_BOUNDARY) {
     for (int i = 0; i < 4; i++) {
       output(lhs_vert, horiz_base + i) = results[i].x;
@@ -778,7 +779,7 @@ EigenFloatContractionKernelInternal(const LhsMapper lhs, const RhsMapper rhs,
   }
 
 
-  Index lhs_vert = base_m+threadIdx.x*4+(threadIdx.y%4)*32;
+  Index lhs_vert = base_m+hipThreadIdx_x*4+(hipThreadIdx_y%4)*32;
   for (Index k = 0; k < k_size; k += 32) {
     lhs_pf0 = internal::pset1<float4>(0);
     lhs_pf1 = internal::pset1<float4>(0);
@@ -789,123 +790,123 @@ EigenFloatContractionKernelInternal(const LhsMapper lhs, const RhsMapper rhs,
     rhs_pf1 = internal::pset1<float4>(0);
 
      if (!CHECK_LHS_BOUNDARY) {
-      if ((threadIdx.y/4+k+24) < k_size) {
-        lhs_pf0 =lhs.loadPacket<Unaligned>(lhs_vert, (threadIdx.y/4+k));
-        lhs_pf1 =lhs.loadPacket<Unaligned>(lhs_vert, (threadIdx.y/4+k+8));
-        lhs_pf2 =lhs.loadPacket<Unaligned>(lhs_vert, (threadIdx.y/4+k+16));
-        lhs_pf3 =lhs.loadPacket<Unaligned>(lhs_vert, (threadIdx.y/4+k+24));
-      } else if ((threadIdx.y/4+k+16) < k_size) {
-        lhs_pf0 =lhs.loadPacket<Unaligned>(lhs_vert, (threadIdx.y/4+k));
-        lhs_pf1 =lhs.loadPacket<Unaligned>(lhs_vert, (threadIdx.y/4+k+8));
-        lhs_pf2 =lhs.loadPacket<Unaligned>(lhs_vert, (threadIdx.y/4+k+16));
-      } else if ((threadIdx.y/4+k+8) < k_size) {
-        lhs_pf0 =lhs.loadPacket<Unaligned>(lhs_vert, (threadIdx.y/4+k));
-        lhs_pf1 =lhs.loadPacket<Unaligned>(lhs_vert, (threadIdx.y/4+k+8));
-      } else if ((threadIdx.y/4+k) < k_size) {
-        lhs_pf0 =lhs.loadPacket<Unaligned>(lhs_vert, (threadIdx.y/4+k));
+      if ((hipThreadIdx_y/4+k+24) < k_size) {
+        lhs_pf0 =lhs.loadPacket<Unaligned>(lhs_vert, (hipThreadIdx_y/4+k));
+        lhs_pf1 =lhs.loadPacket<Unaligned>(lhs_vert, (hipThreadIdx_y/4+k+8));
+        lhs_pf2 =lhs.loadPacket<Unaligned>(lhs_vert, (hipThreadIdx_y/4+k+16));
+        lhs_pf3 =lhs.loadPacket<Unaligned>(lhs_vert, (hipThreadIdx_y/4+k+24));
+      } else if ((hipThreadIdx_y/4+k+16) < k_size) {
+        lhs_pf0 =lhs.loadPacket<Unaligned>(lhs_vert, (hipThreadIdx_y/4+k));
+        lhs_pf1 =lhs.loadPacket<Unaligned>(lhs_vert, (hipThreadIdx_y/4+k+8));
+        lhs_pf2 =lhs.loadPacket<Unaligned>(lhs_vert, (hipThreadIdx_y/4+k+16));
+      } else if ((hipThreadIdx_y/4+k+8) < k_size) {
+        lhs_pf0 =lhs.loadPacket<Unaligned>(lhs_vert, (hipThreadIdx_y/4+k));
+        lhs_pf1 =lhs.loadPacket<Unaligned>(lhs_vert, (hipThreadIdx_y/4+k+8));
+      } else if ((hipThreadIdx_y/4+k) < k_size) {
+        lhs_pf0 =lhs.loadPacket<Unaligned>(lhs_vert, (hipThreadIdx_y/4+k));
       }
     } else {
       // just CHECK_LHS_BOUNDARY
       if (lhs_vert + 3 < m_size) {
-        if ((threadIdx.y/4+k+24) < k_size) {
-          lhs_pf0 =lhs.loadPacket<Unaligned>(lhs_vert, (threadIdx.y/4+k));
-          lhs_pf1 =lhs.loadPacket<Unaligned>(lhs_vert, (threadIdx.y/4+k+8));
-          lhs_pf2 =lhs.loadPacket<Unaligned>(lhs_vert, (threadIdx.y/4+k+16));
-          lhs_pf3 =lhs.loadPacket<Unaligned>(lhs_vert, (threadIdx.y/4+k+24));
-        } else if ((threadIdx.y/4+k+16) < k_size) {
-          lhs_pf0 =lhs.loadPacket<Unaligned>(lhs_vert, (threadIdx.y/4+k));
-          lhs_pf1 =lhs.loadPacket<Unaligned>(lhs_vert, (threadIdx.y/4+k+8));
-          lhs_pf2 =lhs.loadPacket<Unaligned>(lhs_vert, (threadIdx.y/4+k+16));
-        } else if ((threadIdx.y/4+k+8) < k_size) {
-          lhs_pf0 =lhs.loadPacket<Unaligned>(lhs_vert, (threadIdx.y/4+k));
-          lhs_pf1 =lhs.loadPacket<Unaligned>(lhs_vert, (threadIdx.y/4+k+8));
-        } else if ((threadIdx.y/4+k) < k_size) {
-          lhs_pf0 =lhs.loadPacket<Unaligned>(lhs_vert, (threadIdx.y/4+k));
+        if ((hipThreadIdx_y/4+k+24) < k_size) {
+          lhs_pf0 =lhs.loadPacket<Unaligned>(lhs_vert, (hipThreadIdx_y/4+k));
+          lhs_pf1 =lhs.loadPacket<Unaligned>(lhs_vert, (hipThreadIdx_y/4+k+8));
+          lhs_pf2 =lhs.loadPacket<Unaligned>(lhs_vert, (hipThreadIdx_y/4+k+16));
+          lhs_pf3 =lhs.loadPacket<Unaligned>(lhs_vert, (hipThreadIdx_y/4+k+24));
+        } else if ((hipThreadIdx_y/4+k+16) < k_size) {
+          lhs_pf0 =lhs.loadPacket<Unaligned>(lhs_vert, (hipThreadIdx_y/4+k));
+          lhs_pf1 =lhs.loadPacket<Unaligned>(lhs_vert, (hipThreadIdx_y/4+k+8));
+          lhs_pf2 =lhs.loadPacket<Unaligned>(lhs_vert, (hipThreadIdx_y/4+k+16));
+        } else if ((hipThreadIdx_y/4+k+8) < k_size) {
+          lhs_pf0 =lhs.loadPacket<Unaligned>(lhs_vert, (hipThreadIdx_y/4+k));
+          lhs_pf1 =lhs.loadPacket<Unaligned>(lhs_vert, (hipThreadIdx_y/4+k+8));
+        } else if ((hipThreadIdx_y/4+k) < k_size) {
+          lhs_pf0 =lhs.loadPacket<Unaligned>(lhs_vert, (hipThreadIdx_y/4+k));
         }
       } else if (lhs_vert + 2 < m_size) {
-        if ((threadIdx.y/4+k+24) < k_size) {
-          lhs_pf0.x =lhs(lhs_vert + 0, (threadIdx.y/4+k));
-          lhs_pf0.y =lhs(lhs_vert + 1, (threadIdx.y/4+k));
-          lhs_pf0.z =lhs(lhs_vert + 2, (threadIdx.y/4+k));
-          lhs_pf1.x =lhs(lhs_vert + 0, (threadIdx.y/4+k+8));
-          lhs_pf1.y =lhs(lhs_vert + 1, (threadIdx.y/4+k+8));
-          lhs_pf1.z =lhs(lhs_vert + 2, (threadIdx.y/4+k+8));
-          lhs_pf2.x =lhs(lhs_vert + 0, (threadIdx.y/4+k+16));
-          lhs_pf2.y =lhs(lhs_vert + 1, (threadIdx.y/4+k+16));
-          lhs_pf2.z =lhs(lhs_vert + 2, (threadIdx.y/4+k+16));
-          lhs_pf3.x =lhs(lhs_vert + 0, (threadIdx.y/4+k+24));
-          lhs_pf3.y =lhs(lhs_vert + 1, (threadIdx.y/4+k+24));
-          lhs_pf3.z =lhs(lhs_vert + 2, (threadIdx.y/4+k+24));
-        } else if ((threadIdx.y/4+k+16) < k_size) {
-          lhs_pf0.x =lhs(lhs_vert + 0, (threadIdx.y/4+k));
-          lhs_pf0.y =lhs(lhs_vert + 1, (threadIdx.y/4+k));
-          lhs_pf0.z =lhs(lhs_vert + 2, (threadIdx.y/4+k));
-          lhs_pf1.x =lhs(lhs_vert + 0, (threadIdx.y/4+k+8));
-          lhs_pf1.y =lhs(lhs_vert + 1, (threadIdx.y/4+k+8));
-          lhs_pf1.z =lhs(lhs_vert + 2, (threadIdx.y/4+k+8));
-          lhs_pf2.x =lhs(lhs_vert + 0, (threadIdx.y/4+k+16));
-          lhs_pf2.y =lhs(lhs_vert + 1, (threadIdx.y/4+k+16));
-          lhs_pf2.z =lhs(lhs_vert + 2, (threadIdx.y/4+k+16));
-        } else if ((threadIdx.y/4+k+8) < k_size) {
-          lhs_pf0.x =lhs(lhs_vert + 0, (threadIdx.y/4+k));
-          lhs_pf0.y =lhs(lhs_vert + 1, (threadIdx.y/4+k));
-          lhs_pf0.z =lhs(lhs_vert + 2, (threadIdx.y/4+k));
-          lhs_pf1.x =lhs(lhs_vert + 0, (threadIdx.y/4+k+8));
-          lhs_pf1.y =lhs(lhs_vert + 1, (threadIdx.y/4+k+8));
-          lhs_pf1.z =lhs(lhs_vert + 2, (threadIdx.y/4+k+8));
-        } else if ((threadIdx.y/4+k) < k_size) {
-          lhs_pf0.x =lhs(lhs_vert + 0, (threadIdx.y/4+k));
-          lhs_pf0.y =lhs(lhs_vert + 1, (threadIdx.y/4+k));
-          lhs_pf0.z =lhs(lhs_vert + 2, (threadIdx.y/4+k));
+        if ((hipThreadIdx_y/4+k+24) < k_size) {
+          lhs_pf0.x =lhs(lhs_vert + 0, (hipThreadIdx_y/4+k));
+          lhs_pf0.y =lhs(lhs_vert + 1, (hipThreadIdx_y/4+k));
+          lhs_pf0.z =lhs(lhs_vert + 2, (hipThreadIdx_y/4+k));
+          lhs_pf1.x =lhs(lhs_vert + 0, (hipThreadIdx_y/4+k+8));
+          lhs_pf1.y =lhs(lhs_vert + 1, (hipThreadIdx_y/4+k+8));
+          lhs_pf1.z =lhs(lhs_vert + 2, (hipThreadIdx_y/4+k+8));
+          lhs_pf2.x =lhs(lhs_vert + 0, (hipThreadIdx_y/4+k+16));
+          lhs_pf2.y =lhs(lhs_vert + 1, (hipThreadIdx_y/4+k+16));
+          lhs_pf2.z =lhs(lhs_vert + 2, (hipThreadIdx_y/4+k+16));
+          lhs_pf3.x =lhs(lhs_vert + 0, (hipThreadIdx_y/4+k+24));
+          lhs_pf3.y =lhs(lhs_vert + 1, (hipThreadIdx_y/4+k+24));
+          lhs_pf3.z =lhs(lhs_vert + 2, (hipThreadIdx_y/4+k+24));
+        } else if ((hipThreadIdx_y/4+k+16) < k_size) {
+          lhs_pf0.x =lhs(lhs_vert + 0, (hipThreadIdx_y/4+k));
+          lhs_pf0.y =lhs(lhs_vert + 1, (hipThreadIdx_y/4+k));
+          lhs_pf0.z =lhs(lhs_vert + 2, (hipThreadIdx_y/4+k));
+          lhs_pf1.x =lhs(lhs_vert + 0, (hipThreadIdx_y/4+k+8));
+          lhs_pf1.y =lhs(lhs_vert + 1, (hipThreadIdx_y/4+k+8));
+          lhs_pf1.z =lhs(lhs_vert + 2, (hipThreadIdx_y/4+k+8));
+          lhs_pf2.x =lhs(lhs_vert + 0, (hipThreadIdx_y/4+k+16));
+          lhs_pf2.y =lhs(lhs_vert + 1, (hipThreadIdx_y/4+k+16));
+          lhs_pf2.z =lhs(lhs_vert + 2, (hipThreadIdx_y/4+k+16));
+        } else if ((hipThreadIdx_y/4+k+8) < k_size) {
+          lhs_pf0.x =lhs(lhs_vert + 0, (hipThreadIdx_y/4+k));
+          lhs_pf0.y =lhs(lhs_vert + 1, (hipThreadIdx_y/4+k));
+          lhs_pf0.z =lhs(lhs_vert + 2, (hipThreadIdx_y/4+k));
+          lhs_pf1.x =lhs(lhs_vert + 0, (hipThreadIdx_y/4+k+8));
+          lhs_pf1.y =lhs(lhs_vert + 1, (hipThreadIdx_y/4+k+8));
+          lhs_pf1.z =lhs(lhs_vert + 2, (hipThreadIdx_y/4+k+8));
+        } else if ((hipThreadIdx_y/4+k) < k_size) {
+          lhs_pf0.x =lhs(lhs_vert + 0, (hipThreadIdx_y/4+k));
+          lhs_pf0.y =lhs(lhs_vert + 1, (hipThreadIdx_y/4+k));
+          lhs_pf0.z =lhs(lhs_vert + 2, (hipThreadIdx_y/4+k));
         }
       } else if (lhs_vert + 1 < m_size) {
-        if ((threadIdx.y/4+k+24) < k_size) {
-          lhs_pf0.x =lhs(lhs_vert + 0, (threadIdx.y/4+k));
-          lhs_pf0.y =lhs(lhs_vert + 1, (threadIdx.y/4+k));
-          lhs_pf1.x =lhs(lhs_vert + 0, (threadIdx.y/4+k+8));
-          lhs_pf1.y =lhs(lhs_vert + 1, (threadIdx.y/4+k+8));
-          lhs_pf2.x =lhs(lhs_vert + 0, (threadIdx.y/4+k+16));
-          lhs_pf2.y =lhs(lhs_vert + 1, (threadIdx.y/4+k+16));
-          lhs_pf3.x =lhs(lhs_vert + 0, (threadIdx.y/4+k+24));
-          lhs_pf3.y =lhs(lhs_vert + 1, (threadIdx.y/4+k+24));
-        } else if ((threadIdx.y/4+k+16) < k_size) {
-          lhs_pf0.x =lhs(lhs_vert + 0, (threadIdx.y/4+k));
-          lhs_pf0.y =lhs(lhs_vert + 1, (threadIdx.y/4+k));
-          lhs_pf1.x =lhs(lhs_vert + 0, (threadIdx.y/4+k+8));
-          lhs_pf1.y =lhs(lhs_vert + 1, (threadIdx.y/4+k+8));
-          lhs_pf2.x =lhs(lhs_vert + 0, (threadIdx.y/4+k+16));
-          lhs_pf2.y =lhs(lhs_vert + 1, (threadIdx.y/4+k+16));
-        } else if ((threadIdx.y/4+k+8) < k_size) {
-          lhs_pf0.x =lhs(lhs_vert + 0, (threadIdx.y/4+k));
-          lhs_pf0.y =lhs(lhs_vert + 1, (threadIdx.y/4+k));
-          lhs_pf1.x =lhs(lhs_vert + 0, (threadIdx.y/4+k+8));
-          lhs_pf1.y =lhs(lhs_vert + 1, (threadIdx.y/4+k+8));
-        } else if ((threadIdx.y/4+k) < k_size) {
-          lhs_pf0.x =lhs(lhs_vert + 0, (threadIdx.y/4+k));
-          lhs_pf0.y =lhs(lhs_vert + 1, (threadIdx.y/4+k));
+        if ((hipThreadIdx_y/4+k+24) < k_size) {
+          lhs_pf0.x =lhs(lhs_vert + 0, (hipThreadIdx_y/4+k));
+          lhs_pf0.y =lhs(lhs_vert + 1, (hipThreadIdx_y/4+k));
+          lhs_pf1.x =lhs(lhs_vert + 0, (hipThreadIdx_y/4+k+8));
+          lhs_pf1.y =lhs(lhs_vert + 1, (hipThreadIdx_y/4+k+8));
+          lhs_pf2.x =lhs(lhs_vert + 0, (hipThreadIdx_y/4+k+16));
+          lhs_pf2.y =lhs(lhs_vert + 1, (hipThreadIdx_y/4+k+16));
+          lhs_pf3.x =lhs(lhs_vert + 0, (hipThreadIdx_y/4+k+24));
+          lhs_pf3.y =lhs(lhs_vert + 1, (hipThreadIdx_y/4+k+24));
+        } else if ((hipThreadIdx_y/4+k+16) < k_size) {
+          lhs_pf0.x =lhs(lhs_vert + 0, (hipThreadIdx_y/4+k));
+          lhs_pf0.y =lhs(lhs_vert + 1, (hipThreadIdx_y/4+k));
+          lhs_pf1.x =lhs(lhs_vert + 0, (hipThreadIdx_y/4+k+8));
+          lhs_pf1.y =lhs(lhs_vert + 1, (hipThreadIdx_y/4+k+8));
+          lhs_pf2.x =lhs(lhs_vert + 0, (hipThreadIdx_y/4+k+16));
+          lhs_pf2.y =lhs(lhs_vert + 1, (hipThreadIdx_y/4+k+16));
+        } else if ((hipThreadIdx_y/4+k+8) < k_size) {
+          lhs_pf0.x =lhs(lhs_vert + 0, (hipThreadIdx_y/4+k));
+          lhs_pf0.y =lhs(lhs_vert + 1, (hipThreadIdx_y/4+k));
+          lhs_pf1.x =lhs(lhs_vert + 0, (hipThreadIdx_y/4+k+8));
+          lhs_pf1.y =lhs(lhs_vert + 1, (hipThreadIdx_y/4+k+8));
+        } else if ((hipThreadIdx_y/4+k) < k_size) {
+          lhs_pf0.x =lhs(lhs_vert + 0, (hipThreadIdx_y/4+k));
+          lhs_pf0.y =lhs(lhs_vert + 1, (hipThreadIdx_y/4+k));
         }
       } else if (lhs_vert < m_size) {
-        if ((threadIdx.y/4+k+24) < k_size) {
-          lhs_pf0.x =lhs(lhs_vert + 0, (threadIdx.y/4+k));
-          lhs_pf1.x =lhs(lhs_vert + 0, (threadIdx.y/4+k+8));
-          lhs_pf2.x =lhs(lhs_vert + 0, (threadIdx.y/4+k+16));
-          lhs_pf3.x =lhs(lhs_vert + 0, (threadIdx.y/4+k+24));
-        } else if ((threadIdx.y/4+k+16) < k_size) {
-          lhs_pf0.x =lhs(lhs_vert + 0, (threadIdx.y/4+k));
-          lhs_pf1.x =lhs(lhs_vert + 0, (threadIdx.y/4+k+8));
-          lhs_pf2.x =lhs(lhs_vert + 0, (threadIdx.y/4+k+16));
-        } else if ((threadIdx.y/4+k+8) < k_size) {
-          lhs_pf0.x =lhs(lhs_vert + 0, (threadIdx.y/4+k));
-          lhs_pf1.x =lhs(lhs_vert + 0, (threadIdx.y/4+k+8));
-        } else if ((threadIdx.y/4+k) < k_size) {
-          lhs_pf0.x =lhs(lhs_vert + 0, (threadIdx.y/4+k));
+        if ((hipThreadIdx_y/4+k+24) < k_size) {
+          lhs_pf0.x =lhs(lhs_vert + 0, (hipThreadIdx_y/4+k));
+          lhs_pf1.x =lhs(lhs_vert + 0, (hipThreadIdx_y/4+k+8));
+          lhs_pf2.x =lhs(lhs_vert + 0, (hipThreadIdx_y/4+k+16));
+          lhs_pf3.x =lhs(lhs_vert + 0, (hipThreadIdx_y/4+k+24));
+        } else if ((hipThreadIdx_y/4+k+16) < k_size) {
+          lhs_pf0.x =lhs(lhs_vert + 0, (hipThreadIdx_y/4+k));
+          lhs_pf1.x =lhs(lhs_vert + 0, (hipThreadIdx_y/4+k+8));
+          lhs_pf2.x =lhs(lhs_vert + 0, (hipThreadIdx_y/4+k+16));
+        } else if ((hipThreadIdx_y/4+k+8) < k_size) {
+          lhs_pf0.x =lhs(lhs_vert + 0, (hipThreadIdx_y/4+k));
+          lhs_pf1.x =lhs(lhs_vert + 0, (hipThreadIdx_y/4+k+8));
+        } else if ((hipThreadIdx_y/4+k) < k_size) {
+          lhs_pf0.x =lhs(lhs_vert + 0, (hipThreadIdx_y/4+k));
         }
       }
     }
     __syncthreads();
-    Index rhs_vert = k+threadIdx.x*4;
-    Index rhs_horiz0 = threadIdx.y*2+base_n;
-    Index rhs_horiz1 = threadIdx.y*2+1+base_n;
+    Index rhs_vert = k+hipThreadIdx_x*4;
+    Index rhs_horiz0 = hipThreadIdx_y*2+base_n;
+    Index rhs_horiz1 = hipThreadIdx_y*2+1+base_n;
     if (!CHECK_RHS_BOUNDARY) {
       if ((rhs_vert + 3) < k_size) {
         // just CHECK_RHS_BOUNDARY
@@ -942,12 +943,12 @@ EigenFloatContractionKernelInternal(const LhsMapper lhs, const RhsMapper rhs,
           rhs_pf1.x = rhs(rhs_vert, rhs_horiz1);
           rhs_pf1.y = rhs(rhs_vert + 1, rhs_horiz1);
           rhs_pf1.z = rhs(rhs_vert + 2, rhs_horiz1);
-        } else if (k+threadIdx.x*4 + 1 < k_size) {
+        } else if (k+hipThreadIdx_x*4 + 1 < k_size) {
           rhs_pf0.x = rhs(rhs_vert, rhs_horiz0);
           rhs_pf0.y = rhs(rhs_vert + 1, rhs_horiz0);
           rhs_pf1.x = rhs(rhs_vert, rhs_horiz1);
           rhs_pf1.y = rhs(rhs_vert + 1, rhs_horiz1);
-        } else if (k+threadIdx.x*4  < k_size) {
+        } else if (k+hipThreadIdx_x*4  < k_size) {
           rhs_pf0.x = rhs(rhs_vert, rhs_horiz0);
           rhs_pf1.x = rhs(rhs_vert, rhs_horiz1);
         }
@@ -974,17 +975,17 @@ EigenFloatContractionKernelInternal(const LhsMapper lhs, const RhsMapper rhs,
     // Row 1 -> times (0, 4, 8, .. 28) for features 2, 3.
     // ..
     // Row 31 -> times (0, 4, 8, .. 28) for features 62, 63
-    rhs_shmem2[threadIdx.y][threadIdx.x] = make_float2(rhs_pf0.x, rhs_pf1.x);
+    rhs_shmem2[hipThreadIdx_y][hipThreadIdx_x] = make_float2(rhs_pf0.x, rhs_pf1.x);
     // Row 32 -> times (1, 5, 9, .. 29) for features 0, 1.
     // Row 33 -> times (1, 5, 9, .. 29) for features 2, 3.
     // ..
-    rhs_shmem2[threadIdx.y+32][threadIdx.x] = make_float2(rhs_pf0.y, rhs_pf1.y);
+    rhs_shmem2[hipThreadIdx_y+32][hipThreadIdx_x] = make_float2(rhs_pf0.y, rhs_pf1.y);
     // Row 64 -> times (2, 6, 10, .. 30) for features 0, 1.
     // Row 65 -> times (2, 6, 10, .. 30) for features 2, 3.
-    rhs_shmem2[threadIdx.y+64][threadIdx.x] = make_float2(rhs_pf0.z, rhs_pf1.z);
+    rhs_shmem2[hipThreadIdx_y+64][hipThreadIdx_x] = make_float2(rhs_pf0.z, rhs_pf1.z);
     // Row 96 -> times (3, 7, 11, .. 31) for features 0, 1.
     // Row 97 -> times (3, 7, 11, .. 31) for features 2, 3.
-    rhs_shmem2[threadIdx.y+96][threadIdx.x] = make_float2(rhs_pf0.w, rhs_pf1.w);
+    rhs_shmem2[hipThreadIdx_y+96][hipThreadIdx_x] = make_float2(rhs_pf0.w, rhs_pf1.w);
 
     // LHS.
     // Row 0 (time 0) -> features (0, 1), (4, 5), .. (28, 29), (32, 33), ..  (60, 61) .. (124, 125)
@@ -1031,26 +1032,26 @@ EigenFloatContractionKernelInternal(const LhsMapper lhs, const RhsMapper rhs,
       results[6].w += a_feat2.y * f4.x;\
       results[7].w += a_feat2.y * f4.y;\
 
-    lhs_shmem2[threadIdx.y/4][threadIdx.x+(threadIdx.y%4)*8] = make_float2(lhs_pf0.x, lhs_pf0.y);
-    lhs_shmem2[threadIdx.y/4+8][threadIdx.x+(threadIdx.y%4)*8] = make_float2(lhs_pf1.x, lhs_pf1.y);
-    lhs_shmem2[threadIdx.y/4+16][threadIdx.x+(threadIdx.y%4)*8] = make_float2(lhs_pf2.x, lhs_pf2.y);
-    lhs_shmem2[threadIdx.y/4+24][threadIdx.x+(threadIdx.y%4)*8] = make_float2(lhs_pf3.x, lhs_pf3.y);
+    lhs_shmem2[hipThreadIdx_y/4][hipThreadIdx_x+(hipThreadIdx_y%4)*8] = make_float2(lhs_pf0.x, lhs_pf0.y);
+    lhs_shmem2[hipThreadIdx_y/4+8][hipThreadIdx_x+(hipThreadIdx_y%4)*8] = make_float2(lhs_pf1.x, lhs_pf1.y);
+    lhs_shmem2[hipThreadIdx_y/4+16][hipThreadIdx_x+(hipThreadIdx_y%4)*8] = make_float2(lhs_pf2.x, lhs_pf2.y);
+    lhs_shmem2[hipThreadIdx_y/4+24][hipThreadIdx_x+(hipThreadIdx_y%4)*8] = make_float2(lhs_pf3.x, lhs_pf3.y);
 
-    lhs_shmem2[threadIdx.y/4 + 32][threadIdx.x+(threadIdx.y%4)*8] = make_float2(lhs_pf0.z, lhs_pf0.w);
-    lhs_shmem2[threadIdx.y/4 + 40][threadIdx.x+(threadIdx.y%4)*8] = make_float2(lhs_pf1.z, lhs_pf1.w);
-    lhs_shmem2[threadIdx.y/4 + 48][threadIdx.x+(threadIdx.y%4)*8] = make_float2(lhs_pf2.z, lhs_pf2.w);
-    lhs_shmem2[threadIdx.y/4 + 56][threadIdx.x+(threadIdx.y%4)*8] = make_float2(lhs_pf3.z, lhs_pf3.w);
+    lhs_shmem2[hipThreadIdx_y/4 + 32][hipThreadIdx_x+(hipThreadIdx_y%4)*8] = make_float2(lhs_pf0.z, lhs_pf0.w);
+    lhs_shmem2[hipThreadIdx_y/4 + 40][hipThreadIdx_x+(hipThreadIdx_y%4)*8] = make_float2(lhs_pf1.z, lhs_pf1.w);
+    lhs_shmem2[hipThreadIdx_y/4 + 48][hipThreadIdx_x+(hipThreadIdx_y%4)*8] = make_float2(lhs_pf2.z, lhs_pf2.w);
+    lhs_shmem2[hipThreadIdx_y/4 + 56][hipThreadIdx_x+(hipThreadIdx_y%4)*8] = make_float2(lhs_pf3.z, lhs_pf3.w);
 
     __syncthreads();
 
     // Do the multiplies.
     #pragma unroll
     for (int koff = 0; koff < 32; koff ++) {
-      float2 a3 = lhs_shmem2[koff][threadIdx.x + (threadIdx.y % 4) * 8];
-      float2 a4 = lhs_shmem2[koff + 32][threadIdx.x + (threadIdx.y % 4) * 8];
+      float2 a3 = lhs_shmem2[koff][hipThreadIdx_x + (hipThreadIdx_y % 4) * 8];
+      float2 a4 = lhs_shmem2[koff + 32][hipThreadIdx_x + (hipThreadIdx_y % 4) * 8];
 
-      // first feature is at (threadIdx.y/4) * 8 last is at start + 8.
-      int start_feature = (threadIdx.y / 4) * 8;
+      // first feature is at (hipThreadIdx_y/4) * 8 last is at start + 8.
+      int start_feature = (hipThreadIdx_y / 4) * 8;
 
       float2 br1 = rhs_shmem2[start_feature/2 +     (koff % 4) * 32][koff/4];
       float2 br2 = rhs_shmem2[start_feature/2 + 1 + (koff % 4) * 32][koff/4];
@@ -1064,7 +1065,7 @@ EigenFloatContractionKernelInternal(const LhsMapper lhs, const RhsMapper rhs,
 
 
   __syncthreads();
-  Index horiz_base = (threadIdx.y/4)*8+base_n;
+  Index horiz_base = (hipThreadIdx_y/4)*8+base_n;
   if (!CHECK_LHS_BOUNDARY && !CHECK_RHS_BOUNDARY) {
     for (int i = 0; i < 8; i++) {
       output(lhs_vert, horiz_base + i) = results[i].x;
@@ -1128,7 +1129,7 @@ template<typename Index, typename LhsMapper,
          typename RhsMapper, typename OutputMapper>
 __global__ void
 __launch_bounds__(256)
-EigenFloatContractionKernel(const LhsMapper lhs, const RhsMapper rhs,
+EigenFloatContractionKernel(hipLaunchParm lp, const LhsMapper lhs, const RhsMapper rhs,
                        const OutputMapper output,
                        const Index m_size, const Index n_size, const Index k_size) {
   __shared__ float2 lhs_shmem[64*32];
@@ -1140,8 +1141,8 @@ EigenFloatContractionKernel(const LhsMapper lhs, const RhsMapper rhs,
   typedef float2 LHS_MEM16x16[32][16];
   typedef float2 RHS_MEM16x16[64][8];
 
-  const Index m_block_idx = blockIdx.x;
-  const Index n_block_idx = blockIdx.y;
+  const Index m_block_idx = hipBlockIdx_x;
+  const Index n_block_idx = hipBlockIdx_y;
 
   const Index base_m = 128 * m_block_idx;
   const Index base_n = 64 * n_block_idx;
@@ -1174,14 +1175,14 @@ template<typename Index, typename LhsMapper,
          typename RhsMapper, typename OutputMapper>
 __global__ void
 __launch_bounds__(256)
-EigenFloatContractionKernel16x16(const LhsMapper lhs, const RhsMapper rhs,
+EigenFloatContractionKernel16x16(hipLaunchParm lp, const LhsMapper lhs, const RhsMapper rhs,
                        const OutputMapper output,
                        const Index m_size, const Index n_size, const Index k_size) {
   __shared__ float2 lhs_shmem[32][16];
   __shared__ float2 rhs_shmem[64][8];
 
-  const Index m_block_idx = blockIdx.x;
-  const Index n_block_idx = blockIdx.y;
+  const Index m_block_idx = hipBlockIdx_x;
+  const Index n_block_idx = hipBlockIdx_y;
 
   const Index base_m = 64 * m_block_idx;
   const Index base_n = 64 * n_block_idx;
@@ -1380,12 +1381,12 @@ struct TensorEvaluator<const TensorContractionOp<Indices, LeftArgType, RightArgT
 
     OutputMapper output(buffer, m);
 
-    setCudaSharedMemConfig(cudaSharedMemBankSizeEightByte);
+    setCudaSharedMemConfig(hipSharedMemBankSizeEightByte);
     LaunchKernels<LhsScalar, RhsScalar, Index, LhsMapper, RhsMapper, OutputMapper>::Run(lhs, rhs, output,  m, n, k, this->m_device);
   }
 };
 
 } // end namespace Eigen
 
-#endif // EIGEN_USE_GPU and __CUDACC__
+#endif // EIGEN_USE_GPU and __HIPCC__
 #endif // EIGEN_CXX11_TENSOR_TENSOR_CONTRACTION_CUDA_H

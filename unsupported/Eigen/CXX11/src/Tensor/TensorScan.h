@@ -1,3 +1,4 @@
+#include "hip/hip_runtime.h"
 // This file is part of Eigen, a lightweight C++ template library
 // for linear algebra.
 //
@@ -241,16 +242,16 @@ struct ScanLauncher {
   }
 };
 
-#if defined(EIGEN_USE_GPU) && defined(__CUDACC__)
+#if defined(EIGEN_USE_GPU) && defined(__HIPCC__)
 
 // GPU implementation of scan
 // TODO(ibab) This placeholder implementation performs multiple scans in
 // parallel, but it would be better to use a parallel scan algorithm and
 // optimize memory access.
 template <typename Self, typename Reducer>
-__global__ void ScanKernel(Self self, Index total_size, typename Self::CoeffReturnType* data) {
+__global__ void ScanKernel(hipLaunchParm lp, Self self, Index total_size, typename Self::CoeffReturnType* data) {
   // Compute offset as in the CPU version
-  Index val = threadIdx.x + blockIdx.x * blockDim.x;
+  Index val = hipThreadIdx_x + hipBlockIdx_x * hipBlockDim_x;
   Index offset = (val / self.stride()) * self.stride() * self.size() + val % self.stride();
 
   if (offset + (self.size() - 1) * self.stride() < total_size) {
@@ -280,7 +281,7 @@ struct ScanLauncher<Self, Reducer, GpuDevice> {
      LAUNCH_CUDA_KERNEL((ScanKernel<Self, Reducer>), num_blocks, block_size, 0, self.device(), self, total_size, data);
   }
 };
-#endif  // EIGEN_USE_GPU && __CUDACC__
+#endif  // EIGEN_USE_GPU && __HIPCC__
 
 }  // end namespace Eigen
 

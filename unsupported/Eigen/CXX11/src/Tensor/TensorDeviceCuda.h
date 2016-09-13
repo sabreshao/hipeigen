@@ -20,8 +20,8 @@ class StreamInterface {
  public:
   virtual ~StreamInterface() {}
 
-  virtual const cudaStream_t& stream() const = 0;
-  virtual const cudaDeviceProp& deviceProperties() const = 0;
+  virtual const hipStream_t& stream() const = 0;
+  virtual const hipDeviceProp_t& deviceProperties() const = 0;
 
   // Allocate memory on the actual device where the computation will run
   virtual void* allocate(size_t num_bytes) const = 0;
@@ -37,30 +37,30 @@ class StreamInterface {
   virtual unsigned int* semaphore() const = 0;
 };
 
-static cudaDeviceProp* m_deviceProperties;
+static hipDeviceProp_t* m_deviceProperties;
 static bool m_devicePropInitialized = false;
 
 static void initializeDeviceProp() {
   if (!m_devicePropInitialized) {
     if (!m_devicePropInitialized) {
       int num_devices;
-      cudaError_t status = cudaGetDeviceCount(&num_devices);
-      if (status != cudaSuccess) {
+      hipError_t status = hipGetDeviceCount(&num_devices);
+      if (status != hipSuccess) {
         std::cerr << "Failed to get the number of CUDA devices: "
-                  << cudaGetErrorString(status)
+                  << hipGetErrorString(status)
                   << std::endl;
-        assert(status == cudaSuccess);
+        assert(status == hipSuccess);
       }
-      m_deviceProperties = new cudaDeviceProp[num_devices];
+      m_deviceProperties = new hipDeviceProp_t[num_devices];
       for (int i = 0; i < num_devices; ++i) {
-        status = cudaGetDeviceProperties(&m_deviceProperties[i], i);
-        if (status != cudaSuccess) {
+        status = hipGetDeviceProperties(&m_deviceProperties[i], i);
+        if (status != hipSuccess) {
           std::cerr << "Failed to initialize CUDA device #"
                     << i
                     << ": "
-                    << cudaGetErrorString(status)
+                    << hipGetErrorString(status)
                     << std::endl;
-          assert(status == cudaSuccess);
+          assert(status == hipSuccess);
         }
       }
       m_devicePropInitialized = true;
@@ -68,13 +68,13 @@ static void initializeDeviceProp() {
   }
 }
 
-static const cudaStream_t default_stream = cudaStreamDefault;
+static const hipStream_t default_stream = hipStreamDefault;
 
 class CudaStreamDevice : public StreamInterface {
  public:
   // Use the default stream on the current device
   CudaStreamDevice() : stream_(&default_stream), scratch_(NULL), semaphore_(NULL) {
-    cudaGetDevice(&device_);
+    hipGetDevice(&device_);
     initializeDeviceProp();
   }
   // Use the default stream on the specified device
@@ -85,15 +85,15 @@ class CudaStreamDevice : public StreamInterface {
   // caller responsibility to ensure that the stream can run on
   // the specified device. If no device is specified the code
   // assumes that the stream is associated to the current gpu device.
-  CudaStreamDevice(const cudaStream_t* stream, int device = -1)
+  CudaStreamDevice(const hipStream_t* stream, int device = -1)
       : stream_(stream), device_(device), scratch_(NULL), semaphore_(NULL) {
     if (device < 0) {
-      cudaGetDevice(&device_);
+      hipGetDevice(&device_);
     } else {
       int num_devices;
-      cudaError_t err = cudaGetDeviceCount(&num_devices);
+      hipError_t err = hipGetDeviceCount(&num_devices);
       EIGEN_UNUSED_VARIABLE(err)
-      assert(err == cudaSuccess);
+      assert(err == hipSuccess);
       assert(device < num_devices);
       device_ = device;
     }
@@ -106,27 +106,27 @@ class CudaStreamDevice : public StreamInterface {
     }
   }
 
-  const cudaStream_t& stream() const { return *stream_; }
-  const cudaDeviceProp& deviceProperties() const {
+  const hipStream_t& stream() const { return *stream_; }
+  const hipDeviceProp_t& deviceProperties() const {
     return m_deviceProperties[device_];
   }
   virtual void* allocate(size_t num_bytes) const {
-    cudaError_t err = cudaSetDevice(device_);
+    hipError_t err = hipSetDevice(device_);
     EIGEN_UNUSED_VARIABLE(err)
-    assert(err == cudaSuccess);
+    assert(err == hipSuccess);
     void* result;
-    err = cudaMalloc(&result, num_bytes);
-    assert(err == cudaSuccess);
+    err = hipMalloc(&result, num_bytes);
+    assert(err == hipSuccess);
     assert(result != NULL);
     return result;
   }
   virtual void deallocate(void* buffer) const {
-    cudaError_t err = cudaSetDevice(device_);
+    hipError_t err = hipSetDevice(device_);
     EIGEN_UNUSED_VARIABLE(err)
-    assert(err == cudaSuccess);
+    assert(err == hipSuccess);
     assert(buffer != NULL);
-    err = cudaFree(buffer);
-    assert(err == cudaSuccess);
+    err = hipFree(buffer);
+    assert(err == hipSuccess);
   }
 
   virtual void* scratchpad() const {
@@ -140,15 +140,15 @@ class CudaStreamDevice : public StreamInterface {
     if (semaphore_ == NULL) {
       char* scratch = static_cast<char*>(scratchpad()) + kCudaScratchSize;
       semaphore_ = reinterpret_cast<unsigned int*>(scratch);
-      cudaError_t err = cudaMemsetAsync(semaphore_, 0, sizeof(unsigned int), *stream_);
+      hipError_t err = hipMemsetAsync(semaphore_, 0, sizeof(unsigned int), *stream_);
       EIGEN_UNUSED_VARIABLE(err)
-      assert(err == cudaSuccess);
+      assert(err == hipSuccess);
     }
     return semaphore_;
   }
 
  private:
-  const cudaStream_t* stream_;
+  const hipStream_t* stream_;
   int device_;
   mutable void* scratch_;
   mutable unsigned int* semaphore_;
@@ -164,7 +164,7 @@ struct GpuDevice {
     eigen_assert(stream);
   }
   // TODO(bsteiner): This is an internal API, we should not expose it.
-  EIGEN_STRONG_INLINE const cudaStream_t& stream() const {
+  EIGEN_STRONG_INLINE const hipStream_t& stream() const {
     return stream_->stream();
   }
 
@@ -205,10 +205,10 @@ struct GpuDevice {
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void memcpy(void* dst, const void* src, size_t n) const {
 #ifndef __CUDA_ARCH__
-    cudaError_t err = cudaMemcpyAsync(dst, src, n, cudaMemcpyDeviceToDevice,
+    hipError_t err = hipMemcpyAsync(dst, src, n, hipMemcpyDeviceToDevice,
                                       stream_->stream());
     EIGEN_UNUSED_VARIABLE(err)
-    assert(err == cudaSuccess);
+    assert(err == hipSuccess);
 #else
     eigen_assert(false && "The default device should be used instead to generate kernel code");
 #endif
@@ -216,10 +216,10 @@ struct GpuDevice {
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void memcpyHostToDevice(void* dst, const void* src, size_t n) const {
 #ifndef __CUDA_ARCH__
-    cudaError_t err =
-        cudaMemcpyAsync(dst, src, n, cudaMemcpyHostToDevice, stream_->stream());
+    hipError_t err =
+        hipMemcpyAsync(dst, src, n, hipMemcpyHostToDevice, stream_->stream());
     EIGEN_UNUSED_VARIABLE(err)
-    assert(err == cudaSuccess);
+    assert(err == hipSuccess);
 #else
     eigen_assert(false && "The default device should be used instead to generate kernel code");
 #endif
@@ -227,10 +227,10 @@ struct GpuDevice {
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void memcpyDeviceToHost(void* dst, const void* src, size_t n) const {
 #ifndef __CUDA_ARCH__
-    cudaError_t err =
-        cudaMemcpyAsync(dst, src, n, cudaMemcpyDeviceToHost, stream_->stream());
+    hipError_t err =
+        hipMemcpyAsync(dst, src, n, hipMemcpyDeviceToHost, stream_->stream());
     EIGEN_UNUSED_VARIABLE(err)
-    assert(err == cudaSuccess);
+    assert(err == hipSuccess);
 #else
     eigen_assert(false && "The default device should be used instead to generate kernel code");
 #endif
@@ -238,9 +238,9 @@ struct GpuDevice {
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void memset(void* buffer, int c, size_t n) const {
 #ifndef __CUDA_ARCH__
-    cudaError_t err = cudaMemsetAsync(buffer, c, n, stream_->stream());
+    hipError_t err = hipMemsetAsync(buffer, c, n, stream_->stream());
     EIGEN_UNUSED_VARIABLE(err)
-    assert(err == cudaSuccess);
+    assert(err == hipSuccess);
 #else
     eigen_assert(false && "The default device should be used instead to generate kernel code");
 #endif
@@ -263,13 +263,13 @@ struct GpuDevice {
   }
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void synchronize() const {
-#if defined(__CUDACC__) && !defined(__CUDA_ARCH__)
-    cudaError_t err = cudaStreamSynchronize(stream_->stream());
-    if (err != cudaSuccess) {
+#if defined(__HIPCC__) && !defined(__CUDA_ARCH__)
+    hipError_t err = hipStreamSynchronize(stream_->stream());
+    if (err != hipSuccess) {
       std::cerr << "Error detected in CUDA stream: "
-                << cudaGetErrorString(err)
+                << hipGetErrorString(err)
                 << std::endl;
-      assert(err == cudaSuccess);
+      assert(err == hipSuccess);
     }
 #else
     assert(false && "The default device should be used instead to generate kernel code");
@@ -332,9 +332,9 @@ struct GpuDevice {
   // This function checks if the CUDA runtime recorded an error for the
   // underlying stream device.
   inline bool ok() const {
-#ifdef __CUDACC__
-    cudaError_t error = cudaStreamQuery(stream_->stream());
-    return (error == cudaSuccess) || (error == cudaErrorNotReady);
+#ifdef __HIPCC__
+    hipError_t error = cudaStreamQuery(stream_->stream());
+    return (error == hipSuccess) || (error == hipErrorNotReady);
 #else
     return false;
 #endif
@@ -347,16 +347,16 @@ struct GpuDevice {
 
 #define LAUNCH_CUDA_KERNEL(kernel, gridsize, blocksize, sharedmem, device, ...)             \
   (kernel) <<< (gridsize), (blocksize), (sharedmem), (device).stream() >>> (__VA_ARGS__);   \
-  assert(cudaGetLastError() == cudaSuccess);
+  assert(hipGetLastError() == hipSuccess);
 
 
 // FIXME: Should be device and kernel specific.
-#ifdef __CUDACC__
-static EIGEN_DEVICE_FUNC inline void setCudaSharedMemConfig(cudaSharedMemConfig config) {
+#ifdef __HIPCC__
+static EIGEN_DEVICE_FUNC inline void setCudaSharedMemConfig(hipSharedMemConfig config) {
 #ifndef __CUDA_ARCH__
-  cudaError_t status = cudaDeviceSetSharedMemConfig(config);
+  hipError_t status = hipDeviceSetSharedMemConfig(config);
   EIGEN_UNUSED_VARIABLE(status)
-  assert(status == cudaSuccess);
+  assert(status == hipSuccess);
 #else
   EIGEN_UNUSED_VARIABLE(config)
 #endif

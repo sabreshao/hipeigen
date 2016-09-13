@@ -1,3 +1,4 @@
+#include "hip/hip_runtime.h"
 // This file is part of Eigen, a lightweight C++ template library
 // for linear algebra.
 //
@@ -551,7 +552,7 @@ struct TensorEvaluator<const TensorConvolutionOp<Indices, InputArgType, KernelAr
 
 
 // Use an optimized implementation of the evaluation code for GPUs whenever possible.
-#if defined(EIGEN_USE_GPU) && defined(__CUDACC__)
+#if defined(EIGEN_USE_GPU) && defined(__HIPCC__)
 
 template <int StaticKernelSize>
 struct GetKernelSize {
@@ -568,28 +569,28 @@ struct GetKernelSize<Dynamic> {
 
 template <typename InputEvaluator, typename Index, typename InputDims,
           int StaticKernelSize>
-__global__ void EigenConvolutionKernel1D(
+__global__ void EigenConvolutionKernel1D(hipLaunchParm lp,
     InputEvaluator eval,
     const internal::IndexMapper<Index, InputDims, 1, InputEvaluator::Layout>
         indexMapper,
     const float* __restrict kernel, const int numPlanes, const int numX,
     const int maxX, const int kernelSize, float* buffer) {
-  extern __shared__ float s[];
+  HIP_DYNAMIC_SHARED( float, s)
 
-  const int first_x = blockIdx.x * maxX;
+  const int first_x = hipBlockIdx_x * maxX;
   const int last_x = (first_x + maxX < numX ? first_x + maxX : numX) - 1;
   const int num_x_input = last_x - first_x + GetKernelSize<StaticKernelSize>()(kernelSize);
   const int num_x_output = last_x - first_x + 1;
 
-  const int first_plane = blockIdx.y * blockDim.y;
-  const int plane_stride = blockDim.y * gridDim.y;
+  const int first_plane = hipBlockIdx_y * hipBlockDim_y;
+  const int plane_stride = hipBlockDim_y * hipGridDim_y;
 
-  for (int p = first_plane + threadIdx.y; p < numPlanes; p += plane_stride) {
+  for (int p = first_plane + hipThreadIdx_y; p < numPlanes; p += plane_stride) {
     // Load inputs to shared memory
     const int plane_input_offset = indexMapper.mapCudaInputPlaneToTensorInputOffset(p);
-    const int plane_kernel_offset = threadIdx.y * num_x_input;
+    const int plane_kernel_offset = hipThreadIdx_y * num_x_input;
     #pragma unroll
-    for (int i = threadIdx.x; i < num_x_input; i += blockDim.x) {
+    for (int i = hipThreadIdx_x; i < num_x_input; i += hipBlockDim_x) {
       const int tensor_index = plane_input_offset + indexMapper.mapCudaInputKernelToTensorInputOffset(i+first_x);
       s[i + plane_kernel_offset] = eval.coeff(tensor_index);
     }
@@ -600,7 +601,7 @@ __global__ void EigenConvolutionKernel1D(
     const int plane_output_offset = indexMapper.mapCudaOutputPlaneToTensorOutputOffset(p);
 
     #pragma unroll
-    for (int i = threadIdx.x; i < num_x_output; i += blockDim.x) {
+    for (int i = hipThreadIdx_x; i < num_x_output; i += hipBlockDim_x) {
       const int kernel_offset = plane_kernel_offset + i;
       float result = 0.0f;
       #pragma unroll
@@ -616,39 +617,39 @@ __global__ void EigenConvolutionKernel1D(
 
 template <typename InputEvaluator, typename Index, typename InputDims,
           int StaticKernelSizeX, int StaticKernelSizeY>
-__global__ void EigenConvolutionKernel2D(
+__global__ void EigenConvolutionKernel2D(hipLaunchParm lp,
     InputEvaluator eval,
     const internal::IndexMapper<Index, InputDims, 2, InputEvaluator::Layout>
         indexMapper,
     const float* __restrict kernel, const int numPlanes, const int numX,
     const int maxX, const int numY, const int maxY, const int kernelSizeX,
     const int kernelSizeY, float* buffer) {
-  extern __shared__ float s[];
+  HIP_DYNAMIC_SHARED( float, s)
 
-  const int first_x = blockIdx.x * maxX;
+  const int first_x = hipBlockIdx_x * maxX;
   const int last_x = (first_x + maxX < numX ? first_x + maxX : numX) - 1;
   const int num_x_input = last_x - first_x + GetKernelSize<StaticKernelSizeX>()(kernelSizeX);
   const int num_x_output = last_x - first_x + 1;
 
-  const int first_y = blockIdx.y * maxY;
+  const int first_y = hipBlockIdx_y * maxY;
   const int last_y = (first_y + maxY < numY ? first_y + maxY : numY) - 1;
   const int num_y_input = last_y - first_y + GetKernelSize<StaticKernelSizeY>()(kernelSizeY);
   const int num_y_output = last_y - first_y + 1;
 
-  const int first_plane = blockIdx.z * blockDim.z;
-  const int plane_stride = blockDim.z * gridDim.z;
+  const int first_plane = hipBlockIdx_z * hipBlockDim_z;
+  const int plane_stride = hipBlockDim_z * hipGridDim_z;
 
-  for (int p = first_plane + threadIdx.z; p < numPlanes; p += plane_stride) {
+  for (int p = first_plane + hipThreadIdx_z; p < numPlanes; p += plane_stride) {
 
     const int plane_input_offset = indexMapper.mapCudaInputPlaneToTensorInputOffset(p);
-    const int plane_kernel_offset = threadIdx.z * num_y_input;
+    const int plane_kernel_offset = hipThreadIdx_z * num_y_input;
 
     // Load inputs to shared memory
     #pragma unroll
-    for (int j = threadIdx.y; j < num_y_input; j += blockDim.y) {
+    for (int j = hipThreadIdx_y; j < num_y_input; j += hipBlockDim_y) {
       const int input_offset = num_x_input * (j + plane_kernel_offset);
       #pragma unroll
-      for (int i = threadIdx.x; i < num_x_input; i += blockDim.x) {
+      for (int i = hipThreadIdx_x; i < num_x_input; i += hipBlockDim_x) {
         const int tensor_index = plane_input_offset + indexMapper.mapCudaInputKernelToTensorInputOffset(i+first_x, j+first_y);
         s[i + input_offset] = eval.coeff(tensor_index);
       }
@@ -660,9 +661,9 @@ __global__ void EigenConvolutionKernel2D(
     const int plane_output_offset = indexMapper.mapCudaOutputPlaneToTensorOutputOffset(p);
 
     #pragma unroll
-    for (int j = threadIdx.y; j < num_y_output; j += blockDim.y) {
+    for (int j = hipThreadIdx_y; j < num_y_output; j += hipBlockDim_y) {
       #pragma unroll
-      for (int i = threadIdx.x; i < num_x_output; i += blockDim.x) {
+      for (int i = hipThreadIdx_x; i < num_x_output; i += hipBlockDim_x) {
         float result = 0.0f;
         #pragma unroll
         for (int l = 0; l < GetKernelSize<StaticKernelSizeY>()(kernelSizeY); ++l) {
@@ -683,7 +684,7 @@ __global__ void EigenConvolutionKernel2D(
 };
 
 template <typename InputEvaluator, typename Index, typename InputDims>
-__global__ void EigenConvolutionKernel3D(
+__global__ void EigenConvolutionKernel3D(hipLaunchParm lp, 
     InputEvaluator eval,
     const internal::IndexMapper<Index, InputDims, 3, InputEvaluator::Layout>
         indexMapper,
@@ -691,18 +692,18 @@ __global__ void EigenConvolutionKernel3D(
     const size_t maxX, const size_t numY, const size_t maxY, const size_t numZ,
     const size_t maxZ, const size_t kernelSizeX, const size_t kernelSizeY,
     const size_t kernelSizeZ, float* buffer) {
-  extern __shared__ float s[];
+  HIP_DYNAMIC_SHARED( float, s)
 
   // Load inputs to shared memory
-  const int first_x = blockIdx.x * maxX;
+  const int first_x = hipBlockIdx_x * maxX;
   const int last_x = (first_x + maxX < numX ? first_x + maxX : numX) - 1;
   const int num_x_input = last_x - first_x + kernelSizeX;
 
-  const int first_y = blockIdx.y * maxY;
+  const int first_y = hipBlockIdx_y * maxY;
   const int last_y = (first_y + maxY < numY ? first_y + maxY : numY) - 1;
   const int num_y_input = last_y - first_y + kernelSizeY;
 
-  const int first_z = blockIdx.z * maxZ;
+  const int first_z = hipBlockIdx_z * maxZ;
   const int last_z = (first_z + maxZ < numZ ? first_z + maxZ : numZ) - 1;
   const int num_z_input = last_z - first_z + kernelSizeZ;
 
@@ -711,9 +712,9 @@ __global__ void EigenConvolutionKernel3D(
     const int plane_input_offset = indexMapper.mapCudaInputPlaneToTensorInputOffset(p);
     const int plane_kernel_offset = 0;
 
-    for (int k = threadIdx.z; k < num_z_input; k += blockDim.z) {
-      for (int j = threadIdx.y; j < num_y_input; j += blockDim.y) {
-        for (int i = threadIdx.x; i < num_x_input; i += blockDim.x) {
+    for (int k = hipThreadIdx_z; k < num_z_input; k += hipBlockDim_z) {
+      for (int j = hipThreadIdx_y; j < num_y_input; j += hipBlockDim_y) {
+        for (int i = hipThreadIdx_x; i < num_x_input; i += hipBlockDim_x) {
           const int tensor_index = plane_input_offset + indexMapper.mapCudaInputKernelToTensorInputOffset(i+first_x, j+first_y, k+first_z);
           s[i + num_x_input * (j + num_y_input * (k + plane_kernel_offset))] = eval.coeff(tensor_index);
         }
@@ -728,9 +729,9 @@ __global__ void EigenConvolutionKernel3D(
     const int num_x_output = last_x - first_x + 1;
     const int plane_output_offset = indexMapper.mapCudaOutputPlaneToTensorOutputOffset(p);
 
-    for (int k = threadIdx.z; k < num_z_output; k += blockDim.z) {
-      for (int j = threadIdx.y; j < num_y_output; j += blockDim.y) {
-        for (int i = threadIdx.x; i < num_x_output; i += blockDim.x) {
+    for (int k = hipThreadIdx_z; k < num_z_output; k += hipBlockDim_z) {
+      for (int j = hipThreadIdx_y; j < num_y_output; j += hipBlockDim_y) {
+        for (int i = hipThreadIdx_x; i < num_x_output; i += hipBlockDim_x) {
           float result = 0.0f;
           for (int n = 0; n < kernelSizeZ; ++n) {
             for (int m = 0; m < kernelSizeY; ++m) {
@@ -855,7 +856,7 @@ struct TensorEvaluator<const TensorConvolutionOp<Indices, InputArgType, KernelAr
     const int maxThreadsPerBlock = m_device.maxCudaThreadsPerBlock();
     const int maxBlocksPerProcessor = m_device.maxCudaThreadsPerMultiProcessor() / maxThreadsPerBlock;
     const int numMultiProcessors = m_device.getNumCudaMultiProcessors();
-    const int warpSize = 32;
+    const int hipWarpSize = 32;
 
     switch (NumKernelDims) {
       case 1: {
@@ -880,11 +881,11 @@ struct TensorEvaluator<const TensorConvolutionOp<Indices, InputArgType, KernelAr
         }
         else {
           // Read as much as possible alongside the inner most dimension, that is the plane
-          const int inner_dim = maxSharedMem / ((warpSize + kernel_size) * sizeof(Scalar));
+          const int inner_dim = maxSharedMem / ((hipWarpSize + kernel_size) * sizeof(Scalar));
           const int maxP = numext::mini<int>(inner_dim, numP);
           maxX = numext::mini<int>(maxSharedMem / (inner_dim * sizeof(Scalar)) - kernel_size + 1, numX);
 
-          block_size.x = numext::mini(warpSize, maxX);
+          block_size.x = numext::mini(hipWarpSize, maxX);
           block_size.y = numext::mini<int>(maxThreadsPerBlock/block_size.x, maxP);
         }
 

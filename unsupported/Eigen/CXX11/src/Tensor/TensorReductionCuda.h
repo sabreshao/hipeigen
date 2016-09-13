@@ -1,3 +1,4 @@
+#include "hip/hip_runtime.h"
 // This file is part of Eigen, a lightweight C++ template library
 // for linear algebra.
 //
@@ -14,7 +15,7 @@ namespace Eigen {
 namespace internal {
 
 
-#if defined(EIGEN_USE_GPU) && defined(__CUDACC__)
+#if defined(EIGEN_USE_GPU) && defined(__HIPCC__)
 // Full reducers for GPU, don't vectorize for now
 
 // Reducer function that enables multiple cuda thread to safely accumulate at the same
@@ -111,9 +112,9 @@ __device__ inline void atomicReduce(float* output, float accum, SumReducer<float
 
 
 template <typename CoeffType, typename Index>
-__global__ void ReductionInitKernel(const CoeffType val, Index num_preserved_coeffs, CoeffType* output) {
-  const Index thread_id = blockIdx.x * blockDim.x + threadIdx.x;
-  const Index num_threads = blockDim.x * gridDim.x;
+__global__ void ReductionInitKernel(hipLaunchParm lp, const CoeffType val, Index num_preserved_coeffs, CoeffType* output) {
+  const Index thread_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
+  const Index num_threads = hipBlockDim_x * hipGridDim_x;
   for (Index i = thread_id; i < num_preserved_coeffs; i += num_threads) {
     output[i] = val;
   }
@@ -122,18 +123,18 @@ __global__ void ReductionInitKernel(const CoeffType val, Index num_preserved_coe
 
 template <int BlockSize, int NumPerThread, typename Self,
           typename Reducer, typename Index>
-__global__ void FullReductionKernel(Reducer reducer, const Self input, Index num_coeffs,
+__global__ void FullReductionKernel(hipLaunchParm lp, Reducer reducer, const Self input, Index num_coeffs,
                                     typename Self::CoeffReturnType* output, unsigned int* semaphore) {
 #if __CUDA_ARCH__ >= 300
   // Initialize the output value
-  const Index first_index = blockIdx.x * BlockSize * NumPerThread + threadIdx.x;
-  if (gridDim.x == 1) {
+  const Index first_index = hipBlockIdx_x * BlockSize * NumPerThread + hipThreadIdx_x;
+  if (hipGridDim_x == 1) {
     if (first_index == 0) {
       *output = reducer.initialize();
     }
   }
   else {
-    if (threadIdx.x == 0) {
+    if (hipThreadIdx_x == 0) {
       unsigned int block = atomicCAS(semaphore, 0u, 1u);
       if (block == 0) {
         // We're the first block to run, initialize the output value
@@ -155,7 +156,7 @@ __global__ void FullReductionKernel(Reducer reducer, const Self input, Index num
 
   __syncthreads();
 
-  eigen_assert(gridDim.x == 1 || *semaphore >= 2u);
+  eigen_assert(hipGridDim_x == 1 || *semaphore >= 2u);
 
   typename Self::CoeffReturnType accum = reducer.initialize();
   Index max_iter = numext::mini<Index>(num_coeffs - first_index, NumPerThread*BlockSize);
@@ -167,17 +168,17 @@ __global__ void FullReductionKernel(Reducer reducer, const Self input, Index num
   }
 
 #pragma unroll
-  for (int offset = warpSize/2; offset > 0; offset /= 2) {
-    reducer.reduce(__shfl_down(accum, offset, warpSize), &accum);
+  for (int offset = hipWarpSize/2; offset > 0; offset /= 2) {
+    reducer.reduce(__shfl_down(accum, offset, hipWarpSize), &accum);
   }
 
-  if ((threadIdx.x & (warpSize - 1)) == 0) {
+  if ((hipThreadIdx_x & (hipWarpSize - 1)) == 0) {
     atomicReduce(output, accum, reducer);
   }
 
-  if (gridDim.x > 1 && threadIdx.x == 0) {
+  if (hipGridDim_x > 1 && hipThreadIdx_x == 0) {
     // Let the last block reset the semaphore
-    atomicInc(semaphore, gridDim.x + 1);
+    atomicInc(semaphore, hipGridDim_x + 1);
   }
 #else
   assert(0 && "Shouldn't be called on unsupported device");
@@ -188,9 +189,9 @@ __global__ void FullReductionKernel(Reducer reducer, const Self input, Index num
 #ifdef EIGEN_HAS_CUDA_FP16
 template <typename Self,
           typename Reducer, typename Index>
-__global__ void ReductionInitFullReduxKernelHalfFloat(Reducer reducer, const Self input, Index num_coeffs, half2* scratch) {
-  eigen_assert(blockDim.x == 1);
-  eigen_assert(gridDim.x == 1);
+__global__ void ReductionInitFullReduxKernelHalfFloat(hipLaunchParm lp, Reducer reducer, const Self input, Index num_coeffs, half2* scratch) {
+  eigen_assert(hipBlockDim_x == 1);
+  eigen_assert(hipGridDim_x == 1);
   if (num_coeffs % 2 != 0) {
     half last = input.m_impl.coeff(num_coeffs-1);
     *scratch = __halves2half2(last, reducer.initialize());
@@ -201,9 +202,9 @@ __global__ void ReductionInitFullReduxKernelHalfFloat(Reducer reducer, const Sel
 
 template <typename Self,
           typename Reducer, typename Index>
-__global__ void ReductionInitKernelHalfFloat(Reducer reducer, const Self input, Index num_coeffs, half* output) {
-  const Index thread_id = blockIdx.x * blockDim.x + threadIdx.x;
-  const Index num_threads = blockDim.x * gridDim.x;
+__global__ void ReductionInitKernelHalfFloat(hipLaunchParm lp, Reducer reducer, const Self input, Index num_coeffs, half* output) {
+  const Index thread_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
+  const Index num_threads = hipBlockDim_x * hipGridDim_x;
   const Index num_packets = num_coeffs / 2;
   for (Index i = thread_id; i < num_packets; i += num_threads) {
     ((half2*)output)[i] = reducer.template initializePacket<half2>();
@@ -216,14 +217,14 @@ __global__ void ReductionInitKernelHalfFloat(Reducer reducer, const Self input, 
 
 template <int BlockSize, int NumPerThread, typename Self,
           typename Reducer, typename Index>
-__global__ void FullReductionKernelHalfFloat(Reducer reducer, const Self input, Index num_coeffs,
+__global__ void FullReductionKernelHalfFloat(hipLaunchParm lp, Reducer reducer, const Self input, Index num_coeffs,
                                     half* output, half2* scratch) {
   eigen_assert(NumPerThread % 2 == 0);
 
-  const Index first_index = blockIdx.x * BlockSize * NumPerThread + 2*threadIdx.x;
+  const Index first_index = hipBlockIdx_x * BlockSize * NumPerThread + 2*hipThreadIdx_x;
 
   // Initialize the output value if it wasn't initialized by the ReductionInitKernel
-  if (gridDim.x == 1 && first_index == 0) {
+  if (hipGridDim_x == 1 && first_index == 0) {
     if (num_coeffs % 2 != 0) {
       half last = input.m_impl.coeff(num_coeffs-1);
       *scratch = __halves2half2(last, reducer.initialize());
@@ -243,17 +244,17 @@ __global__ void FullReductionKernelHalfFloat(Reducer reducer, const Self input, 
   }
 
 #pragma unroll
-  for (int offset = warpSize/2; offset > 0; offset /= 2) {
-    reducer.reducePacket(__shfl_down(accum, offset, warpSize), &accum);
+  for (int offset = hipWarpSize/2; offset > 0; offset /= 2) {
+    reducer.reducePacket(__shfl_down(accum, offset, hipWarpSize), &accum);
   }
 
-  if ((threadIdx.x & (warpSize - 1)) == 0) {
+  if ((hipThreadIdx_x & (hipWarpSize - 1)) == 0) {
     atomicReduce(scratch, accum, reducer);
   }
 
   __syncthreads();
 
-  if (gridDim.x == 1 && first_index == 0) {
+  if (hipGridDim_x == 1 && first_index == 0) {
     half tmp = __low2half(*scratch);
     reducer.reduce(__high2half(*scratch), &tmp);
     *output = tmp;
@@ -261,8 +262,8 @@ __global__ void FullReductionKernelHalfFloat(Reducer reducer, const Self input, 
 }
 
 template <typename Op>
-__global__ void ReductionCleanupKernelHalfFloat(Op& reducer, half* output, half2* scratch) {
-  eigen_assert(threadIdx.x == 1);
+__global__ void ReductionCleanupKernelHalfFloat(hipLaunchParm lp, Op& reducer, half* output, half2* scratch) {
+  eigen_assert(hipThreadIdx_x == 1);
   half tmp = __low2half(*scratch);
   reducer.reduce(__high2half(*scratch), &tmp);
   *output = tmp;
@@ -371,45 +372,45 @@ struct FullReducer<Self, Op, GpuDevice, Vectorizable> {
 
 template <int NumPerThread, typename Self,
           typename Reducer, typename Index>
-__global__ void InnerReductionKernel(Reducer reducer, const Self input, Index num_coeffs_to_reduce, Index num_preserved_coeffs,
+__global__ void InnerReductionKernel(hipLaunchParm lp, Reducer reducer, const Self input, Index num_coeffs_to_reduce, Index num_preserved_coeffs,
                                          typename Self::CoeffReturnType* output) {
 #if __CUDA_ARCH__ >= 300
   typedef typename Self::CoeffReturnType Type;
-  eigen_assert(blockDim.y == 1);
-  eigen_assert(blockDim.z == 1);
-  eigen_assert(gridDim.y == 1);
-  eigen_assert(gridDim.z == 1);
+  eigen_assert(hipBlockDim_y == 1);
+  eigen_assert(hipBlockDim_z == 1);
+  eigen_assert(hipGridDim_y == 1);
+  eigen_assert(hipGridDim_z == 1);
 
   const int unroll_times = 16;
   eigen_assert(NumPerThread % unroll_times == 0);
 
-  const Index input_col_blocks = divup<Index>(num_coeffs_to_reduce, blockDim.x * NumPerThread);
+  const Index input_col_blocks = divup<Index>(num_coeffs_to_reduce, hipBlockDim_x * NumPerThread);
   const Index num_input_blocks = input_col_blocks * num_preserved_coeffs;
 
-  const Index num_threads = blockDim.x * gridDim.x;
-  const Index thread_id = blockIdx.x * blockDim.x + threadIdx.x;
+  const Index num_threads = hipBlockDim_x * hipGridDim_x;
+  const Index thread_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
 
   // Initialize the output values if they weren't initialized by the ReductionInitKernel
-  if (gridDim.x == 1) {
+  if (hipGridDim_x == 1) {
     for (Index i = thread_id; i < num_preserved_coeffs; i += num_threads) {
       output[i] = reducer.initialize();
     }
     __syncthreads();
   }
 
-  for (Index i = blockIdx.x; i < num_input_blocks; i += gridDim.x) {
+  for (Index i = hipBlockIdx_x; i < num_input_blocks; i += hipGridDim_x) {
     const Index row = i / input_col_blocks;
 
     if (row < num_preserved_coeffs) {
       const Index col_block = i % input_col_blocks;
-      const Index col_begin = col_block * blockDim.x * NumPerThread + threadIdx.x;
+      const Index col_begin = col_block * hipBlockDim_x * NumPerThread + hipThreadIdx_x;
 
       Type reduced_val = reducer.initialize();
 
       for (Index j = 0; j < NumPerThread; j += unroll_times) {
-        const Index last_col = col_begin + blockDim.x * (j + unroll_times - 1);
+        const Index last_col = col_begin + hipBlockDim_x * (j + unroll_times - 1);
         if (last_col >= num_coeffs_to_reduce) {
-          for (Index col = col_begin + blockDim.x * j; col < num_coeffs_to_reduce; col += blockDim.x) {
+          for (Index col = col_begin + hipBlockDim_x * j; col < num_coeffs_to_reduce; col += hipBlockDim_x) {
             const Type val = input.m_impl.coeff(row * num_coeffs_to_reduce + col);
             reducer.reduce(val, &reduced_val);
           }
@@ -418,18 +419,18 @@ __global__ void InnerReductionKernel(Reducer reducer, const Self input, Index nu
           // Faster version of the loop with no branches after unrolling.
 #pragma unroll
           for (int k = 0; k < unroll_times; ++k) {
-            const Index col = col_begin + blockDim.x * (j + k);
+            const Index col = col_begin + hipBlockDim_x * (j + k);
             reducer.reduce(input.m_impl.coeff(row * num_coeffs_to_reduce + col), &reduced_val);
           }
         }
       }
 
 #pragma unroll
-      for (int offset = warpSize/2; offset > 0; offset /= 2) {
+      for (int offset = hipWarpSize/2; offset > 0; offset /= 2) {
         reducer.reduce(__shfl_down(reduced_val, offset), &reduced_val);
       }
 
-      if ((threadIdx.x & (warpSize - 1)) == 0) {
+      if ((hipThreadIdx_x & (hipWarpSize - 1)) == 0) {
         atomicReduce(&(output[row]), reduced_val, reducer);
       }
     }
@@ -443,25 +444,25 @@ __global__ void InnerReductionKernel(Reducer reducer, const Self input, Index nu
 
 template <int NumPerThread, typename Self,
           typename Reducer, typename Index>
-__global__ void InnerReductionKernelHalfFloat(Reducer reducer, const Self input, Index num_coeffs_to_reduce, Index num_preserved_coeffs,
+__global__ void InnerReductionKernelHalfFloat(hipLaunchParm lp, Reducer reducer, const Self input, Index num_coeffs_to_reduce, Index num_preserved_coeffs,
                                               half* output) {
-  eigen_assert(blockDim.y == 1);
-  eigen_assert(blockDim.z == 1);
-  eigen_assert(gridDim.y == 1);
-  eigen_assert(gridDim.z == 1);
+  eigen_assert(hipBlockDim_y == 1);
+  eigen_assert(hipBlockDim_z == 1);
+  eigen_assert(hipGridDim_y == 1);
+  eigen_assert(hipGridDim_z == 1);
 
   const int unroll_times = 16;
   eigen_assert(NumPerThread % unroll_times == 0);
   eigen_assert(unroll_times % 2 == 0);
 
-  const Index input_col_blocks = divup<Index>(num_coeffs_to_reduce, blockDim.x * NumPerThread * 2);
+  const Index input_col_blocks = divup<Index>(num_coeffs_to_reduce, hipBlockDim_x * NumPerThread * 2);
   const Index num_input_blocks = divup<Index>(input_col_blocks * num_preserved_coeffs, 2);
 
-  const Index num_threads = blockDim.x * gridDim.x;
-  const Index thread_id = blockIdx.x * blockDim.x + threadIdx.x;
+  const Index num_threads = hipBlockDim_x * hipGridDim_x;
+  const Index thread_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
 
   // Initialize the output values if they weren't initialized by the ReductionInitKernel
-  if (gridDim.x == 1) {
+  if (hipGridDim_x == 1) {
     Index i = 2*thread_id;
     for (; i + 1 < num_preserved_coeffs; i += 2*num_threads) {
       half* loc = output + i;
@@ -473,21 +474,21 @@ __global__ void InnerReductionKernelHalfFloat(Reducer reducer, const Self input,
     __syncthreads();
   }
 
-  for (Index i = blockIdx.x; i < num_input_blocks; i += gridDim.x) {
+  for (Index i = hipBlockIdx_x; i < num_input_blocks; i += hipGridDim_x) {
     const Index row = 2 * (i / input_col_blocks);
 
     if (row + 1 < num_preserved_coeffs) {
       const Index col_block = i % input_col_blocks;
-      const Index col_begin = 2 * (col_block * blockDim.x * NumPerThread + threadIdx.x);
+      const Index col_begin = 2 * (col_block * hipBlockDim_x * NumPerThread + hipThreadIdx_x);
 
       half2 reduced_val1 = reducer.template initializePacket<half2>();
       half2 reduced_val2 = reducer.template initializePacket<half2>();
 
       for (Index j = 0; j < NumPerThread; j += unroll_times) {
-        const Index last_col = col_begin + blockDim.x * (j + unroll_times - 1) * 2;
+        const Index last_col = col_begin + hipBlockDim_x * (j + unroll_times - 1) * 2;
         if (last_col >= num_coeffs_to_reduce) {
-          Index col = col_begin + blockDim.x * j;
-          for (; col + 1 < num_coeffs_to_reduce; col += blockDim.x) {
+          Index col = col_begin + hipBlockDim_x * j;
+          for (; col + 1 < num_coeffs_to_reduce; col += hipBlockDim_x) {
             const half2 val1 = input.m_impl.template packet<Unaligned>(row * num_coeffs_to_reduce + col);
             reducer.reducePacket(val1, &reduced_val1);
             const half2 val2 = input.m_impl.template packet<Unaligned>((row+1) * num_coeffs_to_reduce + col);
@@ -507,7 +508,7 @@ __global__ void InnerReductionKernelHalfFloat(Reducer reducer, const Self input,
           // Faster version of the loop with no branches after unrolling.
 #pragma unroll
           for (int k = 0; k < unroll_times; ++k) {
-            const Index col = col_begin + blockDim.x * (j + k) * 2;
+            const Index col = col_begin + hipBlockDim_x * (j + k) * 2;
             reducer.reducePacket(input.m_impl.template packet<Unaligned>(row * num_coeffs_to_reduce + col), &reduced_val1);
             reducer.reducePacket(input.m_impl.template packet<Unaligned>((row + 1)* num_coeffs_to_reduce + col), &reduced_val2);
           }
@@ -515,9 +516,9 @@ __global__ void InnerReductionKernelHalfFloat(Reducer reducer, const Self input,
       }
 
 #pragma unroll
-      for (int offset = warpSize/2; offset > 0; offset /= 2) {
-        reducer.reducePacket(__shfl_down(reduced_val1, offset, warpSize), &reduced_val1);
-        reducer.reducePacket(__shfl_down(reduced_val2, offset, warpSize), &reduced_val2);
+      for (int offset = hipWarpSize/2; offset > 0; offset /= 2) {
+        reducer.reducePacket(__shfl_down(reduced_val1, offset, hipWarpSize), &reduced_val1);
+        reducer.reducePacket(__shfl_down(reduced_val2, offset, hipWarpSize), &reduced_val2);
       }
 
       half val1 =  __low2half(reduced_val1);
@@ -526,7 +527,7 @@ __global__ void InnerReductionKernelHalfFloat(Reducer reducer, const Self input,
       reducer.reduce(__high2half(reduced_val2), &val2);
       half2 val = __halves2half2(val1, val2);
 
-      if ((threadIdx.x & (warpSize - 1)) == 0) {
+      if ((hipThreadIdx_x & (hipWarpSize - 1)) == 0) {
         half* loc = output + row;
         atomicReduce((half2*)loc, val, reducer);
       }
@@ -664,12 +665,12 @@ struct InnerReducer<Self, Op, GpuDevice> {
 
 template <int NumPerThread, typename Self,
           typename Reducer, typename Index>
-__global__ void OuterReductionKernel(Reducer reducer, const Self input, Index num_coeffs_to_reduce, Index num_preserved_coeffs,
+__global__ void OuterReductionKernel(hipLaunchParm lp, Reducer reducer, const Self input, Index num_coeffs_to_reduce, Index num_preserved_coeffs,
                                      typename Self::CoeffReturnType* output) {
-  const Index num_threads = blockDim.x * gridDim.x;
-  const Index thread_id = blockIdx.x * blockDim.x + threadIdx.x;
+  const Index num_threads = hipBlockDim_x * hipGridDim_x;
+  const Index thread_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
   // Initialize the output values if they weren't initialized by the ReductionInitKernel
-  if (gridDim.x == 1) {
+  if (hipGridDim_x == 1) {
     for (Index i = thread_id; i < num_preserved_coeffs; i += num_threads) {
       output[i] = reducer.initialize();
     }

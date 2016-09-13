@@ -1,3 +1,4 @@
+#include "hip/hip_runtime.h"
 // This file is part of Eigen, a lightweight C++ template library
 // for linear algebra.
 //
@@ -462,7 +463,7 @@ static inline int get_random_seed() {
 #endif
 }
 
-#if !defined (EIGEN_USE_GPU) || !defined(__CUDACC__) || !defined(__CUDA_ARCH__)
+#if !defined (EIGEN_USE_GPU) || !defined(__HIPCC__) || !defined(__CUDA_ARCH__)
 // We're not compiling a cuda kernel
 template <typename T> class UniformRandomGenerator {
 
@@ -587,14 +588,14 @@ template <> class UniformRandomGenerator<float> {
   static const bool PacketAccess = true;
 
   __device__ UniformRandomGenerator(bool deterministic = true) : m_deterministic(deterministic) {
-    const int tid = blockIdx.x * blockDim.x + threadIdx.x;
+    const int tid = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
     const int seed = deterministic ? 0 : get_random_seed();
     curand_init(seed, tid, 0, &m_state);
   }
 
   __device__ UniformRandomGenerator(const UniformRandomGenerator& other) {
     m_deterministic = other.m_deterministic;
-    const int tid = blockIdx.x * blockDim.x + threadIdx.x;
+    const int tid = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
     const int seed = m_deterministic ? 0 : get_random_seed();
      curand_init(seed, tid, 0, &m_state);
   }
@@ -618,13 +619,13 @@ template <> class UniformRandomGenerator<double> {
   static const bool PacketAccess = true;
 
   __device__ UniformRandomGenerator(bool deterministic = true) : m_deterministic(deterministic) {
-    const int tid = blockIdx.x * blockDim.x + threadIdx.x;
+    const int tid = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
     const int seed = deterministic ? 0 : get_random_seed();
     curand_init(seed, tid, 0, &m_state);
   }
   __device__ UniformRandomGenerator(const UniformRandomGenerator& other) {
     m_deterministic = other.m_deterministic;
-    const int tid = blockIdx.x * blockDim.x + threadIdx.x;
+    const int tid = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
     const int seed = m_deterministic ? 0 : get_random_seed();
     curand_init(seed, tid, 0, &m_state);
   }
@@ -647,13 +648,13 @@ template <> class UniformRandomGenerator<std::complex<float> > {
   static const bool PacketAccess = false;
 
   __device__ UniformRandomGenerator(bool deterministic = true) : m_deterministic(deterministic) {
-    const int tid = blockIdx.x * blockDim.x + threadIdx.x;
+    const int tid = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
     const int seed = deterministic ? 0 : get_random_seed();
     curand_init(seed, tid, 0, &m_state);
   }
   __device__ UniformRandomGenerator(const UniformRandomGenerator& other) {
     m_deterministic = other.m_deterministic;
-    const int tid = blockIdx.x * blockDim.x + threadIdx.x;
+    const int tid = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
     const int seed = m_deterministic ? 0 : get_random_seed();
     curand_init(seed, tid, 0, &m_state);
   }
@@ -672,13 +673,13 @@ template <> class UniformRandomGenerator<std::complex<double> > {
   static const bool PacketAccess = false;
 
   __device__ UniformRandomGenerator(bool deterministic = true) : m_deterministic(deterministic) {
-    const int tid = blockIdx.x * blockDim.x + threadIdx.x;
+    const int tid = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
     const int seed = deterministic ? 0 : get_random_seed();
     curand_init(seed, tid, 0, &m_state);
   }
   __device__ UniformRandomGenerator(const UniformRandomGenerator& other) {
     m_deterministic = other.m_deterministic;
-    const int tid = blockIdx.x * blockDim.x + threadIdx.x;
+    const int tid = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
     const int seed = m_deterministic ? 0 : get_random_seed();
     curand_init(seed, tid, 0, &m_state);
   }
@@ -705,7 +706,7 @@ struct functor_traits<UniformRandomGenerator<Scalar> > {
 
 
 
-#if (!defined (EIGEN_USE_GPU) || !defined(__CUDACC__) || !defined(__CUDA_ARCH__)) && (__cplusplus > 199711 || EIGEN_COMP_MSVC >= 1900)
+#if (!defined (EIGEN_USE_GPU) || !defined(__HIPCC__) || !defined(__CUDA_ARCH__)) && (__cplusplus > 199711 || EIGEN_COMP_MSVC >= 1900)
 // We're not compiling a cuda kernel
 template <typename T> class NormalRandomGenerator {
  public:
@@ -745,7 +746,7 @@ template <typename T> class NormalRandomGenerator {
   std::mt19937* m_generator;
 };
 
-#elif defined (EIGEN_USE_GPU) && defined(__CUDACC__) && defined(__CUDA_ARCH__)
+#elif defined (EIGEN_USE_GPU) && defined(__HIPCC__) && defined(__CUDA_ARCH__)
 
 // We're compiling a cuda kernel
 template <typename T> class NormalRandomGenerator;
@@ -755,13 +756,13 @@ template <> class NormalRandomGenerator<float> {
   static const bool PacketAccess = true;
 
   __device__ NormalRandomGenerator(bool deterministic = true) : m_deterministic(deterministic) {
-    const int tid = blockIdx.x * blockDim.x + threadIdx.x;
+    const int tid = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
     const int seed = deterministic ? 0 : get_random_seed();
     curand_init(seed, tid, 0, &m_state);
   }
   __device__ NormalRandomGenerator(const NormalRandomGenerator<float>& other) {
     m_deterministic = other.m_deterministic;
-    const int tid = blockIdx.x * blockDim.x + threadIdx.x;
+    const int tid = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
     const int seed = m_deterministic ? 0 : get_random_seed();
     curand_init(seed, tid, 0, &m_state);
   }
@@ -784,13 +785,13 @@ template <> class NormalRandomGenerator<double> {
   static const bool PacketAccess = true;
 
   __device__ NormalRandomGenerator(bool deterministic = true) : m_deterministic(deterministic) {
-    const int tid = blockIdx.x * blockDim.x + threadIdx.x;
+    const int tid = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
     const int seed = deterministic ? 0 : get_random_seed();
     curand_init(seed, tid, 0, &m_state);
   }
   __device__ NormalRandomGenerator(const NormalRandomGenerator<double>& other) {
     m_deterministic = other.m_deterministic;
-    const int tid = blockIdx.x * blockDim.x + threadIdx.x;
+    const int tid = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
     const int seed = m_deterministic ? 0 : get_random_seed();
     curand_init(seed, tid, 0, &m_state);
   }
@@ -813,13 +814,13 @@ template <> class NormalRandomGenerator<std::complex<float> > {
   static const bool PacketAccess = false;
 
   __device__ NormalRandomGenerator(bool deterministic = true) : m_deterministic(deterministic) {
-    const int tid = blockIdx.x * blockDim.x + threadIdx.x;
+    const int tid = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
     const int seed = deterministic ? 0 : get_random_seed();
     curand_init(seed, tid, 0, &m_state);
   }
   __device__ NormalRandomGenerator(const NormalRandomGenerator& other) {
     m_deterministic = other.m_deterministic;
-    const int tid = blockIdx.x * blockDim.x + threadIdx.x;
+    const int tid = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
     const int seed = m_deterministic ? 0 : get_random_seed();
     curand_init(seed, tid, 0, &m_state);
   }
@@ -838,13 +839,13 @@ template <> class NormalRandomGenerator<std::complex<double> > {
   static const bool PacketAccess = false;
 
   __device__ NormalRandomGenerator(bool deterministic = true) : m_deterministic(deterministic) {
-    const int tid = blockIdx.x * blockDim.x + threadIdx.x;
+    const int tid = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
     const int seed = deterministic ? 0 : get_random_seed();
     curand_init(seed, tid, 0, &m_state);
   }
   __device__ NormalRandomGenerator(const NormalRandomGenerator& other) {
     m_deterministic = other.m_deterministic;
-    const int tid = blockIdx.x * blockDim.x + threadIdx.x;
+    const int tid = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
     const int seed = m_deterministic ? 0 : get_random_seed();
     curand_init(seed, tid, 0, &m_state);
   }
