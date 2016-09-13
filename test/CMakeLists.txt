@@ -341,7 +341,7 @@ endif()
 
 
 # CUDA unit tests
-option(EIGEN_TEST_CUDA "Enable CUDA support in unit tests" OFF)
+option(EIGEN_TEST_CUDA "Enable CUDA support in unit tests" ON)
 option(EIGEN_TEST_CUDA_CLANG "Use clang instead of nvcc to compile the CUDA tests" OFF)
 
 if(EIGEN_TEST_CUDA_CLANG AND NOT CMAKE_CXX_COMPILER MATCHES "clang")
