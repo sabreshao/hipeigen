@@ -183,6 +183,7 @@ template<typename T> struct numeric_limits
   static T infinity() { assert(false && "Infinity not supported for this type"); }
   static T quiet_NaN() { assert(false && "quiet_NaN not supported for this type"); }
 };
+//TODO: Use appropriate alternates for CUDART predefined numbers
 template<> struct numeric_limits<float>
 {
   EIGEN_DEVICE_FUNC
