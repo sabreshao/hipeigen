@@ -490,7 +490,7 @@ template<typename Derived> class DenseBase
     *
     * \sa colwise(), class VectorwiseOp, \ref TutorialReductionsVisitorsBroadcasting
     */
-    //Code moved here due to a CUDA compiler bug
+    //Code moved here due to a HIP compiler bug
     EIGEN_DEVICE_FUNC inline ConstRowwiseReturnType rowwise() const {
       return ConstRowwiseReturnType(derived());
     }
@@ -539,7 +539,7 @@ template<typename Derived> class DenseBase
     *
     * \sa VectorwiseOp::replicate(), DenseBase::replicate<int,int>(), class Replicate
     */
-    //Code moved here due to a CUDA compiler bug
+    //Code moved here due to a HIP compiler bug
     EIGEN_DEVICE_FUNC
     const Replicate<Derived, Dynamic, Dynamic> replicate(Index rowFactor, Index colFactor) const
     {
@@ -550,7 +550,7 @@ template<typename Derived> class DenseBase
     typedef const Reverse<const Derived, BothDirections> ConstReverseReturnType;
     EIGEN_DEVICE_FUNC ReverseReturnType reverse();
     /** This is the const version of reverse(). */
-    //Code moved here due to a CUDA compiler bug
+    //Code moved here due to a HIP compiler bug
     EIGEN_DEVICE_FUNC ConstReverseReturnType reverse() const
     {
       return ConstReverseReturnType(derived());

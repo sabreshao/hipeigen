@@ -404,10 +404,12 @@
 // Does the compiler fully support const expressions? (as in c++14)
 #ifndef EIGEN_HAS_CONSTEXPR
 
-#ifdef __CUDACC__
-// Const expressions are supported provided that c++11 is enabled and we're using either clang or nvcc 7.5 or above
-#if EIGEN_MAX_CPP_VER>=14 && (__cplusplus > 199711L && defined(__CUDACC_VER__) && (EIGEN_COMP_CLANG || __CUDACC_VER__ >= 70500))
-  #define EIGEN_HAS_CONSTEXPR 1
+#ifdef __HIPCC__
+// Const expressions are supported provided that c++11 is enabled and we're using either clang or hipcc with (nvcc-7.5 or above OR hcc)
+#ifdef __NVCC__
+  #if EIGEN_MAX_CPP_VER>=14 && (__cplusplus > 199711L && defined(__CUDACC_VER__) && (EIGEN_COMP_CLANG || __CUDACC_VER__ >= 70500))
+    #define EIGEN_HAS_CONSTEXPR 1
+  #endif
 #endif
 #elif EIGEN_MAX_CPP_VER>=14 && (__has_feature(cxx_relaxed_constexpr) || (defined(__cplusplus) && __cplusplus >= 201402L) || \
   (EIGEN_GNUC_AT_LEAST(4,8) && (__cplusplus > 199711L)))
@@ -636,7 +638,7 @@ namespace Eigen {
  * If we made alignment depend on whether or not EIGEN_VECTORIZE is defined, it would be impossible to link
  * vectorized and non-vectorized code.
  */
-#if (defined __CUDACC__)
+#if (defined __HIPCC__)
   #define EIGEN_ALIGN_TO_BOUNDARY(n) __align__(n)
 #elif EIGEN_COMP_GNUC || EIGEN_COMP_PGI || EIGEN_COMP_IBM || EIGEN_COMP_ARM
   #define EIGEN_ALIGN_TO_BOUNDARY(n) __attribute__((aligned(n)))
@@ -953,7 +955,7 @@ namespace Eigen {
 #  define EIGEN_TRY try
 #  define EIGEN_CATCH(X) catch (X)
 #else
-#  ifdef __CUDA_ARCH__
+#  if defined(__HIP_DEVICE_COMPILE__) && (__HIP_DEVICE_COMPILE__ == 1)
 #    define EIGEN_THROW_X(X) asm("trap;") return {}
 #    define EIGEN_THROW asm("trap;"); return {}
 #  else

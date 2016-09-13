@@ -361,7 +361,7 @@ template<> struct gemv_dense_selector<OnTheRight,RowMajor,false>
   *
   * \sa lazyProduct(), operator*=(const MatrixBase&), Cwise::operator*()
   */
-#ifndef __CUDACC__
+#ifndef __HIPCC__
 
 template<typename Derived>
 template<typename OtherDerived>
@@ -394,7 +394,7 @@ MatrixBase<Derived>::operator*(const MatrixBase<OtherDerived> &other) const
   return Product<Derived, OtherDerived>(derived(), other.derived());
 }
 
-#endif // __CUDACC__
+#endif // __HIPCC__
 
 /** \returns an expression of the matrix product of \c *this and \a other without implicit evaluation.
   *

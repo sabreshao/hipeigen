@@ -704,7 +704,7 @@ EIGEN_DEVICE_FUNC
 typename internal::enable_if<(!internal::is_integral<T>::value)&&(!NumTraits<T>::IsComplex),bool>::type
 isfinite_impl(const T& x)
 {
-  #ifdef __CUDA_ARCH__
+  #if defined(__HIP_DEVICE_COMPILE__) && (__HIP_DEVICE_COMPILE__ == 1)
     return (::isfinite)(x);
   #elif EIGEN_USE_STD_FPCLASSIFY
     using std::isfinite;
@@ -719,7 +719,7 @@ EIGEN_DEVICE_FUNC
 typename internal::enable_if<(!internal::is_integral<T>::value)&&(!NumTraits<T>::IsComplex),bool>::type
 isinf_impl(const T& x)
 {
-  #ifdef __CUDA_ARCH__
+  #if defined(__HIP_DEVICE_COMPILE__) && (__HIP_DEVICE_COMPILE__ == 1)
     return (::isinf)(x);
   #elif EIGEN_USE_STD_FPCLASSIFY
     using std::isinf;
@@ -734,7 +734,7 @@ EIGEN_DEVICE_FUNC
 typename internal::enable_if<(!internal::is_integral<T>::value)&&(!NumTraits<T>::IsComplex),bool>::type
 isnan_impl(const T& x)
 {
-  #ifdef __CUDA_ARCH__
+  #if defined(__HIP_DEVICE_COMPILE__) && (__HIP_DEVICE_COMPILE__ == 1)
     return (::isnan)(x);
   #elif EIGEN_USE_STD_FPCLASSIFY
     using std::isnan;
@@ -800,7 +800,7 @@ template<typename T> T generic_fast_tanh_float(const T& a_x);
 
 namespace numext {
 
-#ifndef __CUDA_ARCH__
+#if (!defined(__HIP_DEVICE_COMPILE__)) || (__HIP_DEVICE_COMPILE__ == 0)
 template<typename T>
 EIGEN_DEVICE_FUNC
 EIGEN_ALWAYS_INLINE T mini(const T& x, const T& y)
@@ -928,7 +928,7 @@ inline EIGEN_MATHFUNC_RETVAL(log1p, Scalar) log1p(const Scalar& x)
   return EIGEN_MATHFUNC_IMPL(log1p, Scalar)::run(x);
 }
 
-#ifdef __CUDACC__
+#ifdef __HIPCC__
 template<> EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE
 float log1p(const float &x) { return ::log1pf(x); }
 
@@ -962,7 +962,7 @@ T (floor)(const T& x)
   return floor(x);
 }
 
-#ifdef __CUDACC__
+#ifdef __HIPCC__
 template<> EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE
 float floor(const float &x) { return ::floorf(x); }
 
@@ -978,7 +978,7 @@ T (ceil)(const T& x)
   return ceil(x);
 }
 
-#ifdef __CUDACC__
+#ifdef __HIPCC__
 template<> EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE
 float ceil(const float &x) { return ::ceilf(x); }
 
@@ -1025,7 +1025,7 @@ T log(const T &x) {
   return log(x);
 }
 
-#ifdef __CUDACC__
+#ifdef __HIPCC__
 template<> EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE
 float log(const float &x) { return ::logf(x); }
 
@@ -1040,7 +1040,7 @@ typename NumTraits<T>::Real abs(const T &x) {
   return abs(x);
 }
 
-#ifdef __CUDACC__
+#ifdef __HIPCC__
 template<> EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE
 float abs(const float &x) { return ::fabsf(x); }
 
@@ -1055,7 +1055,7 @@ T exp(const T &x) {
   return exp(x);
 }
 
-#ifdef __CUDACC__
+#ifdef __HIPCC__
 template<> EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE
 float exp(const float &x) { return ::expf(x); }
 
@@ -1070,7 +1070,7 @@ T cos(const T &x) {
   return cos(x);
 }
 
-#ifdef __CUDACC__
+#ifdef __HIPCC__
 template<> EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE
 float cos(const float &x) { return ::cosf(x); }
 
@@ -1085,7 +1085,7 @@ T sin(const T &x) {
   return sin(x);
 }
 
-#ifdef __CUDACC__
+#ifdef __HIPCC__
 template<> EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE
 float sin(const float &x) { return ::sinf(x); }
 
@@ -1100,7 +1100,7 @@ T tan(const T &x) {
   return tan(x);
 }
 
-#ifdef __CUDACC__
+#ifdef __HIPCC__
 template<> EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE
 float tan(const float &x) { return ::tanf(x); }
 
@@ -1115,7 +1115,7 @@ T acos(const T &x) {
   return acos(x);
 }
 
-#ifdef __CUDACC__
+#ifdef __HIPCC__
 template<> EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE
 float acos(const float &x) { return ::acosf(x); }
 
@@ -1130,7 +1130,7 @@ T asin(const T &x) {
   return asin(x);
 }
 
-#ifdef __CUDACC__
+#ifdef __HIPCC__
 template<> EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE
 float asin(const float &x) { return ::asinf(x); }
 
@@ -1145,7 +1145,7 @@ T atan(const T &x) {
   return atan(x);
 }
 
-#ifdef __CUDACC__
+#ifdef __HIPCC__
 template<> EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE
 float atan(const float &x) { return ::atanf(x); }
 
@@ -1161,7 +1161,7 @@ T cosh(const T &x) {
   return cosh(x);
 }
 
-#ifdef __CUDACC__
+#ifdef __HIPCC__
 template<> EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE
 float cosh(const float &x) { return ::coshf(x); }
 
@@ -1176,7 +1176,7 @@ T sinh(const T &x) {
   return sinh(x);
 }
 
-#ifdef __CUDACC__
+#ifdef __HIPCC__
 template<> EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE
 float sinh(const float &x) { return ::sinhf(x); }
 
@@ -1191,12 +1191,12 @@ T tanh(const T &x) {
   return tanh(x);
 }
 
-#if (!defined(__CUDACC__)) && EIGEN_FAST_MATH
+#if (!defined(__HIPCC__)) && EIGEN_FAST_MATH
 EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE
 float tanh(float x) { return internal::generic_fast_tanh_float(x); }
 #endif
 
-#ifdef __CUDACC__
+#ifdef __HIPCC__
 template<> EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE
 float tanh(const float &x) { return ::tanhf(x); }
 
@@ -1211,7 +1211,7 @@ T fmod(const T& a, const T& b) {
   return fmod(a, b);
 }
 
-#ifdef __CUDACC__
+#ifdef __HIPCC__
 template <>
 EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE
 float fmod(const float& a, const float& b) {
