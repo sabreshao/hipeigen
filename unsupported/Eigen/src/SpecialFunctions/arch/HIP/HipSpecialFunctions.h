@@ -7,8 +7,8 @@
 // Public License v. 2.0. If a copy of the MPL was not distributed
 // with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#ifndef EIGEN_CUDA_SPECIALFUNCTIONS_H
-#define EIGEN_CUDA_SPECIALFUNCTIONS_H
+#ifndef EIGEN_HIP_SPECIALFUNCTIONS_H
+#define EIGEN_HIP_SPECIALFUNCTIONS_H
 
 namespace Eigen {
 
@@ -17,7 +17,7 @@ namespace internal {
 // Make sure this is only available when targeting a GPU: we don't want to
 // introduce conflicts between these packet_traits definitions and the ones
 // we'll use on the host side (SSE, AVX, ...)
-#if defined(__CUDACC__) && defined(EIGEN_USE_GPU)
+#if defined(__HIPCC__) && defined(EIGEN_USE_GPU)
 
 template<> EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE
 float4 plgamma<float4>(const float4& a)
@@ -162,4 +162,4 @@ double2 pbetainc<double2>(const double2& a, const double2& b, const double2& x)
 
 } // end namespace Eigen
 
-#endif // EIGEN_CUDA_SPECIALFUNCTIONS_H
+#endif // EIGEN_HIP_SPECIALFUNCTIONS_H

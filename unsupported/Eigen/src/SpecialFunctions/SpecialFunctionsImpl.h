@@ -559,7 +559,7 @@ struct igammac_impl {
     Scalar ans, ax, c, yc, r, t, y, z;
     Scalar pk, pkm1, pkm2, qk, qkm1, qkm2;
 
-    if (x == inf) return zero;  // std::isinf crashes on CUDA
+    if (x == inf) return zero;  // std::isinf crashes on HIP 
 
     /* Compute  x**a * exp(-x) / gamma(a)  */
     ax = a * numext::log(x) - x - lgamma_impl<Scalar>::run(a);
