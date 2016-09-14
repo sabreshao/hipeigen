@@ -333,7 +333,7 @@ struct GpuDevice {
   // underlying stream device.
   inline bool ok() const {
 #ifdef __HIPCC__
-    hipError_t error = cudaStreamQuery(stream_->stream());
+    hipError_t error = hipStreamQuery(stream_->stream());
     return (error == hipSuccess) || (error == hipErrorNotReady);
 #else
     return false;
