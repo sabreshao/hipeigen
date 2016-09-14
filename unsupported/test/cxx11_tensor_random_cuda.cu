@@ -28,7 +28,7 @@ void test_cuda_random_uniform()
   std::size_t out_bytes = out.size() * sizeof(float);
 
   float* d_out;
-  cudaMalloc((void**)(&d_out), out_bytes);
+  hipMalloc((void**)(&d_out), out_bytes);
 
   Eigen::CudaStreamDevice stream;
   Eigen::GpuDevice gpu_device(&stream);
@@ -37,8 +37,8 @@ void test_cuda_random_uniform()
 
   gpu_out.device(gpu_device) = gpu_out.random();
 
-  assert(cudaMemcpyAsync(out.data(), d_out, out_bytes, cudaMemcpyDeviceToHost, gpu_device.stream()) == cudaSuccess);
-  assert(cudaStreamSynchronize(gpu_device.stream()) == cudaSuccess);
+  assert(hipMemcpyAsync(out.data(), d_out, out_bytes, hipMemcpyDeviceToHost, gpu_device.stream()) == hipSuccess);
+  assert(hipStreamSynchronize(gpu_device.stream()) == hipSuccess);
 
   // For now we just check thes code doesn't crash.
   // TODO: come up with a valid test of randomness
@@ -53,7 +53,7 @@ void test_cuda_random_normal()
   std::size_t out_bytes = out.size() * sizeof(float);
 
   float* d_out;
-  cudaMalloc((void**)(&d_out), out_bytes);
+  hipMalloc((void**)(&d_out), out_bytes);
 
   Eigen::CudaStreamDevice stream;
   Eigen::GpuDevice gpu_device(&stream);
@@ -63,8 +63,8 @@ void test_cuda_random_normal()
   Eigen::internal::NormalRandomGenerator<float> gen(true);
   gpu_out.device(gpu_device) = gpu_out.random(gen);
 
-  assert(cudaMemcpyAsync(out.data(), d_out, out_bytes, cudaMemcpyDeviceToHost, gpu_device.stream()) == cudaSuccess);
-  assert(cudaStreamSynchronize(gpu_device.stream()) == cudaSuccess);
+  assert(hipMemcpyAsync(out.data(), d_out, out_bytes, hipMemcpyDeviceToHost, gpu_device.stream()) == hipSuccess);
+  assert(hipStreamSynchronize(gpu_device.stream()) == hipSuccess);
 }
 
 static void test_complex()

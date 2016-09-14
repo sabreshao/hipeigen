@@ -68,22 +68,22 @@ struct CPUContext {
 // Context for evaluation on GPU
 struct GPUContext {
   GPUContext(const Eigen::TensorMap<Eigen::Tensor<float, 3> >& in1, Eigen::TensorMap<Eigen::Tensor<float, 3> >& in2, Eigen::TensorMap<Eigen::Tensor<float, 3> >& out) : in1_(in1), in2_(in2), out_(out), gpu_device_(&stream_) {
-    assert(cudaMalloc((void**)(&kernel_1d_), 2*sizeof(float)) == cudaSuccess);
+    assert(hipMalloc((void**)(&kernel_1d_), 2*sizeof(float)) == hipSuccess);
     float kernel_1d_val[] = {3.14f, 2.7f};
-    assert(cudaMemcpy(kernel_1d_, kernel_1d_val, 2*sizeof(float), cudaMemcpyHostToDevice) == cudaSuccess);
+    assert(hipMemcpy(kernel_1d_, kernel_1d_val, 2*sizeof(float), hipMemcpyHostToDevice) == hipSuccess);
 
-    assert(cudaMalloc((void**)(&kernel_2d_), 4*sizeof(float)) == cudaSuccess);
+    assert(hipMalloc((void**)(&kernel_2d_), 4*sizeof(float)) == hipSuccess);
     float kernel_2d_val[] = {3.14f, 2.7f, 0.2f, 7.0f};
-    assert(cudaMemcpy(kernel_2d_, kernel_2d_val, 4*sizeof(float), cudaMemcpyHostToDevice) == cudaSuccess);
+    assert(hipMemcpy(kernel_2d_, kernel_2d_val, 4*sizeof(float), hipMemcpyHostToDevice) == hipSuccess);
 
-    assert(cudaMalloc((void**)(&kernel_3d_), 8*sizeof(float)) == cudaSuccess);
+    assert(hipMalloc((void**)(&kernel_3d_), 8*sizeof(float)) == hipSuccess);
     float kernel_3d_val[] = {3.14f, -1.0f, 2.7f, -0.3f, 0.2f, -0.7f, 7.0f, -0.5f};
-    assert(cudaMemcpy(kernel_3d_, kernel_3d_val, 8*sizeof(float), cudaMemcpyHostToDevice) == cudaSuccess);
+    assert(hipMemcpy(kernel_3d_, kernel_3d_val, 8*sizeof(float), hipMemcpyHostToDevice) == hipSuccess);
   }
   ~GPUContext() {
-    assert(cudaFree(kernel_1d_) == cudaSuccess);
-    assert(cudaFree(kernel_2d_) == cudaSuccess);
-    assert(cudaFree(kernel_3d_) == cudaSuccess);
+    assert(hipFree(kernel_1d_) == hipSuccess);
+    assert(hipFree(kernel_2d_) == hipSuccess);
+    assert(hipFree(kernel_3d_) == hipSuccess);
   }
 
   const Eigen::GpuDevice& device() const { return gpu_device_; }
@@ -283,12 +283,12 @@ void test_gpu() {
   float* d_in1;
   float* d_in2;
   float* d_out;
-  cudaMalloc((void**)(&d_in1), in1_bytes);
-  cudaMalloc((void**)(&d_in2), in2_bytes);
-  cudaMalloc((void**)(&d_out), out_bytes);
+  hipMalloc((void**)(&d_in1), in1_bytes);
+  hipMalloc((void**)(&d_in2), in2_bytes);
+  hipMalloc((void**)(&d_out), out_bytes);
 
-  cudaMemcpy(d_in1, in1.data(), in1_bytes, cudaMemcpyHostToDevice);
-  cudaMemcpy(d_in2, in2.data(), in2_bytes, cudaMemcpyHostToDevice);
+  hipMemcpy(d_in1, in1.data(), in1_bytes, hipMemcpyHostToDevice);
+  hipMemcpy(d_in2, in2.data(), in2_bytes, hipMemcpyHostToDevice);
 
   Eigen::TensorMap<Eigen::Tensor<float, 3> > gpu_in1(d_in1, 40,50,70);
   Eigen::TensorMap<Eigen::Tensor<float, 3> > gpu_in2(d_in2, 40,50,70);
@@ -296,7 +296,7 @@ void test_gpu() {
 
   GPUContext context(gpu_in1, gpu_in2, gpu_out);
   test_contextual_eval(&context);
-  assert(cudaMemcpy(out.data(), d_out, out_bytes, cudaMemcpyDeviceToHost) == cudaSuccess);
+  assert(hipMemcpy(out.data(), d_out, out_bytes, hipMemcpyDeviceToHost) == hipSuccess);
   for (int i = 0; i < 40; ++i) {
     for (int j = 0; j < 50; ++j) {
       for (int k = 0; k < 70; ++k) {
@@ -306,7 +306,7 @@ void test_gpu() {
   }
 
   test_forced_contextual_eval(&context);
-  assert(cudaMemcpy(out.data(), d_out, out_bytes, cudaMemcpyDeviceToHost) == cudaSuccess);
+  assert(hipMemcpy(out.data(), d_out, out_bytes, hipMemcpyDeviceToHost) == hipSuccess);
   for (int i = 0; i < 40; ++i) {
     for (int j = 0; j < 50; ++j) {
       for (int k = 0; k < 70; ++k) {
@@ -316,7 +316,7 @@ void test_gpu() {
   }
 
   test_compound_assignment(&context);
-  assert(cudaMemcpy(out.data(), d_out, out_bytes, cudaMemcpyDeviceToHost) == cudaSuccess);
+  assert(hipMemcpy(out.data(), d_out, out_bytes, hipMemcpyDeviceToHost) == hipSuccess);
   for (int i = 0; i < 40; ++i) {
     for (int j = 0; j < 50; ++j) {
       for (int k = 0; k < 70; ++k) {
@@ -326,7 +326,7 @@ void test_gpu() {
   }
 
   test_contraction(&context);
-  assert(cudaMemcpy(out.data(), d_out, out_bytes, cudaMemcpyDeviceToHost) == cudaSuccess);
+  assert(hipMemcpy(out.data(), d_out, out_bytes, hipMemcpyDeviceToHost) == hipSuccess);
   for (int i = 0; i < 40; ++i) {
     for (int j = 0; j < 40; ++j) {
       const float result = out(i,j,0);
@@ -341,8 +341,8 @@ void test_gpu() {
   }
 
   test_1d_convolution(&context);
-  assert(cudaMemcpyAsync(out.data(), d_out, out_bytes, cudaMemcpyDeviceToHost, context.device().stream()) == cudaSuccess);
-  assert(cudaStreamSynchronize(context.device().stream()) == cudaSuccess);
+  assert(hipMemcpyAsync(out.data(), d_out, out_bytes, hipMemcpyDeviceToHost, context.device().stream()) == hipSuccess);
+  assert(hipStreamSynchronize(context.device().stream()) == hipSuccess);
   for (int i = 0; i < 40; ++i) {
     for (int j = 0; j < 49; ++j) {
       for (int k = 0; k < 70; ++k) {
@@ -352,8 +352,8 @@ void test_gpu() {
   }
 
   test_2d_convolution(&context);
-  assert(cudaMemcpyAsync(out.data(), d_out, out_bytes, cudaMemcpyDeviceToHost, context.device().stream()) == cudaSuccess);
-  assert(cudaStreamSynchronize(context.device().stream()) == cudaSuccess);
+  assert(hipMemcpyAsync(out.data(), d_out, out_bytes, hipMemcpyDeviceToHost, context.device().stream()) == hipSuccess);
+  assert(hipStreamSynchronize(context.device().stream()) == hipSuccess);
   for (int i = 0; i < 40; ++i) {
     for (int j = 0; j < 49; ++j) {
       for (int k = 0; k < 69; ++k) {
@@ -366,8 +366,8 @@ void test_gpu() {
   }
 
   test_3d_convolution(&context);
-  assert(cudaMemcpyAsync(out.data(), d_out, out_bytes, cudaMemcpyDeviceToHost, context.device().stream()) == cudaSuccess);
-  assert(cudaStreamSynchronize(context.device().stream()) == cudaSuccess);
+  assert(hipMemcpyAsync(out.data(), d_out, out_bytes, hipMemcpyDeviceToHost, context.device().stream()) == hipSuccess);
+  assert(hipStreamSynchronize(context.device().stream()) == hipSuccess);
   for (int i = 0; i < 39; ++i) {
     for (int j = 0; j < 49; ++j) {
       for (int k = 0; k < 69; ++k) {

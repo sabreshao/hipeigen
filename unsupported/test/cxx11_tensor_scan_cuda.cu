@@ -38,10 +38,10 @@ void test_cuda_cumsum(int m_size, int k_size, int n_size)
   float* d_t_input;
   float* d_t_result;
 
-  cudaMalloc((void**)(&d_t_input), t_input_bytes);
-  cudaMalloc((void**)(&d_t_result), t_result_bytes);
+  hipMalloc((void**)(&d_t_input), t_input_bytes);
+  hipMalloc((void**)(&d_t_result), t_result_bytes);
 
-  cudaMemcpy(d_t_input, t_input.data(), t_input_bytes, cudaMemcpyHostToDevice);
+  hipMemcpy(d_t_input, t_input.data(), t_input_bytes, hipMemcpyHostToDevice);
 
   Eigen::CudaStreamDevice stream;
   Eigen::GpuDevice gpu_device(&stream);
@@ -54,7 +54,7 @@ void test_cuda_cumsum(int m_size, int k_size, int n_size)
   gpu_t_result.device(gpu_device) = gpu_t_input.cumsum(1);
   t_result = t_input.cumsum(1);
 
-  cudaMemcpy(t_result_gpu.data(), d_t_result, t_result_bytes, cudaMemcpyDeviceToHost);
+  hipMemcpy(t_result_gpu.data(), d_t_result, t_result_bytes, hipMemcpyDeviceToHost);
   for (size_t i = 0; i < t_result.size(); i++) {
     if (fabs(t_result(i) - t_result_gpu(i)) < 1e-4f) {
       continue;
@@ -67,8 +67,8 @@ void test_cuda_cumsum(int m_size, int k_size, int n_size)
     assert(false);
   }
 
-  cudaFree((void*)d_t_input);
-  cudaFree((void*)d_t_result);
+  hipFree((void*)d_t_input);
+  hipFree((void*)d_t_result);
 }
 
 

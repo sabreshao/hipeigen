@@ -30,10 +30,10 @@ void test_cuda_nullary() {
 
   float* d_in1;
   float* d_in2;
-  cudaMalloc((void**)(&d_in1), tensor_bytes);
-  cudaMalloc((void**)(&d_in2), tensor_bytes);
-  cudaMemcpy(d_in1, in1.data(), tensor_bytes, cudaMemcpyHostToDevice);
-  cudaMemcpy(d_in2, in2.data(), tensor_bytes, cudaMemcpyHostToDevice);
+  hipMalloc((void**)(&d_in1), tensor_bytes);
+  hipMalloc((void**)(&d_in2), tensor_bytes);
+  hipMemcpy(d_in1, in1.data(), tensor_bytes, hipMemcpyHostToDevice);
+  hipMemcpy(d_in2, in2.data(), tensor_bytes, hipMemcpyHostToDevice);
 
   Eigen::CudaStreamDevice stream;
   Eigen::GpuDevice gpu_device(&stream);
@@ -49,20 +49,20 @@ void test_cuda_nullary() {
   Tensor<float, 1, 0, int> new1(2);
   Tensor<float, 1, 0, int> new2(2);
 
-  assert(cudaMemcpyAsync(new1.data(), d_in1, tensor_bytes, cudaMemcpyDeviceToHost,
-                         gpu_device.stream()) == cudaSuccess);
-  assert(cudaMemcpyAsync(new2.data(), d_in2, tensor_bytes, cudaMemcpyDeviceToHost,
-                         gpu_device.stream()) == cudaSuccess);
+  assert(hipMemcpyAsync(new1.data(), d_in1, tensor_bytes, hipMemcpyDeviceToHost,
+                         gpu_device.stream()) == hipSuccess);
+  assert(hipMemcpyAsync(new2.data(), d_in2, tensor_bytes, hipMemcpyDeviceToHost,
+                         gpu_device.stream()) == hipSuccess);
 
-  assert(cudaStreamSynchronize(gpu_device.stream()) == cudaSuccess);
+  assert(hipStreamSynchronize(gpu_device.stream()) == hipSuccess);
 
   for (int i = 0; i < 2; ++i) {
     VERIFY_IS_APPROX(new1(i), 3.14f);
     VERIFY_IS_NOT_EQUAL(new2(i), in2(i));
   }
 
-  cudaFree(d_in1);
-  cudaFree(d_in2);
+  hipFree(d_in1);
+  hipFree(d_in2);
 }
 
 void test_cuda_elementwise_small() {
@@ -79,12 +79,12 @@ void test_cuda_elementwise_small() {
   float* d_in1;
   float* d_in2;
   float* d_out;
-  cudaMalloc((void**)(&d_in1), in1_bytes);
-  cudaMalloc((void**)(&d_in2), in2_bytes);
-  cudaMalloc((void**)(&d_out), out_bytes);
+  hipMalloc((void**)(&d_in1), in1_bytes);
+  hipMalloc((void**)(&d_in2), in2_bytes);
+  hipMalloc((void**)(&d_out), out_bytes);
 
-  cudaMemcpy(d_in1, in1.data(), in1_bytes, cudaMemcpyHostToDevice);
-  cudaMemcpy(d_in2, in2.data(), in2_bytes, cudaMemcpyHostToDevice);
+  hipMemcpy(d_in1, in1.data(), in1_bytes, hipMemcpyHostToDevice);
+  hipMemcpy(d_in2, in2.data(), in2_bytes, hipMemcpyHostToDevice);
 
   Eigen::CudaStreamDevice stream;
   Eigen::GpuDevice gpu_device(&stream);
@@ -98,9 +98,9 @@ void test_cuda_elementwise_small() {
 
   gpu_out.device(gpu_device) = gpu_in1 + gpu_in2;
 
-  assert(cudaMemcpyAsync(out.data(), d_out, out_bytes, cudaMemcpyDeviceToHost,
-                         gpu_device.stream()) == cudaSuccess);
-  assert(cudaStreamSynchronize(gpu_device.stream()) == cudaSuccess);
+  assert(hipMemcpyAsync(out.data(), d_out, out_bytes, hipMemcpyDeviceToHost,
+                         gpu_device.stream()) == hipSuccess);
+  assert(hipStreamSynchronize(gpu_device.stream()) == hipSuccess);
 
   for (int i = 0; i < 2; ++i) {
     VERIFY_IS_APPROX(
@@ -108,9 +108,9 @@ void test_cuda_elementwise_small() {
         in1(Eigen::array<Eigen::DenseIndex, 1>(i)) + in2(Eigen::array<Eigen::DenseIndex, 1>(i)));
   }
 
-  cudaFree(d_in1);
-  cudaFree(d_in2);
-  cudaFree(d_out);
+  hipFree(d_in1);
+  hipFree(d_in2);
+  hipFree(d_out);
 }
 
 void test_cuda_elementwise()
@@ -132,14 +132,14 @@ void test_cuda_elementwise()
   float* d_in2;
   float* d_in3;
   float* d_out;
-  cudaMalloc((void**)(&d_in1), in1_bytes);
-  cudaMalloc((void**)(&d_in2), in2_bytes);
-  cudaMalloc((void**)(&d_in3), in3_bytes);
-  cudaMalloc((void**)(&d_out), out_bytes);
+  hipMalloc((void**)(&d_in1), in1_bytes);
+  hipMalloc((void**)(&d_in2), in2_bytes);
+  hipMalloc((void**)(&d_in3), in3_bytes);
+  hipMalloc((void**)(&d_out), out_bytes);
 
-  cudaMemcpy(d_in1, in1.data(), in1_bytes, cudaMemcpyHostToDevice);
-  cudaMemcpy(d_in2, in2.data(), in2_bytes, cudaMemcpyHostToDevice);
-  cudaMemcpy(d_in3, in3.data(), in3_bytes, cudaMemcpyHostToDevice);
+  hipMemcpy(d_in1, in1.data(), in1_bytes, hipMemcpyHostToDevice);
+  hipMemcpy(d_in2, in2.data(), in2_bytes, hipMemcpyHostToDevice);
+  hipMemcpy(d_in3, in3.data(), in3_bytes, hipMemcpyHostToDevice);
 
   Eigen::CudaStreamDevice stream;
   Eigen::GpuDevice gpu_device(&stream);
@@ -151,8 +151,8 @@ void test_cuda_elementwise()
 
   gpu_out.device(gpu_device) = gpu_in1 + gpu_in2 * gpu_in3;
 
-  assert(cudaMemcpyAsync(out.data(), d_out, out_bytes, cudaMemcpyDeviceToHost, gpu_device.stream()) == cudaSuccess);
-  assert(cudaStreamSynchronize(gpu_device.stream()) == cudaSuccess);
+  assert(hipMemcpyAsync(out.data(), d_out, out_bytes, hipMemcpyDeviceToHost, gpu_device.stream()) == hipSuccess);
+  assert(hipStreamSynchronize(gpu_device.stream()) == hipSuccess);
 
   for (int i = 0; i < 72; ++i) {
     for (int j = 0; j < 53; ++j) {
@@ -162,10 +162,10 @@ void test_cuda_elementwise()
     }
   }
 
-  cudaFree(d_in1);
-  cudaFree(d_in2);
-  cudaFree(d_in3);
-  cudaFree(d_out);
+  hipFree(d_in1);
+  hipFree(d_in2);
+  hipFree(d_in3);
+  hipFree(d_out);
 }
 
 void test_cuda_props() {
@@ -178,10 +178,10 @@ void test_cuda_props() {
 
   float* d_in1;
   bool* d_out;
-  cudaMalloc((void**)(&d_in1), in1_bytes);
-  cudaMalloc((void**)(&d_out), out_bytes);
+  hipMalloc((void**)(&d_in1), in1_bytes);
+  hipMalloc((void**)(&d_out), out_bytes);
 
-  cudaMemcpy(d_in1, in1.data(), in1_bytes, cudaMemcpyHostToDevice);
+  hipMemcpy(d_in1, in1.data(), in1_bytes, hipMemcpyHostToDevice);
 
   Eigen::CudaStreamDevice stream;
   Eigen::GpuDevice gpu_device(&stream);
@@ -193,16 +193,16 @@ void test_cuda_props() {
 
   gpu_out.device(gpu_device) = (gpu_in1.isnan)();
 
-  assert(cudaMemcpyAsync(out.data(), d_out, out_bytes, cudaMemcpyDeviceToHost,
-                         gpu_device.stream()) == cudaSuccess);
-  assert(cudaStreamSynchronize(gpu_device.stream()) == cudaSuccess);
+  assert(hipMemcpyAsync(out.data(), d_out, out_bytes, hipMemcpyDeviceToHost,
+                         gpu_device.stream()) == hipSuccess);
+  assert(hipStreamSynchronize(gpu_device.stream()) == hipSuccess);
 
   for (int i = 0; i < 200; ++i) {
     VERIFY_IS_EQUAL(out(i), (std::isnan)(in1(i)));
   }
 
-  cudaFree(d_in1);
-  cudaFree(d_out);
+  hipFree(d_in1);
+  hipFree(d_out);
 }
 
 void test_cuda_reduction()
@@ -216,10 +216,10 @@ void test_cuda_reduction()
 
   float* d_in1;
   float* d_out;
-  cudaMalloc((void**)(&d_in1), in1_bytes);
-  cudaMalloc((void**)(&d_out), out_bytes);
+  hipMalloc((void**)(&d_in1), in1_bytes);
+  hipMalloc((void**)(&d_out), out_bytes);
 
-  cudaMemcpy(d_in1, in1.data(), in1_bytes, cudaMemcpyHostToDevice);
+  hipMemcpy(d_in1, in1.data(), in1_bytes, hipMemcpyHostToDevice);
 
   Eigen::CudaStreamDevice stream;
   Eigen::GpuDevice gpu_device(&stream);
@@ -233,8 +233,8 @@ void test_cuda_reduction()
 
   gpu_out.device(gpu_device) = gpu_in1.maximum(reduction_axis);
 
-  assert(cudaMemcpyAsync(out.data(), d_out, out_bytes, cudaMemcpyDeviceToHost, gpu_device.stream()) == cudaSuccess);
-  assert(cudaStreamSynchronize(gpu_device.stream()) == cudaSuccess);
+  assert(hipMemcpyAsync(out.data(), d_out, out_bytes, hipMemcpyDeviceToHost, gpu_device.stream()) == hipSuccess);
+  assert(hipStreamSynchronize(gpu_device.stream()) == hipSuccess);
 
   for (int i = 0; i < 72; ++i) {
     for (int j = 0; j < 97; ++j) {
@@ -249,8 +249,8 @@ void test_cuda_reduction()
     }
   }
 
-  cudaFree(d_in1);
-  cudaFree(d_out);
+  hipFree(d_in1);
+  hipFree(d_out);
 }
 
 template<int DataLayout>
@@ -274,12 +274,12 @@ void test_cuda_contraction()
   float* d_t_right;
   float* d_t_result;
 
-  cudaMalloc((void**)(&d_t_left), t_left_bytes);
-  cudaMalloc((void**)(&d_t_right), t_right_bytes);
-  cudaMalloc((void**)(&d_t_result), t_result_bytes);
+  hipMalloc((void**)(&d_t_left), t_left_bytes);
+  hipMalloc((void**)(&d_t_right), t_right_bytes);
+  hipMalloc((void**)(&d_t_result), t_result_bytes);
 
-  cudaMemcpy(d_t_left, t_left.data(), t_left_bytes, cudaMemcpyHostToDevice);
-  cudaMemcpy(d_t_right, t_right.data(), t_right_bytes, cudaMemcpyHostToDevice);
+  hipMemcpy(d_t_left, t_left.data(), t_left_bytes, hipMemcpyHostToDevice);
+  hipMemcpy(d_t_right, t_right.data(), t_right_bytes, hipMemcpyHostToDevice);
 
   Eigen::CudaStreamDevice stream;
   Eigen::GpuDevice gpu_device(&stream);
@@ -301,7 +301,7 @@ void test_cuda_contraction()
   m_result = m_left * m_right;
   gpu_t_result.device(gpu_device) = gpu_t_left.contract(gpu_t_right, dims);
 
-  cudaMemcpy(t_result.data(), d_t_result, t_result_bytes, cudaMemcpyDeviceToHost);
+  hipMemcpy(t_result.data(), d_t_result, t_result_bytes, hipMemcpyDeviceToHost);
 
   for (size_t i = 0; i < t_result.dimensions().TotalSize(); i++) {
     if (fabs(t_result.data()[i] - m_result.data()[i]) >= 1e-4) {
@@ -310,9 +310,9 @@ void test_cuda_contraction()
     }
   }
 
-  cudaFree(d_t_left);
-  cudaFree(d_t_right);
-  cudaFree(d_t_result);
+  hipFree(d_t_left);
+  hipFree(d_t_right);
+  hipFree(d_t_result);
 }
 
 template<int DataLayout>
@@ -331,12 +331,12 @@ void test_cuda_convolution_1d()
   float* d_input;
   float* d_kernel;
   float* d_out;
-  cudaMalloc((void**)(&d_input), input_bytes);
-  cudaMalloc((void**)(&d_kernel), kernel_bytes);
-  cudaMalloc((void**)(&d_out), out_bytes);
+  hipMalloc((void**)(&d_input), input_bytes);
+  hipMalloc((void**)(&d_kernel), kernel_bytes);
+  hipMalloc((void**)(&d_out), out_bytes);
 
-  cudaMemcpy(d_input, input.data(), input_bytes, cudaMemcpyHostToDevice);
-  cudaMemcpy(d_kernel, kernel.data(), kernel_bytes, cudaMemcpyHostToDevice);
+  hipMemcpy(d_input, input.data(), input_bytes, hipMemcpyHostToDevice);
+  hipMemcpy(d_kernel, kernel.data(), kernel_bytes, hipMemcpyHostToDevice);
 
   Eigen::CudaStreamDevice stream;
   Eigen::GpuDevice gpu_device(&stream);
@@ -348,8 +348,8 @@ void test_cuda_convolution_1d()
   Eigen::array<Eigen::DenseIndex, 1> dims(1);
   gpu_out.device(gpu_device) = gpu_input.convolve(gpu_kernel, dims);
 
-  assert(cudaMemcpyAsync(out.data(), d_out, out_bytes, cudaMemcpyDeviceToHost, gpu_device.stream()) == cudaSuccess);
-  assert(cudaStreamSynchronize(gpu_device.stream()) == cudaSuccess);
+  assert(hipMemcpyAsync(out.data(), d_out, out_bytes, hipMemcpyDeviceToHost, gpu_device.stream()) == hipSuccess);
+  assert(hipStreamSynchronize(gpu_device.stream()) == hipSuccess);
 
   for (int i = 0; i < 74; ++i) {
     for (int j = 0; j < 34; ++j) {
@@ -364,9 +364,9 @@ void test_cuda_convolution_1d()
     }
   }
 
-  cudaFree(d_input);
-  cudaFree(d_kernel);
-  cudaFree(d_out);
+  hipFree(d_input);
+  hipFree(d_kernel);
+  hipFree(d_out);
 }
 
 void test_cuda_convolution_inner_dim_col_major_1d()
@@ -384,12 +384,12 @@ void test_cuda_convolution_inner_dim_col_major_1d()
   float* d_input;
   float* d_kernel;
   float* d_out;
-  cudaMalloc((void**)(&d_input), input_bytes);
-  cudaMalloc((void**)(&d_kernel), kernel_bytes);
-  cudaMalloc((void**)(&d_out), out_bytes);
+  hipMalloc((void**)(&d_input), input_bytes);
+  hipMalloc((void**)(&d_kernel), kernel_bytes);
+  hipMalloc((void**)(&d_out), out_bytes);
 
-  cudaMemcpy(d_input, input.data(), input_bytes, cudaMemcpyHostToDevice);
-  cudaMemcpy(d_kernel, kernel.data(), kernel_bytes, cudaMemcpyHostToDevice);
+  hipMemcpy(d_input, input.data(), input_bytes, hipMemcpyHostToDevice);
+  hipMemcpy(d_kernel, kernel.data(), kernel_bytes, hipMemcpyHostToDevice);
 
   Eigen::CudaStreamDevice stream;
   Eigen::GpuDevice gpu_device(&stream);
@@ -401,8 +401,8 @@ void test_cuda_convolution_inner_dim_col_major_1d()
   Eigen::array<Eigen::DenseIndex, 1> dims(0);
   gpu_out.device(gpu_device) = gpu_input.convolve(gpu_kernel, dims);
 
-  assert(cudaMemcpyAsync(out.data(), d_out, out_bytes, cudaMemcpyDeviceToHost, gpu_device.stream()) == cudaSuccess);
-  assert(cudaStreamSynchronize(gpu_device.stream()) == cudaSuccess);
+  assert(hipMemcpyAsync(out.data(), d_out, out_bytes, hipMemcpyDeviceToHost, gpu_device.stream()) == hipSuccess);
+  assert(hipStreamSynchronize(gpu_device.stream()) == hipSuccess);
 
   for (int i = 0; i < 71; ++i) {
     for (int j = 0; j < 9; ++j) {
@@ -417,9 +417,9 @@ void test_cuda_convolution_inner_dim_col_major_1d()
     }
   }
 
-  cudaFree(d_input);
-  cudaFree(d_kernel);
-  cudaFree(d_out);
+  hipFree(d_input);
+  hipFree(d_kernel);
+  hipFree(d_out);
 }
 
 void test_cuda_convolution_inner_dim_row_major_1d()
@@ -437,12 +437,12 @@ void test_cuda_convolution_inner_dim_row_major_1d()
   float* d_input;
   float* d_kernel;
   float* d_out;
-  cudaMalloc((void**)(&d_input), input_bytes);
-  cudaMalloc((void**)(&d_kernel), kernel_bytes);
-  cudaMalloc((void**)(&d_out), out_bytes);
+  hipMalloc((void**)(&d_input), input_bytes);
+  hipMalloc((void**)(&d_kernel), kernel_bytes);
+  hipMalloc((void**)(&d_out), out_bytes);
 
-  cudaMemcpy(d_input, input.data(), input_bytes, cudaMemcpyHostToDevice);
-  cudaMemcpy(d_kernel, kernel.data(), kernel_bytes, cudaMemcpyHostToDevice);
+  hipMemcpy(d_input, input.data(), input_bytes, hipMemcpyHostToDevice);
+  hipMemcpy(d_kernel, kernel.data(), kernel_bytes, hipMemcpyHostToDevice);
 
   Eigen::CudaStreamDevice stream;
   Eigen::GpuDevice gpu_device(&stream);
@@ -454,8 +454,8 @@ void test_cuda_convolution_inner_dim_row_major_1d()
   Eigen::array<Eigen::DenseIndex, 1> dims(3);
   gpu_out.device(gpu_device) = gpu_input.convolve(gpu_kernel, dims);
 
-  assert(cudaMemcpyAsync(out.data(), d_out, out_bytes, cudaMemcpyDeviceToHost, gpu_device.stream()) == cudaSuccess);
-  assert(cudaStreamSynchronize(gpu_device.stream()) == cudaSuccess);
+  assert(hipMemcpyAsync(out.data(), d_out, out_bytes, hipMemcpyDeviceToHost, gpu_device.stream()) == hipSuccess);
+  assert(hipStreamSynchronize(gpu_device.stream()) == hipSuccess);
 
   for (int i = 0; i < 7; ++i) {
     for (int j = 0; j < 9; ++j) {
@@ -470,9 +470,9 @@ void test_cuda_convolution_inner_dim_row_major_1d()
     }
   }
 
-  cudaFree(d_input);
-  cudaFree(d_kernel);
-  cudaFree(d_out);
+  hipFree(d_input);
+  hipFree(d_kernel);
+  hipFree(d_out);
 }
 
 template<int DataLayout>
@@ -491,12 +491,12 @@ void test_cuda_convolution_2d()
   float* d_input;
   float* d_kernel;
   float* d_out;
-  cudaMalloc((void**)(&d_input), input_bytes);
-  cudaMalloc((void**)(&d_kernel), kernel_bytes);
-  cudaMalloc((void**)(&d_out), out_bytes);
+  hipMalloc((void**)(&d_input), input_bytes);
+  hipMalloc((void**)(&d_kernel), kernel_bytes);
+  hipMalloc((void**)(&d_out), out_bytes);
 
-  cudaMemcpy(d_input, input.data(), input_bytes, cudaMemcpyHostToDevice);
-  cudaMemcpy(d_kernel, kernel.data(), kernel_bytes, cudaMemcpyHostToDevice);
+  hipMemcpy(d_input, input.data(), input_bytes, hipMemcpyHostToDevice);
+  hipMemcpy(d_kernel, kernel.data(), kernel_bytes, hipMemcpyHostToDevice);
 
   Eigen::CudaStreamDevice stream;
   Eigen::GpuDevice gpu_device(&stream);
@@ -508,8 +508,8 @@ void test_cuda_convolution_2d()
   Eigen::array<Eigen::DenseIndex, 2> dims(1,2);
   gpu_out.device(gpu_device) = gpu_input.convolve(gpu_kernel, dims);
 
-  assert(cudaMemcpyAsync(out.data(), d_out, out_bytes, cudaMemcpyDeviceToHost, gpu_device.stream()) == cudaSuccess);
-  assert(cudaStreamSynchronize(gpu_device.stream()) == cudaSuccess);
+  assert(hipMemcpyAsync(out.data(), d_out, out_bytes, hipMemcpyDeviceToHost, gpu_device.stream()) == hipSuccess);
+  assert(hipStreamSynchronize(gpu_device.stream()) == hipSuccess);
 
   for (int i = 0; i < 74; ++i) {
     for (int j = 0; j < 35; ++j) {
@@ -534,9 +534,9 @@ void test_cuda_convolution_2d()
     }
   }
 
-  cudaFree(d_input);
-  cudaFree(d_kernel);
-  cudaFree(d_out);
+  hipFree(d_input);
+  hipFree(d_kernel);
+  hipFree(d_out);
 }
 
 template<int DataLayout>
@@ -555,12 +555,12 @@ void test_cuda_convolution_3d()
   float* d_input;
   float* d_kernel;
   float* d_out;
-  cudaMalloc((void**)(&d_input), input_bytes);
-  cudaMalloc((void**)(&d_kernel), kernel_bytes);
-  cudaMalloc((void**)(&d_out), out_bytes);
+  hipMalloc((void**)(&d_input), input_bytes);
+  hipMalloc((void**)(&d_kernel), kernel_bytes);
+  hipMalloc((void**)(&d_out), out_bytes);
 
-  cudaMemcpy(d_input, input.data(), input_bytes, cudaMemcpyHostToDevice);
-  cudaMemcpy(d_kernel, kernel.data(), kernel_bytes, cudaMemcpyHostToDevice);
+  hipMemcpy(d_input, input.data(), input_bytes, hipMemcpyHostToDevice);
+  hipMemcpy(d_kernel, kernel.data(), kernel_bytes, hipMemcpyHostToDevice);
 
   Eigen::CudaStreamDevice stream;    
   Eigen::GpuDevice gpu_device(&stream);
@@ -572,8 +572,8 @@ void test_cuda_convolution_3d()
   Eigen::array<Eigen::DenseIndex, 3> dims(1,2,3);
   gpu_out.device(gpu_device) = gpu_input.convolve(gpu_kernel, dims);
 
-  assert(cudaMemcpyAsync(out.data(), d_out, out_bytes, cudaMemcpyDeviceToHost, gpu_device.stream()) == cudaSuccess);
-  assert(cudaStreamSynchronize(gpu_device.stream()) == cudaSuccess);
+  assert(hipMemcpyAsync(out.data(), d_out, out_bytes, hipMemcpyDeviceToHost, gpu_device.stream()) == hipSuccess);
+  assert(hipStreamSynchronize(gpu_device.stream()) == hipSuccess);
 
   for (int i = 0; i < 74; ++i) {
     for (int j = 0; j < 35; ++j) {
@@ -612,9 +612,9 @@ void test_cuda_convolution_3d()
     }
   }
 
-  cudaFree(d_input);
-  cudaFree(d_kernel);
-  cudaFree(d_out);
+  hipFree(d_input);
+  hipFree(d_kernel);
+  hipFree(d_out);
 }
 
 
@@ -631,10 +631,10 @@ void test_cuda_lgamma(const Scalar stddev)
 
   Scalar* d_in;
   Scalar* d_out;
-  cudaMalloc((void**)(&d_in), bytes);
-  cudaMalloc((void**)(&d_out), bytes);
+  hipMalloc((void**)(&d_in), bytes);
+  hipMalloc((void**)(&d_out), bytes);
 
-  cudaMemcpy(d_in, in.data(), bytes, cudaMemcpyHostToDevice);
+  hipMemcpy(d_in, in.data(), bytes, hipMemcpyHostToDevice);
 
   Eigen::CudaStreamDevice stream;
   Eigen::GpuDevice gpu_device(&stream);
@@ -644,8 +644,8 @@ void test_cuda_lgamma(const Scalar stddev)
 
   gpu_out.device(gpu_device) = gpu_in.lgamma();
 
-  assert(cudaMemcpyAsync(out.data(), d_out, bytes, cudaMemcpyDeviceToHost, gpu_device.stream()) == cudaSuccess);
-  assert(cudaStreamSynchronize(gpu_device.stream()) == cudaSuccess);
+  assert(hipMemcpyAsync(out.data(), d_out, bytes, hipMemcpyDeviceToHost, gpu_device.stream()) == hipSuccess);
+  assert(hipStreamSynchronize(gpu_device.stream()) == hipSuccess);
 
   for (int i = 0; i < 72; ++i) {
     for (int j = 0; j < 97; ++j) {
@@ -653,8 +653,8 @@ void test_cuda_lgamma(const Scalar stddev)
     }
   }
 
-  cudaFree(d_in);
-  cudaFree(d_out);
+  hipFree(d_in);
+  hipFree(d_out);
 }
 
 template <typename Scalar>
@@ -685,10 +685,10 @@ void test_cuda_digamma()
 
   Scalar* d_in;
   Scalar* d_out;
-  cudaMalloc((void**)(&d_in), bytes);
-  cudaMalloc((void**)(&d_out), bytes);
+  hipMalloc((void**)(&d_in), bytes);
+  hipMalloc((void**)(&d_out), bytes);
 
-  cudaMemcpy(d_in, in.data(), bytes, cudaMemcpyHostToDevice);
+  hipMemcpy(d_in, in.data(), bytes, hipMemcpyHostToDevice);
 
   Eigen::CudaStreamDevice stream;
   Eigen::GpuDevice gpu_device(&stream);
@@ -698,8 +698,8 @@ void test_cuda_digamma()
 
   gpu_out.device(gpu_device) = gpu_in.digamma();
 
-  assert(cudaMemcpyAsync(out.data(), d_out, bytes, cudaMemcpyDeviceToHost, gpu_device.stream()) == cudaSuccess);
-  assert(cudaStreamSynchronize(gpu_device.stream()) == cudaSuccess);
+  assert(hipMemcpyAsync(out.data(), d_out, bytes, hipMemcpyDeviceToHost, gpu_device.stream()) == hipSuccess);
+  assert(hipStreamSynchronize(gpu_device.stream()) == hipSuccess);
 
   for (int i = 0; i < 5; ++i) {
     VERIFY_IS_APPROX(out(i), expected_out(i));
@@ -708,8 +708,8 @@ void test_cuda_digamma()
     VERIFY_IS_EQUAL(out(i), expected_out(i));
   }
 
-  cudaFree(d_in);
-  cudaFree(d_out);
+  hipFree(d_in);
+  hipFree(d_out);
 }
 
 template <typename Scalar>
@@ -747,12 +747,12 @@ void test_cuda_zeta()
   Scalar* d_in_x;
   Scalar* d_in_q;
   Scalar* d_out;
-  cudaMalloc((void**)(&d_in_x), bytes);
-  cudaMalloc((void**)(&d_in_q), bytes);
-  cudaMalloc((void**)(&d_out), bytes);
+  hipMalloc((void**)(&d_in_x), bytes);
+  hipMalloc((void**)(&d_in_q), bytes);
+  hipMalloc((void**)(&d_out), bytes);
 
-  cudaMemcpy(d_in_x, in_x.data(), bytes, cudaMemcpyHostToDevice);
-  cudaMemcpy(d_in_q, in_q.data(), bytes, cudaMemcpyHostToDevice);
+  hipMemcpy(d_in_x, in_x.data(), bytes, hipMemcpyHostToDevice);
+  hipMemcpy(d_in_q, in_q.data(), bytes, hipMemcpyHostToDevice);
   
   Eigen::CudaStreamDevice stream;
   Eigen::GpuDevice gpu_device(&stream);
@@ -763,8 +763,8 @@ void test_cuda_zeta()
 
   gpu_out.device(gpu_device) = gpu_in_x.zeta(gpu_in_q);
 
-  assert(cudaMemcpyAsync(out.data(), d_out, bytes, cudaMemcpyDeviceToHost, gpu_device.stream()) == cudaSuccess);
-  assert(cudaStreamSynchronize(gpu_device.stream()) == cudaSuccess);
+  assert(hipMemcpyAsync(out.data(), d_out, bytes, hipMemcpyDeviceToHost, gpu_device.stream()) == hipSuccess);
+  assert(hipStreamSynchronize(gpu_device.stream()) == hipSuccess);
 
   VERIFY_IS_EQUAL(out(0), expected_out(0));
   VERIFY((std::isnan)(out(3)));
@@ -775,9 +775,9 @@ void test_cuda_zeta()
     }
   }
 
-  cudaFree(d_in_x);
-  cudaFree(d_in_q);
-  cudaFree(d_out);
+  hipFree(d_in_x);
+  hipFree(d_in_q);
+  hipFree(d_out);
 }
 
 template <typename Scalar>
@@ -818,12 +818,12 @@ void test_cuda_polygamma()
   Scalar* d_in_x;
   Scalar* d_in_n;
   Scalar* d_out;
-  cudaMalloc((void**)(&d_in_x), bytes);
-  cudaMalloc((void**)(&d_in_n), bytes);
-  cudaMalloc((void**)(&d_out), bytes);
+  hipMalloc((void**)(&d_in_x), bytes);
+  hipMalloc((void**)(&d_in_n), bytes);
+  hipMalloc((void**)(&d_out), bytes);
 
-  cudaMemcpy(d_in_x, in_x.data(), bytes, cudaMemcpyHostToDevice);
-  cudaMemcpy(d_in_n, in_n.data(), bytes, cudaMemcpyHostToDevice);
+  hipMemcpy(d_in_x, in_x.data(), bytes, hipMemcpyHostToDevice);
+  hipMemcpy(d_in_n, in_n.data(), bytes, hipMemcpyHostToDevice);
   
   Eigen::CudaStreamDevice stream;
   Eigen::GpuDevice gpu_device(&stream);
@@ -834,16 +834,16 @@ void test_cuda_polygamma()
 
   gpu_out.device(gpu_device) = gpu_in_n.polygamma(gpu_in_x);
 
-  assert(cudaMemcpyAsync(out.data(), d_out, bytes, cudaMemcpyDeviceToHost, gpu_device.stream()) == cudaSuccess);
-  assert(cudaStreamSynchronize(gpu_device.stream()) == cudaSuccess);
+  assert(hipMemcpyAsync(out.data(), d_out, bytes, hipMemcpyDeviceToHost, gpu_device.stream()) == hipSuccess);
+  assert(hipStreamSynchronize(gpu_device.stream()) == hipSuccess);
 
   for (int i = 0; i < 7; ++i) {
     VERIFY_IS_APPROX(out(i), expected_out(i));
   }
 
-  cudaFree(d_in_x);
-  cudaFree(d_in_n);
-  cudaFree(d_out);
+  hipFree(d_in_x);
+  hipFree(d_in_n);
+  hipFree(d_out);
 }
 
 template <typename Scalar>
@@ -883,12 +883,12 @@ void test_cuda_igamma()
   Scalar* d_a;
   Scalar* d_x;
   Scalar* d_out;
-  assert(cudaMalloc((void**)(&d_a), bytes) == cudaSuccess);
-  assert(cudaMalloc((void**)(&d_x), bytes) == cudaSuccess);
-  assert(cudaMalloc((void**)(&d_out), bytes) == cudaSuccess);
+  assert(hipMalloc((void**)(&d_a), bytes) == hipSuccess);
+  assert(hipMalloc((void**)(&d_x), bytes) == hipSuccess);
+  assert(hipMalloc((void**)(&d_out), bytes) == hipSuccess);
 
-  cudaMemcpy(d_a, a.data(), bytes, cudaMemcpyHostToDevice);
-  cudaMemcpy(d_x, x.data(), bytes, cudaMemcpyHostToDevice);
+  hipMemcpy(d_a, a.data(), bytes, hipMemcpyHostToDevice);
+  hipMemcpy(d_x, x.data(), bytes, hipMemcpyHostToDevice);
 
   Eigen::CudaStreamDevice stream;
   Eigen::GpuDevice gpu_device(&stream);
@@ -899,8 +899,8 @@ void test_cuda_igamma()
 
   gpu_out.device(gpu_device) = gpu_a.igamma(gpu_x);
 
-  assert(cudaMemcpyAsync(out.data(), d_out, bytes, cudaMemcpyDeviceToHost, gpu_device.stream()) == cudaSuccess);
-  assert(cudaStreamSynchronize(gpu_device.stream()) == cudaSuccess);
+  assert(hipMemcpyAsync(out.data(), d_out, bytes, hipMemcpyDeviceToHost, gpu_device.stream()) == hipSuccess);
+  assert(hipStreamSynchronize(gpu_device.stream()) == hipSuccess);
 
   for (int i = 0; i < 6; ++i) {
     for (int j = 0; j < 6; ++j) {
@@ -912,9 +912,9 @@ void test_cuda_igamma()
     }
   }
 
-  cudaFree(d_a);
-  cudaFree(d_x);
-  cudaFree(d_out);
+  hipFree(d_a);
+  hipFree(d_x);
+  hipFree(d_out);
 }
 
 template <typename Scalar>
@@ -953,12 +953,12 @@ void test_cuda_igammac()
   Scalar* d_a;
   Scalar* d_x;
   Scalar* d_out;
-  cudaMalloc((void**)(&d_a), bytes);
-  cudaMalloc((void**)(&d_x), bytes);
-  cudaMalloc((void**)(&d_out), bytes);
+  hipMalloc((void**)(&d_a), bytes);
+  hipMalloc((void**)(&d_x), bytes);
+  hipMalloc((void**)(&d_out), bytes);
 
-  cudaMemcpy(d_a, a.data(), bytes, cudaMemcpyHostToDevice);
-  cudaMemcpy(d_x, x.data(), bytes, cudaMemcpyHostToDevice);
+  hipMemcpy(d_a, a.data(), bytes, hipMemcpyHostToDevice);
+  hipMemcpy(d_x, x.data(), bytes, hipMemcpyHostToDevice);
 
   Eigen::CudaStreamDevice stream;
   Eigen::GpuDevice gpu_device(&stream);
@@ -969,8 +969,8 @@ void test_cuda_igammac()
 
   gpu_out.device(gpu_device) = gpu_a.igammac(gpu_x);
 
-  assert(cudaMemcpyAsync(out.data(), d_out, bytes, cudaMemcpyDeviceToHost, gpu_device.stream()) == cudaSuccess);
-  assert(cudaStreamSynchronize(gpu_device.stream()) == cudaSuccess);
+  assert(hipMemcpyAsync(out.data(), d_out, bytes, hipMemcpyDeviceToHost, gpu_device.stream()) == hipSuccess);
+  assert(hipStreamSynchronize(gpu_device.stream()) == hipSuccess);
 
   for (int i = 0; i < 6; ++i) {
     for (int j = 0; j < 6; ++j) {
@@ -982,9 +982,9 @@ void test_cuda_igammac()
     }
   }
 
-  cudaFree(d_a);
-  cudaFree(d_x);
-  cudaFree(d_out);
+  hipFree(d_a);
+  hipFree(d_x);
+  hipFree(d_out);
 }
 
 template <typename Scalar>
@@ -1000,10 +1000,10 @@ void test_cuda_erf(const Scalar stddev)
 
   Scalar* d_in;
   Scalar* d_out;
-  assert(cudaMalloc((void**)(&d_in), bytes) == cudaSuccess);
-  assert(cudaMalloc((void**)(&d_out), bytes) == cudaSuccess);
+  assert(hipMalloc((void**)(&d_in), bytes) == hipSuccess);
+  assert(hipMalloc((void**)(&d_out), bytes) == hipSuccess);
 
-  cudaMemcpy(d_in, in.data(), bytes, cudaMemcpyHostToDevice);
+  hipMemcpy(d_in, in.data(), bytes, hipMemcpyHostToDevice);
 
   Eigen::CudaStreamDevice stream;
   Eigen::GpuDevice gpu_device(&stream);
@@ -1013,8 +1013,8 @@ void test_cuda_erf(const Scalar stddev)
 
   gpu_out.device(gpu_device) = gpu_in.erf();
 
-  assert(cudaMemcpyAsync(out.data(), d_out, bytes, cudaMemcpyDeviceToHost, gpu_device.stream()) == cudaSuccess);
-  assert(cudaStreamSynchronize(gpu_device.stream()) == cudaSuccess);
+  assert(hipMemcpyAsync(out.data(), d_out, bytes, hipMemcpyDeviceToHost, gpu_device.stream()) == hipSuccess);
+  assert(hipStreamSynchronize(gpu_device.stream()) == hipSuccess);
 
   for (int i = 0; i < 72; ++i) {
     for (int j = 0; j < 97; ++j) {
@@ -1022,8 +1022,8 @@ void test_cuda_erf(const Scalar stddev)
     }
   }
 
-  cudaFree(d_in);
-  cudaFree(d_out);
+  hipFree(d_in);
+  hipFree(d_out);
 }
 
 template <typename Scalar>
@@ -1039,10 +1039,10 @@ void test_cuda_erfc(const Scalar stddev)
 
   Scalar* d_in;
   Scalar* d_out;
-  cudaMalloc((void**)(&d_in), bytes);
-  cudaMalloc((void**)(&d_out), bytes);
+  hipMalloc((void**)(&d_in), bytes);
+  hipMalloc((void**)(&d_out), bytes);
 
-  cudaMemcpy(d_in, in.data(), bytes, cudaMemcpyHostToDevice);
+  hipMemcpy(d_in, in.data(), bytes, hipMemcpyHostToDevice);
 
   Eigen::CudaStreamDevice stream;
   Eigen::GpuDevice gpu_device(&stream);
@@ -1052,8 +1052,8 @@ void test_cuda_erfc(const Scalar stddev)
 
   gpu_out.device(gpu_device) = gpu_in.erfc();
 
-  assert(cudaMemcpyAsync(out.data(), d_out, bytes, cudaMemcpyDeviceToHost, gpu_device.stream()) == cudaSuccess);
-  assert(cudaStreamSynchronize(gpu_device.stream()) == cudaSuccess);
+  assert(hipMemcpyAsync(out.data(), d_out, bytes, hipMemcpyDeviceToHost, gpu_device.stream()) == hipSuccess);
+  assert(hipStreamSynchronize(gpu_device.stream()) == hipSuccess);
 
   for (int i = 0; i < 72; ++i) {
     for (int j = 0; j < 97; ++j) {
@@ -1061,8 +1061,8 @@ void test_cuda_erfc(const Scalar stddev)
     }
   }
 
-  cudaFree(d_in);
-  cudaFree(d_out);
+  hipFree(d_in);
+  hipFree(d_out);
 }
 
 template <typename Scalar>
@@ -1175,14 +1175,14 @@ void test_cuda_betainc()
   Scalar* d_in_a;
   Scalar* d_in_b;
   Scalar* d_out;
-  cudaMalloc((void**)(&d_in_x), bytes);
-  cudaMalloc((void**)(&d_in_a), bytes);
-  cudaMalloc((void**)(&d_in_b), bytes);
-  cudaMalloc((void**)(&d_out), bytes);
+  hipMalloc((void**)(&d_in_x), bytes);
+  hipMalloc((void**)(&d_in_a), bytes);
+  hipMalloc((void**)(&d_in_b), bytes);
+  hipMalloc((void**)(&d_out), bytes);
 
-  cudaMemcpy(d_in_x, in_x.data(), bytes, cudaMemcpyHostToDevice);
-  cudaMemcpy(d_in_a, in_a.data(), bytes, cudaMemcpyHostToDevice);
-  cudaMemcpy(d_in_b, in_b.data(), bytes, cudaMemcpyHostToDevice);
+  hipMemcpy(d_in_x, in_x.data(), bytes, hipMemcpyHostToDevice);
+  hipMemcpy(d_in_a, in_a.data(), bytes, hipMemcpyHostToDevice);
+  hipMemcpy(d_in_b, in_b.data(), bytes, hipMemcpyHostToDevice);
 
   Eigen::CudaStreamDevice stream;
   Eigen::GpuDevice gpu_device(&stream);
@@ -1194,8 +1194,8 @@ void test_cuda_betainc()
 
   gpu_out.device(gpu_device) = betainc(gpu_in_a, gpu_in_b, gpu_in_x);
 
-  assert(cudaMemcpyAsync(out.data(), d_out, bytes, cudaMemcpyDeviceToHost, gpu_device.stream()) == cudaSuccess);
-  assert(cudaStreamSynchronize(gpu_device.stream()) == cudaSuccess);
+  assert(hipMemcpyAsync(out.data(), d_out, bytes, hipMemcpyDeviceToHost, gpu_device.stream()) == hipSuccess);
+  assert(hipStreamSynchronize(gpu_device.stream()) == hipSuccess);
 
   for (int i = 1; i < 125; ++i) {
     if ((std::isnan)(expected_out(i))) {
@@ -1205,10 +1205,10 @@ void test_cuda_betainc()
     }
   }
 
-  cudaFree(d_in_x);
-  cudaFree(d_in_a);
-  cudaFree(d_in_b);
-  cudaFree(d_out);
+  hipFree(d_in_x);
+  hipFree(d_in_a);
+  hipFree(d_in_b);
+  hipFree(d_out);
 }
 
 

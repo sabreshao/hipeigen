@@ -47,12 +47,12 @@ void test_cuda_contraction(int m_size, int k_size, int n_size)
   float* d_t_right;
   float* d_t_result;
 
-  cudaMalloc((void**)(&d_t_left), t_left_bytes);
-  cudaMalloc((void**)(&d_t_right), t_right_bytes);
-  cudaMalloc((void**)(&d_t_result), t_result_bytes);
+  hipMalloc((void**)(&d_t_left), t_left_bytes);
+  hipMalloc((void**)(&d_t_right), t_right_bytes);
+  hipMalloc((void**)(&d_t_result), t_result_bytes);
 
-  cudaMemcpy(d_t_left, t_left.data(), t_left_bytes, cudaMemcpyHostToDevice);
-  cudaMemcpy(d_t_right, t_right.data(), t_right_bytes, cudaMemcpyHostToDevice);
+  hipMemcpy(d_t_left, t_left.data(), t_left_bytes, hipMemcpyHostToDevice);
+  hipMemcpy(d_t_right, t_right.data(), t_right_bytes, hipMemcpyHostToDevice);
 
   Eigen::CudaStreamDevice stream;
   Eigen::GpuDevice gpu_device(&stream);
@@ -68,7 +68,7 @@ void test_cuda_contraction(int m_size, int k_size, int n_size)
   gpu_t_result.device(gpu_device) = gpu_t_left.contract(gpu_t_right, dims);
   t_result = t_left.contract(t_right, dims);
 
-  cudaMemcpy(t_result_gpu.data(), d_t_result, t_result_bytes, cudaMemcpyDeviceToHost);
+  hipMemcpy(t_result_gpu.data(), d_t_result, t_result_bytes, hipMemcpyDeviceToHost);
   for (size_t i = 0; i < t_result.size(); i++) {
     if (fabs(t_result(i) - t_result_gpu(i)) < 1e-4f) {
       continue;
@@ -81,9 +81,9 @@ void test_cuda_contraction(int m_size, int k_size, int n_size)
     assert(false);
   }
 
-  cudaFree((void*)d_t_left);
-  cudaFree((void*)d_t_right);
-  cudaFree((void*)d_t_result);
+  hipFree((void*)d_t_left);
+  hipFree((void*)d_t_right);
+  hipFree((void*)d_t_result);
 }
 
 
@@ -111,12 +111,12 @@ void test_scalar(int m_size, int k_size, int n_size)
   float* d_t_right;
   float* d_t_result;
 
-  cudaMalloc((void**)(&d_t_left), t_left_bytes);
-  cudaMalloc((void**)(&d_t_right), t_right_bytes);
-  cudaMalloc((void**)(&d_t_result), t_result_bytes);
+  hipMalloc((void**)(&d_t_left), t_left_bytes);
+  hipMalloc((void**)(&d_t_right), t_right_bytes);
+  hipMalloc((void**)(&d_t_result), t_result_bytes);
 
-  cudaMemcpy(d_t_left, t_left.data(), t_left_bytes, cudaMemcpyHostToDevice);
-  cudaMemcpy(d_t_right, t_right.data(), t_right_bytes, cudaMemcpyHostToDevice);
+  hipMemcpy(d_t_left, t_left.data(), t_left_bytes, hipMemcpyHostToDevice);
+  hipMemcpy(d_t_right, t_right.data(), t_right_bytes, hipMemcpyHostToDevice);
 
   Eigen::CudaStreamDevice stream;
   Eigen::GpuDevice gpu_device(&stream);
@@ -131,7 +131,7 @@ void test_scalar(int m_size, int k_size, int n_size)
   gpu_t_result.device(gpu_device) = gpu_t_left.contract(gpu_t_right, dims);
   t_result = t_left.contract(t_right, dims);
 
-  cudaMemcpy(t_result_gpu.data(), d_t_result, t_result_bytes, cudaMemcpyDeviceToHost);
+  hipMemcpy(t_result_gpu.data(), d_t_result, t_result_bytes, hipMemcpyDeviceToHost);
   if (fabs(t_result() - t_result_gpu()) > 1e-4f &&
       !Eigen::internal::isApprox(t_result(), t_result_gpu(), 1e-4f)) {
     std::cout << "mismatch detected: " << t_result()
@@ -139,9 +139,9 @@ void test_scalar(int m_size, int k_size, int n_size)
     assert(false);
   }
 
-  cudaFree((void*)d_t_left);
-  cudaFree((void*)d_t_right);
-  cudaFree((void*)d_t_result);
+  hipFree((void*)d_t_left);
+  hipFree((void*)d_t_right);
+  hipFree((void*)d_t_result);
 }
 
 

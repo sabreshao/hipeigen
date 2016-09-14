@@ -37,11 +37,11 @@ void test_cuda_simple_argmax()
   double* d_in;
   DenseIndex* d_out_max;
   DenseIndex* d_out_min;
-  cudaMalloc((void**)(&d_in), in_bytes);
-  cudaMalloc((void**)(&d_out_max), out_bytes);
-  cudaMalloc((void**)(&d_out_min), out_bytes);
+  hipMalloc((void**)(&d_in), in_bytes);
+  hipMalloc((void**)(&d_out_max), out_bytes);
+  hipMalloc((void**)(&d_out_min), out_bytes);
 
-  cudaMemcpy(d_in, in.data(), in_bytes, cudaMemcpyHostToDevice);
+  hipMemcpy(d_in, in.data(), in_bytes, hipMemcpyHostToDevice);
 
   Eigen::CudaStreamDevice stream;
   Eigen::GpuDevice gpu_device(&stream);
@@ -53,16 +53,16 @@ void test_cuda_simple_argmax()
   gpu_out_max.device(gpu_device) = gpu_in.argmax();
   gpu_out_min.device(gpu_device) = gpu_in.argmin();
 
-  assert(cudaMemcpyAsync(out_max.data(), d_out_max, out_bytes, cudaMemcpyDeviceToHost, gpu_device.stream()) == cudaSuccess);
-  assert(cudaMemcpyAsync(out_min.data(), d_out_min, out_bytes, cudaMemcpyDeviceToHost, gpu_device.stream()) == cudaSuccess);
-  assert(cudaStreamSynchronize(gpu_device.stream()) == cudaSuccess);
+  assert(hipMemcpyAsync(out_max.data(), d_out_max, out_bytes, hipMemcpyDeviceToHost, gpu_device.stream()) == hipSuccess);
+  assert(hipMemcpyAsync(out_min.data(), d_out_min, out_bytes, hipMemcpyDeviceToHost, gpu_device.stream()) == hipSuccess);
+  assert(hipStreamSynchronize(gpu_device.stream()) == hipSuccess);
 
   VERIFY_IS_EQUAL(out_max(Eigen::array<DenseIndex, 1>(0)), 72*53*97 - 1);
   VERIFY_IS_EQUAL(out_min(Eigen::array<DenseIndex, 1>(0)), 0);
 
-  cudaFree(d_in);
-  cudaFree(d_out_max);
-  cudaFree(d_out_min);
+  hipFree(d_in);
+  hipFree(d_out_max);
+  hipFree(d_out_min);
 }
 
 template <int DataLayout>
@@ -100,10 +100,10 @@ void test_cuda_argmax_dim()
 
     float* d_in;
     DenseIndex* d_out;
-    cudaMalloc((void**)(&d_in), in_bytes);
-    cudaMalloc((void**)(&d_out), out_bytes);
+    hipMalloc((void**)(&d_in), in_bytes);
+    hipMalloc((void**)(&d_out), out_bytes);
 
-    cudaMemcpy(d_in, tensor.data(), in_bytes, cudaMemcpyHostToDevice);
+    hipMemcpy(d_in, tensor.data(), in_bytes, hipMemcpyHostToDevice);
 
     Eigen::CudaStreamDevice stream;
     Eigen::GpuDevice gpu_device(&stream);
@@ -113,8 +113,8 @@ void test_cuda_argmax_dim()
 
     gpu_out.device(gpu_device) = gpu_in.argmax(dim);
 
-    assert(cudaMemcpyAsync(tensor_arg.data(), d_out, out_bytes, cudaMemcpyDeviceToHost, gpu_device.stream()) == cudaSuccess);
-    assert(cudaStreamSynchronize(gpu_device.stream()) == cudaSuccess);
+    assert(hipMemcpyAsync(tensor_arg.data(), d_out, out_bytes, hipMemcpyDeviceToHost, gpu_device.stream()) == hipSuccess);
+    assert(hipStreamSynchronize(gpu_device.stream()) == hipSuccess);
 
     VERIFY_IS_EQUAL(tensor_arg.dimensions().TotalSize(),
                     size_t(2*3*5*7 / tensor.dimension(dim)));
@@ -137,20 +137,20 @@ void test_cuda_argmax_dim()
       }
     }
 
-    cudaMemcpy(d_in, tensor.data(), in_bytes, cudaMemcpyHostToDevice);
+    hipMemcpy(d_in, tensor.data(), in_bytes, hipMemcpyHostToDevice);
 
     gpu_out.device(gpu_device) = gpu_in.argmax(dim);
 
-    assert(cudaMemcpyAsync(tensor_arg.data(), d_out, out_bytes, cudaMemcpyDeviceToHost, gpu_device.stream()) == cudaSuccess);
-    assert(cudaStreamSynchronize(gpu_device.stream()) == cudaSuccess);
+    assert(hipMemcpyAsync(tensor_arg.data(), d_out, out_bytes, hipMemcpyDeviceToHost, gpu_device.stream()) == hipSuccess);
+    assert(hipStreamSynchronize(gpu_device.stream()) == hipSuccess);
 
     for (size_t n = 0; n < tensor_arg.dimensions().TotalSize(); ++n) {
       // Expect max to be in the last index of the reduced dimension
       VERIFY_IS_EQUAL(tensor_arg.data()[n], tensor.dimension(dim) - 1);
     }
 
-    cudaFree(d_in);
-    cudaFree(d_out);
+    hipFree(d_in);
+    hipFree(d_out);
   }
 }
 
@@ -189,10 +189,10 @@ void test_cuda_argmin_dim()
 
     float* d_in;
     DenseIndex* d_out;
-    cudaMalloc((void**)(&d_in), in_bytes);
-    cudaMalloc((void**)(&d_out), out_bytes);
+    hipMalloc((void**)(&d_in), in_bytes);
+    hipMalloc((void**)(&d_out), out_bytes);
 
-    cudaMemcpy(d_in, tensor.data(), in_bytes, cudaMemcpyHostToDevice);
+    hipMemcpy(d_in, tensor.data(), in_bytes, hipMemcpyHostToDevice);
 
     Eigen::CudaStreamDevice stream;
     Eigen::GpuDevice gpu_device(&stream);
@@ -202,8 +202,8 @@ void test_cuda_argmin_dim()
 
     gpu_out.device(gpu_device) = gpu_in.argmin(dim);
 
-    assert(cudaMemcpyAsync(tensor_arg.data(), d_out, out_bytes, cudaMemcpyDeviceToHost, gpu_device.stream()) == cudaSuccess);
-    assert(cudaStreamSynchronize(gpu_device.stream()) == cudaSuccess);
+    assert(hipMemcpyAsync(tensor_arg.data(), d_out, out_bytes, hipMemcpyDeviceToHost, gpu_device.stream()) == hipSuccess);
+    assert(hipStreamSynchronize(gpu_device.stream()) == hipSuccess);
 
     VERIFY_IS_EQUAL(tensor_arg.dimensions().TotalSize(),
                     size_t(2*3*5*7 / tensor.dimension(dim)));
@@ -226,20 +226,20 @@ void test_cuda_argmin_dim()
       }
     }
 
-    cudaMemcpy(d_in, tensor.data(), in_bytes, cudaMemcpyHostToDevice);
+    hipMemcpy(d_in, tensor.data(), in_bytes, hipMemcpyHostToDevice);
 
     gpu_out.device(gpu_device) = gpu_in.argmin(dim);
 
-    assert(cudaMemcpyAsync(tensor_arg.data(), d_out, out_bytes, cudaMemcpyDeviceToHost, gpu_device.stream()) == cudaSuccess);
-    assert(cudaStreamSynchronize(gpu_device.stream()) == cudaSuccess);
+    assert(hipMemcpyAsync(tensor_arg.data(), d_out, out_bytes, hipMemcpyDeviceToHost, gpu_device.stream()) == hipSuccess);
+    assert(hipStreamSynchronize(gpu_device.stream()) == hipSuccess);
 
     for (size_t n = 0; n < tensor_arg.dimensions().TotalSize(); ++n) {
       // Expect max to be in the last index of the reduced dimension
       VERIFY_IS_EQUAL(tensor_arg.data()[n], tensor.dimension(dim) - 1);
     }
 
-    cudaFree(d_in);
-    cudaFree(d_out);
+    hipFree(d_in);
+    hipFree(d_out);
   }
 }
 
