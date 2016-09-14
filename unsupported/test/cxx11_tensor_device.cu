@@ -13,8 +13,10 @@
 #define EIGEN_DEFAULT_DENSE_INDEX_TYPE int
 #define EIGEN_USE_GPU
 
+#ifdef __NVCC__
 #if defined __CUDACC_VER__ && __CUDACC_VER__ >= 70500
 #include <cuda_fp16.h>
+#endif
 #endif
 #include "main.h"
 #include <unsupported/Eigen/CXX11/Tensor>
@@ -104,7 +106,7 @@ struct GPUContext {
   float* kernel_2d_;
   float* kernel_3d_;
 
-  Eigen::CudaStreamDevice stream_;
+  Eigen::HipStreamDevice stream_;
   Eigen::GpuDevice gpu_device_;
 };
 

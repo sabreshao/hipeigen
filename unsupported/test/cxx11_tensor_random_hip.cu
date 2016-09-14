@@ -9,18 +9,20 @@
 
 #define EIGEN_TEST_NO_LONGDOUBLE
 #define EIGEN_TEST_NO_COMPLEX
-#define EIGEN_TEST_FUNC cxx11_tensor_random_cuda
+#define EIGEN_TEST_FUNC cxx11_tensor_random_hip
 #define EIGEN_DEFAULT_DENSE_INDEX_TYPE int
 #define EIGEN_USE_GPU
 
+#ifdef __NVCC__
 #if defined __CUDACC_VER__ && __CUDACC_VER__ >= 70500
 #include <cuda_fp16.h>
+#endif
 #endif
 #include "main.h"
 #include <Eigen/CXX11/Tensor>
 
 
-void test_cuda_random_uniform()
+void test_hip_random_uniform()
 {
   Tensor<float, 2> out(72,97);
   out.setZero();
@@ -30,7 +32,7 @@ void test_cuda_random_uniform()
   float* d_out;
   hipMalloc((void**)(&d_out), out_bytes);
 
-  Eigen::CudaStreamDevice stream;
+  Eigen::HipStreamDevice stream;
   Eigen::GpuDevice gpu_device(&stream);
 
   Eigen::TensorMap<Eigen::Tensor<float, 2> > gpu_out(d_out, 72,97);
@@ -45,7 +47,7 @@ void test_cuda_random_uniform()
 }
 
 
-void test_cuda_random_normal()
+void test_hip_random_normal()
 {
   Tensor<float, 2> out(72,97);
   out.setZero();
@@ -55,7 +57,7 @@ void test_cuda_random_normal()
   float* d_out;
   hipMalloc((void**)(&d_out), out_bytes);
 
-  Eigen::CudaStreamDevice stream;
+  Eigen::HipStreamDevice stream;
   Eigen::GpuDevice gpu_device(&stream);
 
   Eigen::TensorMap<Eigen::Tensor<float, 2> > gpu_out(d_out, 72,97);
@@ -80,9 +82,9 @@ static void test_complex()
 }
 
 
-void test_cxx11_tensor_random_cuda()
+void test_cxx11_tensor_random_hip()
 {
-  CALL_SUBTEST(test_cuda_random_uniform());
-  CALL_SUBTEST(test_cuda_random_normal());
+  CALL_SUBTEST(test_hip_random_uniform());
+  CALL_SUBTEST(test_hip_random_normal());
   CALL_SUBTEST(test_complex());
 }

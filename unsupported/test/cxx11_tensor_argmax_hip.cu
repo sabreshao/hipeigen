@@ -9,7 +9,7 @@
 
 
 #define EIGEN_TEST_NO_LONGDOUBLE
-#define EIGEN_TEST_FUNC cxx11_tensor_cuda
+#define EIGEN_TEST_FUNC cxx11_tensor_hip
 #define EIGEN_USE_GPU
 
 #if defined __CUDACC_VER__ && __CUDACC_VER__ >= 70500
@@ -21,7 +21,7 @@
 using Eigen::Tensor;
 
 template <int Layout>
-void test_cuda_simple_argmax()
+void test_hip_simple_argmax()
 {
   Tensor<double, 3, Layout> in(Eigen::array<DenseIndex, 3>(72,53,97));
   Tensor<DenseIndex, 1, Layout> out_max(Eigen::array<DenseIndex, 1>(1));
@@ -43,7 +43,7 @@ void test_cuda_simple_argmax()
 
   hipMemcpy(d_in, in.data(), in_bytes, hipMemcpyHostToDevice);
 
-  Eigen::CudaStreamDevice stream;
+  Eigen::HipStreamDevice stream;
   Eigen::GpuDevice gpu_device(&stream);
 
   Eigen::TensorMap<Eigen::Tensor<double, 3, Layout>, Aligned > gpu_in(d_in, Eigen::array<DenseIndex, 3>(72,53,97));
@@ -66,7 +66,7 @@ void test_cuda_simple_argmax()
 }
 
 template <int DataLayout>
-void test_cuda_argmax_dim()
+void test_hip_argmax_dim()
 {
   Tensor<float, 4, DataLayout> tensor(2,3,5,7);
   std::vector<int> dims;
@@ -105,7 +105,7 @@ void test_cuda_argmax_dim()
 
     hipMemcpy(d_in, tensor.data(), in_bytes, hipMemcpyHostToDevice);
 
-    Eigen::CudaStreamDevice stream;
+    Eigen::HipStreamDevice stream;
     Eigen::GpuDevice gpu_device(&stream);
 
     Eigen::TensorMap<Eigen::Tensor<float, 4, DataLayout>, Aligned > gpu_in(d_in, Eigen::array<DenseIndex, 4>(2, 3, 5, 7));
@@ -155,7 +155,7 @@ void test_cuda_argmax_dim()
 }
 
 template <int DataLayout>
-void test_cuda_argmin_dim()
+void test_hip_argmin_dim()
 {
   Tensor<float, 4, DataLayout> tensor(2,3,5,7);
   std::vector<int> dims;
@@ -194,7 +194,7 @@ void test_cuda_argmin_dim()
 
     hipMemcpy(d_in, tensor.data(), in_bytes, hipMemcpyHostToDevice);
 
-    Eigen::CudaStreamDevice stream;
+    Eigen::HipStreamDevice stream;
     Eigen::GpuDevice gpu_device(&stream);
 
     Eigen::TensorMap<Eigen::Tensor<float, 4, DataLayout>, Aligned > gpu_in(d_in, Eigen::array<DenseIndex, 4>(2, 3, 5, 7));
@@ -243,12 +243,12 @@ void test_cuda_argmin_dim()
   }
 }
 
-void test_cxx11_tensor_cuda()
+void test_cxx11_tensor_hip()
 {
-  CALL_SUBTEST_1(test_cuda_simple_argmax<RowMajor>());
-  CALL_SUBTEST_1(test_cuda_simple_argmax<ColMajor>());
-  CALL_SUBTEST_2(test_cuda_argmax_dim<RowMajor>());
-  CALL_SUBTEST_2(test_cuda_argmax_dim<ColMajor>());
-  CALL_SUBTEST_3(test_cuda_argmin_dim<RowMajor>());
-  CALL_SUBTEST_3(test_cuda_argmin_dim<ColMajor>());
+  CALL_SUBTEST_1(test_hip_simple_argmax<RowMajor>());
+  CALL_SUBTEST_1(test_hip_simple_argmax<ColMajor>());
+  CALL_SUBTEST_2(test_hip_argmax_dim<RowMajor>());
+  CALL_SUBTEST_2(test_hip_argmax_dim<ColMajor>());
+  CALL_SUBTEST_3(test_hip_argmin_dim<RowMajor>());
+  CALL_SUBTEST_3(test_hip_argmin_dim<ColMajor>());
 }

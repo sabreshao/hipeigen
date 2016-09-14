@@ -9,11 +9,13 @@
 
 #define EIGEN_TEST_NO_LONGDOUBLE
 #define EIGEN_TEST_NO_COMPLEX
-#define EIGEN_TEST_FUNC cxx11_tensor_reduction_cuda
+#define EIGEN_TEST_FUNC cxx11_tensor_reduction_hip
 #define EIGEN_USE_GPU
 
+#ifdef __NVCC__
 #if defined __CUDACC_VER__ && __CUDACC_VER__ >= 70500
 #include <cuda_fp16.h>
+#endif
 #endif
 #include "main.h"
 #include <unsupported/Eigen/CXX11/Tensor>
@@ -22,7 +24,7 @@
 template<typename Type, int DataLayout>
 static void test_full_reductions() {
 
-  Eigen::CudaStreamDevice stream;
+  Eigen::HipStreamDevice stream;
   Eigen::GpuDevice gpu_device(&stream);
 
   const int num_rows = internal::random<int>(1024, 5*1024);
@@ -56,7 +58,7 @@ static void test_full_reductions() {
   gpu_device.deallocate(gpu_out_ptr);
 }
 
-void test_cxx11_tensor_reduction_cuda() {
+void test_cxx11_tensor_reduction_hip() {
   CALL_SUBTEST_1((test_full_reductions<float, ColMajor>()));
   CALL_SUBTEST_1((test_full_reductions<double, ColMajor>()));
   CALL_SUBTEST_2((test_full_reductions<float, RowMajor>()));

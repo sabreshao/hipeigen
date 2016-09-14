@@ -9,12 +9,14 @@
 
 #define EIGEN_TEST_NO_LONGDOUBLE
 #define EIGEN_TEST_NO_COMPLEX
-#define EIGEN_TEST_FUNC cxx11_tensor_scan_cuda
+#define EIGEN_TEST_FUNC cxx11_tensor_scan_hip
 #define EIGEN_DEFAULT_DENSE_INDEX_TYPE int
 #define EIGEN_USE_GPU
 
+#ifdef __NVCC__
 #if defined __CUDACC_VER__ && __CUDACC_VER__ >= 70500
 #include <cuda_fp16.h>
+#endif
 #endif
 #include "main.h"
 #include <unsupported/Eigen/CXX11/Tensor>
@@ -23,7 +25,7 @@ using Eigen::Tensor;
 typedef Tensor<float, 1>::DimensionPair DimPair;
 
 template<int DataLayout>
-void test_cuda_cumsum(int m_size, int k_size, int n_size)
+void test_hip_cumsum(int m_size, int k_size, int n_size)
 {
   std::cout << "Testing for (" << m_size << "," << k_size << "," << n_size << ")" << std::endl;
   Tensor<float, 3, DataLayout> t_input(m_size, k_size, n_size);
@@ -43,7 +45,7 @@ void test_cuda_cumsum(int m_size, int k_size, int n_size)
 
   hipMemcpy(d_t_input, t_input.data(), t_input_bytes, hipMemcpyHostToDevice);
 
-  Eigen::CudaStreamDevice stream;
+  Eigen::HipStreamDevice stream;
   Eigen::GpuDevice gpu_device(&stream);
 
   Eigen::TensorMap<Eigen::Tensor<float, 3, DataLayout> >
@@ -72,8 +74,8 @@ void test_cuda_cumsum(int m_size, int k_size, int n_size)
 }
 
 
-void test_cxx11_tensor_scan_cuda()
+void test_cxx11_tensor_scan_hip()
 {
-  CALL_SUBTEST_1(test_cuda_cumsum<ColMajor>(128, 128, 128));
-  CALL_SUBTEST_2(test_cuda_cumsum<RowMajor>(128, 128, 128));
+  CALL_SUBTEST_1(test_hip_cumsum<ColMajor>(128, 128, 128));
+  CALL_SUBTEST_2(test_hip_cumsum<RowMajor>(128, 128, 128));
 }

@@ -9,18 +9,20 @@
 
 #define EIGEN_TEST_NO_LONGDOUBLE
 #define EIGEN_TEST_NO_COMPLEX
-#define EIGEN_TEST_FUNC cxx11_tensor_cuda
+#define EIGEN_TEST_FUNC cxx11_tensor_hip
 #define EIGEN_USE_GPU
 
+#ifdef __NVCC__
 #if defined __CUDACC_VER__ && __CUDACC_VER__ >= 70500
 #include <cuda_fp16.h>
+#endif
 #endif
 #include "main.h"
 #include <unsupported/Eigen/CXX11/Tensor>
 
 using Eigen::Tensor;
 
-void test_cuda_nullary() {
+void test_hip_nullary() {
   Tensor<float, 1, 0, int> in1(2);
   Tensor<float, 1, 0, int> in2(2);
   in1.setRandom();
@@ -35,7 +37,7 @@ void test_cuda_nullary() {
   hipMemcpy(d_in1, in1.data(), tensor_bytes, hipMemcpyHostToDevice);
   hipMemcpy(d_in2, in2.data(), tensor_bytes, hipMemcpyHostToDevice);
 
-  Eigen::CudaStreamDevice stream;
+  Eigen::HipStreamDevice stream;
   Eigen::GpuDevice gpu_device(&stream);
 
   Eigen::TensorMap<Eigen::Tensor<float, 1, 0, int>, Eigen::Aligned> gpu_in1(
@@ -65,7 +67,7 @@ void test_cuda_nullary() {
   hipFree(d_in2);
 }
 
-void test_cuda_elementwise_small() {
+void test_hip_elementwise_small() {
   Tensor<float, 1> in1(Eigen::array<Eigen::DenseIndex, 1>(2));
   Tensor<float, 1> in2(Eigen::array<Eigen::DenseIndex, 1>(2));
   Tensor<float, 1> out(Eigen::array<Eigen::DenseIndex, 1>(2));
@@ -86,7 +88,7 @@ void test_cuda_elementwise_small() {
   hipMemcpy(d_in1, in1.data(), in1_bytes, hipMemcpyHostToDevice);
   hipMemcpy(d_in2, in2.data(), in2_bytes, hipMemcpyHostToDevice);
 
-  Eigen::CudaStreamDevice stream;
+  Eigen::HipStreamDevice stream;
   Eigen::GpuDevice gpu_device(&stream);
 
   Eigen::TensorMap<Eigen::Tensor<float, 1>, Eigen::Aligned> gpu_in1(
@@ -113,7 +115,7 @@ void test_cuda_elementwise_small() {
   hipFree(d_out);
 }
 
-void test_cuda_elementwise()
+void test_hip_elementwise()
 {
   Tensor<float, 3> in1(Eigen::array<Eigen::DenseIndex, 3>(72,53,97));
   Tensor<float, 3> in2(Eigen::array<Eigen::DenseIndex, 3>(72,53,97));
@@ -141,7 +143,7 @@ void test_cuda_elementwise()
   hipMemcpy(d_in2, in2.data(), in2_bytes, hipMemcpyHostToDevice);
   hipMemcpy(d_in3, in3.data(), in3_bytes, hipMemcpyHostToDevice);
 
-  Eigen::CudaStreamDevice stream;
+  Eigen::HipStreamDevice stream;
   Eigen::GpuDevice gpu_device(&stream);
 
   Eigen::TensorMap<Eigen::Tensor<float, 3> > gpu_in1(d_in1, Eigen::array<Eigen::DenseIndex, 3>(72,53,97));
@@ -168,7 +170,7 @@ void test_cuda_elementwise()
   hipFree(d_out);
 }
 
-void test_cuda_props() {
+void test_hip_props() {
   Tensor<float, 1> in1(200);
   Tensor<bool, 1> out(200);
   in1.setRandom();
@@ -183,7 +185,7 @@ void test_cuda_props() {
 
   hipMemcpy(d_in1, in1.data(), in1_bytes, hipMemcpyHostToDevice);
 
-  Eigen::CudaStreamDevice stream;
+  Eigen::HipStreamDevice stream;
   Eigen::GpuDevice gpu_device(&stream);
 
   Eigen::TensorMap<Eigen::Tensor<float, 1>, Eigen::Aligned> gpu_in1(
@@ -205,7 +207,7 @@ void test_cuda_props() {
   hipFree(d_out);
 }
 
-void test_cuda_reduction()
+void test_hip_reduction()
 {
   Tensor<float, 4> in1(72,53,97,113);
   Tensor<float, 2> out(72,97);
@@ -221,7 +223,7 @@ void test_cuda_reduction()
 
   hipMemcpy(d_in1, in1.data(), in1_bytes, hipMemcpyHostToDevice);
 
-  Eigen::CudaStreamDevice stream;
+  Eigen::HipStreamDevice stream;
   Eigen::GpuDevice gpu_device(&stream);
 
   Eigen::TensorMap<Eigen::Tensor<float, 4> > gpu_in1(d_in1, 72,53,97,113);
@@ -254,7 +256,7 @@ void test_cuda_reduction()
 }
 
 template<int DataLayout>
-void test_cuda_contraction()
+void test_hip_contraction()
 {
   // with these dimensions, the output has 300 * 140 elements, which is
   // more than 30 * 1024, which is the number of threads in blocks on
@@ -281,7 +283,7 @@ void test_cuda_contraction()
   hipMemcpy(d_t_left, t_left.data(), t_left_bytes, hipMemcpyHostToDevice);
   hipMemcpy(d_t_right, t_right.data(), t_right_bytes, hipMemcpyHostToDevice);
 
-  Eigen::CudaStreamDevice stream;
+  Eigen::HipStreamDevice stream;
   Eigen::GpuDevice gpu_device(&stream);
 
   Eigen::TensorMap<Eigen::Tensor<float, 4, DataLayout> > gpu_t_left(d_t_left, 6, 50, 3, 31);
@@ -316,7 +318,7 @@ void test_cuda_contraction()
 }
 
 template<int DataLayout>
-void test_cuda_convolution_1d()
+void test_hip_convolution_1d()
 {
   Tensor<float, 4, DataLayout> input(74,37,11,137);
   Tensor<float, 1, DataLayout> kernel(4);
@@ -338,7 +340,7 @@ void test_cuda_convolution_1d()
   hipMemcpy(d_input, input.data(), input_bytes, hipMemcpyHostToDevice);
   hipMemcpy(d_kernel, kernel.data(), kernel_bytes, hipMemcpyHostToDevice);
 
-  Eigen::CudaStreamDevice stream;
+  Eigen::HipStreamDevice stream;
   Eigen::GpuDevice gpu_device(&stream);
 
   Eigen::TensorMap<Eigen::Tensor<float, 4, DataLayout> > gpu_input(d_input, 74,37,11,137);
@@ -369,7 +371,7 @@ void test_cuda_convolution_1d()
   hipFree(d_out);
 }
 
-void test_cuda_convolution_inner_dim_col_major_1d()
+void test_hip_convolution_inner_dim_col_major_1d()
 {
   Tensor<float, 4, ColMajor> input(74,9,11,7);
   Tensor<float, 1, ColMajor> kernel(4);
@@ -391,7 +393,7 @@ void test_cuda_convolution_inner_dim_col_major_1d()
   hipMemcpy(d_input, input.data(), input_bytes, hipMemcpyHostToDevice);
   hipMemcpy(d_kernel, kernel.data(), kernel_bytes, hipMemcpyHostToDevice);
 
-  Eigen::CudaStreamDevice stream;
+  Eigen::HipStreamDevice stream;
   Eigen::GpuDevice gpu_device(&stream);
 
   Eigen::TensorMap<Eigen::Tensor<float, 4, ColMajor> > gpu_input(d_input,74,9,11,7);
@@ -422,7 +424,7 @@ void test_cuda_convolution_inner_dim_col_major_1d()
   hipFree(d_out);
 }
 
-void test_cuda_convolution_inner_dim_row_major_1d()
+void test_hip_convolution_inner_dim_row_major_1d()
 {
   Tensor<float, 4, RowMajor> input(7,9,11,74);
   Tensor<float, 1, RowMajor> kernel(4);
@@ -444,7 +446,7 @@ void test_cuda_convolution_inner_dim_row_major_1d()
   hipMemcpy(d_input, input.data(), input_bytes, hipMemcpyHostToDevice);
   hipMemcpy(d_kernel, kernel.data(), kernel_bytes, hipMemcpyHostToDevice);
 
-  Eigen::CudaStreamDevice stream;
+  Eigen::HipStreamDevice stream;
   Eigen::GpuDevice gpu_device(&stream);
 
   Eigen::TensorMap<Eigen::Tensor<float, 4, RowMajor> > gpu_input(d_input, 7,9,11,74);
@@ -476,7 +478,7 @@ void test_cuda_convolution_inner_dim_row_major_1d()
 }
 
 template<int DataLayout>
-void test_cuda_convolution_2d()
+void test_hip_convolution_2d()
 {
   Tensor<float, 4, DataLayout> input(74,37,11,137);
   Tensor<float, 2, DataLayout> kernel(3,4);
@@ -498,7 +500,7 @@ void test_cuda_convolution_2d()
   hipMemcpy(d_input, input.data(), input_bytes, hipMemcpyHostToDevice);
   hipMemcpy(d_kernel, kernel.data(), kernel_bytes, hipMemcpyHostToDevice);
 
-  Eigen::CudaStreamDevice stream;
+  Eigen::HipStreamDevice stream;
   Eigen::GpuDevice gpu_device(&stream);
 
   Eigen::TensorMap<Eigen::Tensor<float, 4, DataLayout> > gpu_input(d_input,74,37,11,137);
@@ -540,7 +542,7 @@ void test_cuda_convolution_2d()
 }
 
 template<int DataLayout>
-void test_cuda_convolution_3d()
+void test_hip_convolution_3d()
 {
   Tensor<float, 5, DataLayout> input(Eigen::array<Eigen::DenseIndex, 5>(74,37,11,137,17));
   Tensor<float, 3, DataLayout> kernel(3,4,2);
@@ -562,7 +564,7 @@ void test_cuda_convolution_3d()
   hipMemcpy(d_input, input.data(), input_bytes, hipMemcpyHostToDevice);
   hipMemcpy(d_kernel, kernel.data(), kernel_bytes, hipMemcpyHostToDevice);
 
-  Eigen::CudaStreamDevice stream;    
+  Eigen::HipStreamDevice stream;    
   Eigen::GpuDevice gpu_device(&stream);
 
   Eigen::TensorMap<Eigen::Tensor<float, 5, DataLayout> > gpu_input(d_input,74,37,11,137,17);
@@ -619,7 +621,7 @@ void test_cuda_convolution_3d()
 
 
 template <typename Scalar>
-void test_cuda_lgamma(const Scalar stddev)
+void test_hip_lgamma(const Scalar stddev)
 {
   Tensor<Scalar, 2> in(72,97);
   in.setRandom();
@@ -636,7 +638,7 @@ void test_cuda_lgamma(const Scalar stddev)
 
   hipMemcpy(d_in, in.data(), bytes, hipMemcpyHostToDevice);
 
-  Eigen::CudaStreamDevice stream;
+  Eigen::HipStreamDevice stream;
   Eigen::GpuDevice gpu_device(&stream);
 
   Eigen::TensorMap<Eigen::Tensor<Scalar, 2> > gpu_in(d_in, 72, 97);
@@ -658,7 +660,7 @@ void test_cuda_lgamma(const Scalar stddev)
 }
 
 template <typename Scalar>
-void test_cuda_digamma()
+void test_hip_digamma()
 {
   Tensor<Scalar, 1> in(7);
   Tensor<Scalar, 1> out(7);
@@ -690,7 +692,7 @@ void test_cuda_digamma()
 
   hipMemcpy(d_in, in.data(), bytes, hipMemcpyHostToDevice);
 
-  Eigen::CudaStreamDevice stream;
+  Eigen::HipStreamDevice stream;
   Eigen::GpuDevice gpu_device(&stream);
 
   Eigen::TensorMap<Eigen::Tensor<Scalar, 1> > gpu_in(d_in, 7);
@@ -713,7 +715,7 @@ void test_cuda_digamma()
 }
 
 template <typename Scalar>
-void test_cuda_zeta()
+void test_hip_zeta()
 {
   Tensor<Scalar, 1> in_x(6);
   Tensor<Scalar, 1> in_q(6);
@@ -754,7 +756,7 @@ void test_cuda_zeta()
   hipMemcpy(d_in_x, in_x.data(), bytes, hipMemcpyHostToDevice);
   hipMemcpy(d_in_q, in_q.data(), bytes, hipMemcpyHostToDevice);
   
-  Eigen::CudaStreamDevice stream;
+  Eigen::HipStreamDevice stream;
   Eigen::GpuDevice gpu_device(&stream);
 
   Eigen::TensorMap<Eigen::Tensor<Scalar, 1> > gpu_in_x(d_in_x, 6);
@@ -781,7 +783,7 @@ void test_cuda_zeta()
 }
 
 template <typename Scalar>
-void test_cuda_polygamma()
+void test_hip_polygamma()
 {
   Tensor<Scalar, 1> in_x(7);
   Tensor<Scalar, 1> in_n(7);
@@ -825,7 +827,7 @@ void test_cuda_polygamma()
   hipMemcpy(d_in_x, in_x.data(), bytes, hipMemcpyHostToDevice);
   hipMemcpy(d_in_n, in_n.data(), bytes, hipMemcpyHostToDevice);
   
-  Eigen::CudaStreamDevice stream;
+  Eigen::HipStreamDevice stream;
   Eigen::GpuDevice gpu_device(&stream);
 
   Eigen::TensorMap<Eigen::Tensor<Scalar, 1> > gpu_in_x(d_in_x, 7);
@@ -847,7 +849,7 @@ void test_cuda_polygamma()
 }
 
 template <typename Scalar>
-void test_cuda_igamma()
+void test_hip_igamma()
 {
   Tensor<Scalar, 2> a(6, 6);
   Tensor<Scalar, 2> x(6, 6);
@@ -890,7 +892,7 @@ void test_cuda_igamma()
   hipMemcpy(d_a, a.data(), bytes, hipMemcpyHostToDevice);
   hipMemcpy(d_x, x.data(), bytes, hipMemcpyHostToDevice);
 
-  Eigen::CudaStreamDevice stream;
+  Eigen::HipStreamDevice stream;
   Eigen::GpuDevice gpu_device(&stream);
 
   Eigen::TensorMap<Eigen::Tensor<Scalar, 2> > gpu_a(d_a, 6, 6);
@@ -918,7 +920,7 @@ void test_cuda_igamma()
 }
 
 template <typename Scalar>
-void test_cuda_igammac()
+void test_hip_igammac()
 {
   Tensor<Scalar, 2> a(6, 6);
   Tensor<Scalar, 2> x(6, 6);
@@ -960,7 +962,7 @@ void test_cuda_igammac()
   hipMemcpy(d_a, a.data(), bytes, hipMemcpyHostToDevice);
   hipMemcpy(d_x, x.data(), bytes, hipMemcpyHostToDevice);
 
-  Eigen::CudaStreamDevice stream;
+  Eigen::HipStreamDevice stream;
   Eigen::GpuDevice gpu_device(&stream);
 
   Eigen::TensorMap<Eigen::Tensor<Scalar, 2> > gpu_a(d_a, 6, 6);
@@ -988,7 +990,7 @@ void test_cuda_igammac()
 }
 
 template <typename Scalar>
-void test_cuda_erf(const Scalar stddev)
+void test_hip_erf(const Scalar stddev)
 {
   Tensor<Scalar, 2> in(72,97);
   in.setRandom();
@@ -1005,7 +1007,7 @@ void test_cuda_erf(const Scalar stddev)
 
   hipMemcpy(d_in, in.data(), bytes, hipMemcpyHostToDevice);
 
-  Eigen::CudaStreamDevice stream;
+  Eigen::HipStreamDevice stream;
   Eigen::GpuDevice gpu_device(&stream);
 
   Eigen::TensorMap<Eigen::Tensor<Scalar, 2> > gpu_in(d_in, 72, 97);
@@ -1027,7 +1029,7 @@ void test_cuda_erf(const Scalar stddev)
 }
 
 template <typename Scalar>
-void test_cuda_erfc(const Scalar stddev)
+void test_hip_erfc(const Scalar stddev)
 {
   Tensor<Scalar, 2> in(72,97);
   in.setRandom();
@@ -1044,7 +1046,7 @@ void test_cuda_erfc(const Scalar stddev)
 
   hipMemcpy(d_in, in.data(), bytes, hipMemcpyHostToDevice);
 
-  Eigen::CudaStreamDevice stream;
+  Eigen::HipStreamDevice stream;
   Eigen::GpuDevice gpu_device(&stream);
 
   Eigen::TensorMap<Eigen::Tensor<Scalar, 2> > gpu_in(d_in, 72, 97);
@@ -1066,7 +1068,7 @@ void test_cuda_erfc(const Scalar stddev)
 }
 
 template <typename Scalar>
-void test_cuda_betainc()
+void test_hip_betainc()
 {
   Tensor<Scalar, 1> in_x(125);
   Tensor<Scalar, 1> in_a(125);
@@ -1184,7 +1186,7 @@ void test_cuda_betainc()
   hipMemcpy(d_in_a, in_a.data(), bytes, hipMemcpyHostToDevice);
   hipMemcpy(d_in_b, in_b.data(), bytes, hipMemcpyHostToDevice);
 
-  Eigen::CudaStreamDevice stream;
+  Eigen::HipStreamDevice stream;
   Eigen::GpuDevice gpu_device(&stream);
 
   Eigen::TensorMap<Eigen::Tensor<Scalar, 1> > gpu_in_x(d_in_x, 125);
@@ -1212,76 +1214,76 @@ void test_cuda_betainc()
 }
 
 
-void test_cxx11_tensor_cuda()
+void test_cxx11_tensor_hip()
 {
-  CALL_SUBTEST_1(test_cuda_nullary());
-  CALL_SUBTEST_1(test_cuda_elementwise_small());
-  CALL_SUBTEST_1(test_cuda_elementwise());
-  CALL_SUBTEST_1(test_cuda_props());
-  CALL_SUBTEST_1(test_cuda_reduction());
-  CALL_SUBTEST_2(test_cuda_contraction<ColMajor>());
-  CALL_SUBTEST_2(test_cuda_contraction<RowMajor>());
-  CALL_SUBTEST_3(test_cuda_convolution_1d<ColMajor>());
-  CALL_SUBTEST_3(test_cuda_convolution_1d<RowMajor>());
-  CALL_SUBTEST_3(test_cuda_convolution_inner_dim_col_major_1d());
-  CALL_SUBTEST_3(test_cuda_convolution_inner_dim_row_major_1d());
-  CALL_SUBTEST_3(test_cuda_convolution_2d<ColMajor>());
-  CALL_SUBTEST_3(test_cuda_convolution_2d<RowMajor>());
-  CALL_SUBTEST_3(test_cuda_convolution_3d<ColMajor>());
-  CALL_SUBTEST_3(test_cuda_convolution_3d<RowMajor>());
+  CALL_SUBTEST_1(test_hip_nullary());
+  CALL_SUBTEST_1(test_hip_elementwise_small());
+  CALL_SUBTEST_1(test_hip_elementwise());
+  CALL_SUBTEST_1(test_hip_props());
+  CALL_SUBTEST_1(test_hip_reduction());
+  CALL_SUBTEST_2(test_hip_contraction<ColMajor>());
+  CALL_SUBTEST_2(test_hip_contraction<RowMajor>());
+  CALL_SUBTEST_3(test_hip_convolution_1d<ColMajor>());
+  CALL_SUBTEST_3(test_hip_convolution_1d<RowMajor>());
+  CALL_SUBTEST_3(test_hip_convolution_inner_dim_col_major_1d());
+  CALL_SUBTEST_3(test_hip_convolution_inner_dim_row_major_1d());
+  CALL_SUBTEST_3(test_hip_convolution_2d<ColMajor>());
+  CALL_SUBTEST_3(test_hip_convolution_2d<RowMajor>());
+  CALL_SUBTEST_3(test_hip_convolution_3d<ColMajor>());
+  CALL_SUBTEST_3(test_hip_convolution_3d<RowMajor>());
 
 #if __cplusplus > 199711L
   // std::erf, std::erfc, and so on where only added in c++11. We use them
   // as a golden reference to validate the results produced by Eigen. Therefore
   // we can only run these tests if we use a c++11 compiler.
-  CALL_SUBTEST_4(test_cuda_lgamma<float>(1.0f));
-  CALL_SUBTEST_4(test_cuda_lgamma<float>(100.0f));
-  CALL_SUBTEST_4(test_cuda_lgamma<float>(0.01f));
-  CALL_SUBTEST_4(test_cuda_lgamma<float>(0.001f));
+  CALL_SUBTEST_4(test_hip_lgamma<float>(1.0f));
+  CALL_SUBTEST_4(test_hip_lgamma<float>(100.0f));
+  CALL_SUBTEST_4(test_hip_lgamma<float>(0.01f));
+  CALL_SUBTEST_4(test_hip_lgamma<float>(0.001f));
 
-  CALL_SUBTEST_4(test_cuda_lgamma<double>(1.0));
-  CALL_SUBTEST_4(test_cuda_lgamma<double>(100.0));
-  CALL_SUBTEST_4(test_cuda_lgamma<double>(0.01));
-  CALL_SUBTEST_4(test_cuda_lgamma<double>(0.001));
+  CALL_SUBTEST_4(test_hip_lgamma<double>(1.0));
+  CALL_SUBTEST_4(test_hip_lgamma<double>(100.0));
+  CALL_SUBTEST_4(test_hip_lgamma<double>(0.01));
+  CALL_SUBTEST_4(test_hip_lgamma<double>(0.001));
 
-  CALL_SUBTEST_4(test_cuda_erf<float>(1.0f));
-  CALL_SUBTEST_4(test_cuda_erf<float>(100.0f));
-  CALL_SUBTEST_4(test_cuda_erf<float>(0.01f));
-  CALL_SUBTEST_4(test_cuda_erf<float>(0.001f));
+  CALL_SUBTEST_4(test_hip_erf<float>(1.0f));
+  CALL_SUBTEST_4(test_hip_erf<float>(100.0f));
+  CALL_SUBTEST_4(test_hip_erf<float>(0.01f));
+  CALL_SUBTEST_4(test_hip_erf<float>(0.001f));
 
-  CALL_SUBTEST_4(test_cuda_erfc<float>(1.0f));
-  // CALL_SUBTEST(test_cuda_erfc<float>(100.0f));
-  CALL_SUBTEST_4(test_cuda_erfc<float>(5.0f)); // CUDA erfc lacks precision for large inputs
-  CALL_SUBTEST_4(test_cuda_erfc<float>(0.01f));
-  CALL_SUBTEST_4(test_cuda_erfc<float>(0.001f));
+  CALL_SUBTEST_4(test_hip_erfc<float>(1.0f));
+  // CALL_SUBTEST(test_hip_erfc<float>(100.0f));
+  CALL_SUBTEST_4(test_hip_erfc<float>(5.0f)); // HIP erfc lacks precision for large inputs
+  CALL_SUBTEST_4(test_hip_erfc<float>(0.01f));
+  CALL_SUBTEST_4(test_hip_erfc<float>(0.001f));
 
-  CALL_SUBTEST_4(test_cuda_erf<double>(1.0));
-  CALL_SUBTEST_4(test_cuda_erf<double>(100.0));
-  CALL_SUBTEST_4(test_cuda_erf<double>(0.01));
-  CALL_SUBTEST_4(test_cuda_erf<double>(0.001));
+  CALL_SUBTEST_4(test_hip_erf<double>(1.0));
+  CALL_SUBTEST_4(test_hip_erf<double>(100.0));
+  CALL_SUBTEST_4(test_hip_erf<double>(0.01));
+  CALL_SUBTEST_4(test_hip_erf<double>(0.001));
 
-  CALL_SUBTEST_4(test_cuda_erfc<double>(1.0));
-  // CALL_SUBTEST(test_cuda_erfc<double>(100.0));
-  CALL_SUBTEST_4(test_cuda_erfc<double>(5.0)); // CUDA erfc lacks precision for large inputs
-  CALL_SUBTEST_4(test_cuda_erfc<double>(0.01));
-  CALL_SUBTEST_4(test_cuda_erfc<double>(0.001));
+  CALL_SUBTEST_4(test_hip_erfc<double>(1.0));
+  // CALL_SUBTEST(test_hip_erfc<double>(100.0));
+  CALL_SUBTEST_4(test_hip_erfc<double>(5.0)); // HIP erfc lacks precision for large inputs
+  CALL_SUBTEST_4(test_hip_erfc<double>(0.01));
+  CALL_SUBTEST_4(test_hip_erfc<double>(0.001));
 
-  CALL_SUBTEST_5(test_cuda_digamma<float>());
-  CALL_SUBTEST_5(test_cuda_digamma<double>());
+  CALL_SUBTEST_5(test_hip_digamma<float>());
+  CALL_SUBTEST_5(test_hip_digamma<double>());
 
-  CALL_SUBTEST_5(test_cuda_polygamma<float>());
-  CALL_SUBTEST_5(test_cuda_polygamma<double>());
+  CALL_SUBTEST_5(test_hip_polygamma<float>());
+  CALL_SUBTEST_5(test_hip_polygamma<double>());
 
-  CALL_SUBTEST_5(test_cuda_zeta<float>());
-  CALL_SUBTEST_5(test_cuda_zeta<double>());
+  CALL_SUBTEST_5(test_hip_zeta<float>());
+  CALL_SUBTEST_5(test_hip_zeta<double>());
 
-  CALL_SUBTEST_5(test_cuda_igamma<float>());
-  CALL_SUBTEST_5(test_cuda_igammac<float>());
+  CALL_SUBTEST_5(test_hip_igamma<float>());
+  CALL_SUBTEST_5(test_hip_igammac<float>());
 
-  CALL_SUBTEST_5(test_cuda_igamma<double>());
-  CALL_SUBTEST_5(test_cuda_igammac<double>());
+  CALL_SUBTEST_5(test_hip_igamma<double>());
+  CALL_SUBTEST_5(test_hip_igammac<double>());
 
-  CALL_SUBTEST_6(test_cuda_betainc<float>());
-  CALL_SUBTEST_6(test_cuda_betainc<double>());
+  CALL_SUBTEST_6(test_hip_betainc<float>());
+  CALL_SUBTEST_6(test_hip_betainc<double>());
 #endif
 }

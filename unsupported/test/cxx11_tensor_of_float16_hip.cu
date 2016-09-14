@@ -9,12 +9,14 @@
 
 #define EIGEN_TEST_NO_LONGDOUBLE
 #define EIGEN_TEST_NO_COMPLEX
-#define EIGEN_TEST_FUNC cxx11_tensor_of_float16_cuda
+#define EIGEN_TEST_FUNC cxx11_tensor_of_float16_hip
 #define EIGEN_DEFAULT_DENSE_INDEX_TYPE int
 #define EIGEN_USE_GPU
 
+#ifdef __NVCC__
 #if defined __CUDACC_VER__ && __CUDACC_VER__ >= 70500
 #include <cuda_fp16.h>
+#endif
 #endif
 #include "main.h"
 #include <unsupported/Eigen/CXX11/Tensor>
@@ -22,8 +24,8 @@
 using Eigen::Tensor;
 
 template<typename>
-void test_cuda_numext() {
-  Eigen::CudaStreamDevice stream;
+void test_hip_numext() {
+  Eigen::HipStreamDevice stream;
   Eigen::GpuDevice gpu_device(&stream);
   int num_elem = 101;
 
@@ -59,11 +61,11 @@ void test_cuda_numext() {
 }
 
 
-#ifdef EIGEN_HAS_CUDA_FP16
+#ifdef EIGEN_HAS_HIP_FP16
 
 template<typename>
-void test_cuda_conversion() {
-  Eigen::CudaStreamDevice stream;
+void test_hip_conversion() {
+  Eigen::HipStreamDevice stream;
   Eigen::GpuDevice gpu_device(&stream);
   int num_elem = 101;
   
@@ -97,8 +99,8 @@ void test_cuda_conversion() {
 }
 
 template<typename>
-void test_cuda_unary() {
-  Eigen::CudaStreamDevice stream;
+void test_hip_unary() {
+  Eigen::HipStreamDevice stream;
   Eigen::GpuDevice gpu_device(&stream);
   int num_elem = 101;
 
@@ -134,8 +136,8 @@ void test_cuda_unary() {
 }
 
 template<typename>
-void test_cuda_elementwise() {
-  Eigen::CudaStreamDevice stream;
+void test_hip_elementwise() {
+  Eigen::HipStreamDevice stream;
   Eigen::GpuDevice gpu_device(&stream);
   int num_elem = 101;
 
@@ -176,8 +178,8 @@ void test_cuda_elementwise() {
 }
 
 template<typename>
-void test_cuda_trancendental() {
-  Eigen::CudaStreamDevice stream;
+void test_hip_trancendental() {
+  Eigen::HipStreamDevice stream;
   Eigen::GpuDevice gpu_device(&stream);
   int num_elem = 101;
 
@@ -264,8 +266,8 @@ void test_cuda_trancendental() {
 }
 
 template<typename>
-void test_cuda_contractions() {
-  Eigen::CudaStreamDevice stream;
+void test_hip_contractions() {
+  Eigen::HipStreamDevice stream;
   Eigen::GpuDevice gpu_device(&stream);
   int rows = 23;
   int cols = 23;
@@ -315,12 +317,12 @@ void test_cuda_contractions() {
 }
 
 template<typename>
-void test_cuda_reductions(int size1, int size2, int redux) {
+void test_hip_reductions(int size1, int size2, int redux) {
 
    std::cout << "Reducing " << size1 << " by " << size2
              << " tensor along dim " << redux << std::endl; 
 
-  Eigen::CudaStreamDevice stream;
+  Eigen::HipStreamDevice stream;
   Eigen::GpuDevice gpu_device(&stream);
   int num_elem = size1*size2;
   int result_size = (redux == 1 ? size1 : size2);
@@ -364,20 +366,20 @@ void test_cuda_reductions(int size1, int size2, int redux) {
 }
 
 template<typename>
-void test_cuda_reductions() {
-  test_cuda_reductions<void>(13, 13, 0);
-  test_cuda_reductions<void>(13, 13, 1);
+void test_hip_reductions() {
+  test_hip_reductions<void>(13, 13, 0);
+  test_hip_reductions<void>(13, 13, 1);
 
-  test_cuda_reductions<void>(35, 36, 0);
-  test_cuda_reductions<void>(35, 36, 1);
+  test_hip_reductions<void>(35, 36, 0);
+  test_hip_reductions<void>(35, 36, 1);
 
-  test_cuda_reductions<void>(36, 35, 0);
-  test_cuda_reductions<void>(36, 35, 1);
+  test_hip_reductions<void>(36, 35, 0);
+  test_hip_reductions<void>(36, 35, 1);
 }
 
 template<typename>
-void test_cuda_full_reductions() {
-  Eigen::CudaStreamDevice stream;
+void test_hip_full_reductions() {
+  Eigen::HipStreamDevice stream;
   Eigen::GpuDevice gpu_device(&stream);
   int size = 13;
   int num_elem = size*size;
@@ -425,9 +427,9 @@ void test_cuda_full_reductions() {
 }
 
 template<typename>
-void test_cuda_forced_evals() {
+void test_hip_forced_evals() {
 
-  Eigen::CudaStreamDevice stream;
+  Eigen::HipStreamDevice stream;
   Eigen::GpuDevice gpu_device(&stream);
   int num_elem = 101;
 
@@ -475,20 +477,20 @@ void test_cuda_forced_evals() {
 #endif
 
 
-void test_cxx11_tensor_of_float16_cuda()
+void test_cxx11_tensor_of_float16_hip()
 {
-  CALL_SUBTEST_1(test_cuda_numext<void>());
+  CALL_SUBTEST_1(test_hip_numext<void>());
 
-#ifdef EIGEN_HAS_CUDA_FP16
-  CALL_SUBTEST_1(test_cuda_conversion<void>());
-  CALL_SUBTEST_1(test_cuda_unary<void>());
-  CALL_SUBTEST_1(test_cuda_elementwise<void>());
-  CALL_SUBTEST_1(test_cuda_trancendental<void>());
-  CALL_SUBTEST_2(test_cuda_contractions<void>());
-  CALL_SUBTEST_3(test_cuda_reductions<void>());
-  CALL_SUBTEST_4(test_cuda_full_reductions<void>());
-  CALL_SUBTEST_5(test_cuda_forced_evals<void>());
+#ifdef EIGEN_HAS_HIP_FP16
+  CALL_SUBTEST_1(test_hip_conversion<void>());
+  CALL_SUBTEST_1(test_hip_unary<void>());
+  CALL_SUBTEST_1(test_hip_elementwise<void>());
+  CALL_SUBTEST_1(test_hip_trancendental<void>());
+  CALL_SUBTEST_2(test_hip_contractions<void>());
+  CALL_SUBTEST_3(test_hip_reductions<void>());
+  CALL_SUBTEST_4(test_hip_full_reductions<void>());
+  CALL_SUBTEST_5(test_hip_forced_evals<void>());
 #else
-  std::cout << "Half floats are not supported by this version of cuda: skipping the test" << std::endl;
+  std::cout << "Half floats are not supported by this version of hip: skipping the test" << std::endl;
 #endif
 }

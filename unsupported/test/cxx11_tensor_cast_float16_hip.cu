@@ -9,20 +9,22 @@
 
 #define EIGEN_TEST_NO_LONGDOUBLE
 #define EIGEN_TEST_NO_COMPLEX
-#define EIGEN_TEST_FUNC cxx11_tensor_cast_float16_cuda
+#define EIGEN_TEST_FUNC cxx11_tensor_cast_float16_hip
 #define EIGEN_DEFAULT_DENSE_INDEX_TYPE int
 #define EIGEN_USE_GPU
 
+#ifdef __NVCC__
 #if defined __CUDACC_VER__ && __CUDACC_VER__ >= 70500
 #include <cuda_fp16.h>
+#endif
 #endif
 #include "main.h"
 #include <unsupported/Eigen/CXX11/Tensor>
 
 using Eigen::Tensor;
 
-void test_cuda_conversion() {
-  Eigen::CudaStreamDevice stream;
+void test_hip_conversion() {
+  Eigen::HipStreamDevice stream;
   Eigen::GpuDevice gpu_device(&stream);
   int num_elem = 101;
 
@@ -75,8 +77,8 @@ void test_fallback_conversion() {
 }
 
 
-void test_cxx11_tensor_cast_float16_cuda()
+void test_cxx11_tensor_cast_float16_hip()
 {
-  CALL_SUBTEST(test_cuda_conversion());
+  CALL_SUBTEST(test_hip_conversion());
   CALL_SUBTEST(test_fallback_conversion());
 }
