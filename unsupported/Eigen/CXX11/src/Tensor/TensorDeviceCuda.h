@@ -7,15 +7,15 @@
 // Public License v. 2.0. If a copy of the MPL was not distributed
 // with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#if defined(EIGEN_USE_GPU) && !defined(EIGEN_CXX11_TENSOR_TENSOR_DEVICE_CUDA_H)
-#define EIGEN_CXX11_TENSOR_TENSOR_DEVICE_CUDA_H
+#if defined(EIGEN_USE_GPU) && !defined(EIGEN_CXX11_TENSOR_TENSOR_DEVICE_HIP_H)
+#define EIGEN_CXX11_TENSOR_TENSOR_DEVICE_HIP_H
 
 namespace Eigen {
 
-static const int kCudaScratchSize = 1024;
+static const int kHipScratchSize = 1024;
 
 // This defines an interface that GPUDevice can take to use
-// CUDA streams underneath.
+// HIP streams underneath.
 class StreamInterface {
  public:
   virtual ~StreamInterface() {}
@@ -46,7 +46,7 @@ static void initializeDeviceProp() {
       int num_devices;
       hipError_t status = hipGetDeviceCount(&num_devices);
       if (status != hipSuccess) {
-        std::cerr << "Failed to get the number of CUDA devices: "
+        std::cerr << "Failed to get the number of HIP devices: "
                   << hipGetErrorString(status)
                   << std::endl;
         assert(status == hipSuccess);
@@ -55,7 +55,7 @@ static void initializeDeviceProp() {
       for (int i = 0; i < num_devices; ++i) {
         status = hipGetDeviceProperties(&m_deviceProperties[i], i);
         if (status != hipSuccess) {
-          std::cerr << "Failed to initialize CUDA device #"
+          std::cerr << "Failed to initialize HIP device #"
                     << i
                     << ": "
                     << hipGetErrorString(status)
@@ -70,22 +70,22 @@ static void initializeDeviceProp() {
 
 static const hipStream_t default_stream = hipStreamDefault;
 
-class CudaStreamDevice : public StreamInterface {
+class HipStreamDevice : public StreamInterface {
  public:
   // Use the default stream on the current device
-  CudaStreamDevice() : stream_(&default_stream), scratch_(NULL), semaphore_(NULL) {
+  HipStreamDevice() : stream_(&default_stream), scratch_(NULL), semaphore_(NULL) {
     hipGetDevice(&device_);
     initializeDeviceProp();
   }
   // Use the default stream on the specified device
-  CudaStreamDevice(int device) : stream_(&default_stream), device_(device), scratch_(NULL), semaphore_(NULL) {
+  HipStreamDevice(int device) : stream_(&default_stream), device_(device), scratch_(NULL), semaphore_(NULL) {
     initializeDeviceProp();
   }
   // Use the specified stream. Note that it's the
   // caller responsibility to ensure that the stream can run on
   // the specified device. If no device is specified the code
   // assumes that the stream is associated to the current gpu device.
-  CudaStreamDevice(const hipStream_t* stream, int device = -1)
+  HipStreamDevice(const hipStream_t* stream, int device = -1)
       : stream_(stream), device_(device), scratch_(NULL), semaphore_(NULL) {
     if (device < 0) {
       hipGetDevice(&device_);
@@ -100,7 +100,7 @@ class CudaStreamDevice : public StreamInterface {
     initializeDeviceProp();
   }
 
-  virtual ~CudaStreamDevice() {
+  virtual ~HipStreamDevice() {
     if (scratch_) {
       deallocate(scratch_);
     }
@@ -131,14 +131,14 @@ class CudaStreamDevice : public StreamInterface {
 
   virtual void* scratchpad() const {
     if (scratch_ == NULL) {
-      scratch_ = allocate(kCudaScratchSize + sizeof(unsigned int));
+      scratch_ = allocate(kHipScratchSize + sizeof(unsigned int));
     }
     return scratch_;
   }
 
   virtual unsigned int* semaphore() const {
     if (semaphore_ == NULL) {
-      char* scratch = static_cast<char*>(scratchpad()) + kCudaScratchSize;
+      char* scratch = static_cast<char*>(scratchpad()) + kHipScratchSize;
       semaphore_ = reinterpret_cast<unsigned int*>(scratch);
       hipError_t err = hipMemsetAsync(semaphore_, 0, sizeof(unsigned int), *stream_);
       EIGEN_UNUSED_VARIABLE(err)
@@ -169,7 +169,7 @@ struct GpuDevice {
   }
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void* allocate(size_t num_bytes) const {
-#ifndef __CUDA_ARCH__
+#if !defined(__HIP_DEVICE_COMPILE__) || (__HIP_DEVICE_COMPILE__ == 0)
     return stream_->allocate(num_bytes);
 #else
     eigen_assert(false && "The default device should be used instead to generate kernel code");
@@ -178,7 +178,7 @@ struct GpuDevice {
   }
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void deallocate(void* buffer) const {
-#ifndef __CUDA_ARCH__
+#if !defined(__HIP_DEVICE_COMPILE__) || (__HIP_DEVICE_COMPILE__ == 0)
     stream_->deallocate(buffer);
 #else
     eigen_assert(false && "The default device should be used instead to generate kernel code");
@@ -186,7 +186,7 @@ struct GpuDevice {
   }
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void* scratchpad() const {
-#ifndef __CUDA_ARCH__
+#if !defined(__HIP_DEVICE_COMPILE__) || (__HIP_DEVICE_COMPILE__ == 0)
     return stream_->scratchpad();
 #else
     eigen_assert(false && "The default device should be used instead to generate kernel code");
@@ -195,7 +195,7 @@ struct GpuDevice {
   }
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE unsigned int* semaphore() const {
-#ifndef __CUDA_ARCH__
+#if !defined(__HIP_DEVICE_COMPILE__) || (__HIP_DEVICE_COMPILE__ == 0)
     return stream_->semaphore();
 #else
     eigen_assert(false && "The default device should be used instead to generate kernel code");
@@ -204,7 +204,7 @@ struct GpuDevice {
   }
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void memcpy(void* dst, const void* src, size_t n) const {
-#ifndef __CUDA_ARCH__
+#if !defined(__HIP_DEVICE_COMPILE__) || (__HIP_DEVICE_COMPILE__ == 0)
     hipError_t err = hipMemcpyAsync(dst, src, n, hipMemcpyDeviceToDevice,
                                       stream_->stream());
     EIGEN_UNUSED_VARIABLE(err)
@@ -215,7 +215,7 @@ struct GpuDevice {
   }
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void memcpyHostToDevice(void* dst, const void* src, size_t n) const {
-#ifndef __CUDA_ARCH__
+#if !defined(__HIP_DEVICE_COMPILE__) || (__HIP_DEVICE_COMPILE__ == 0)
     hipError_t err =
         hipMemcpyAsync(dst, src, n, hipMemcpyHostToDevice, stream_->stream());
     EIGEN_UNUSED_VARIABLE(err)
@@ -226,7 +226,7 @@ struct GpuDevice {
   }
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void memcpyDeviceToHost(void* dst, const void* src, size_t n) const {
-#ifndef __CUDA_ARCH__
+#if !defined(__HIP_DEVICE_COMPILE__) || (__HIP_DEVICE_COMPILE__ == 0)
     hipError_t err =
         hipMemcpyAsync(dst, src, n, hipMemcpyDeviceToHost, stream_->stream());
     EIGEN_UNUSED_VARIABLE(err)
@@ -237,7 +237,7 @@ struct GpuDevice {
   }
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void memset(void* buffer, int c, size_t n) const {
-#ifndef __CUDA_ARCH__
+#if !defined(__HIP_DEVICE_COMPILE__) || (__HIP_DEVICE_COMPILE__ == 0)
     hipError_t err = hipMemsetAsync(buffer, c, n, stream_->stream());
     EIGEN_UNUSED_VARIABLE(err)
     assert(err == hipSuccess);
@@ -258,15 +258,16 @@ struct GpuDevice {
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE size_t lastLevelCacheSize() const {
     // We won't try to take advantage of the l2 cache for the time being, and
-    // there is no l3 cache on cuda devices.
+    // there is no l3 cache on hip devices.
     return firstLevelCacheSize();
   }
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void synchronize() const {
-#if defined(__HIPCC__) && !defined(__CUDA_ARCH__)
+#if defined(__HIPCC__) && \
+    !defined(__HIP_DEVICE_COMPILE__) || (__HIP_DEVICE_COMPILE__ == 0)
     hipError_t err = hipStreamSynchronize(stream_->stream());
     if (err != hipSuccess) {
-      std::cerr << "Error detected in CUDA stream: "
+      std::cerr << "Error detected in HIP stream: "
                 << hipGetErrorString(err)
                 << std::endl;
       assert(err == hipSuccess);
@@ -276,24 +277,24 @@ struct GpuDevice {
 #endif
   }
 
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE int getNumCudaMultiProcessors() const {
-#ifndef __CUDA_ARCH__
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE int getNumHipMultiProcessors() const {
+#if !defined(__HIP_DEVICE_COMPILE__) || (__HIP_DEVICE_COMPILE__ == 0)
     return stream_->deviceProperties().multiProcessorCount;
 #else
     eigen_assert(false && "The default device should be used instead to generate kernel code");
     return 0;
 #endif
   }
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE int maxCudaThreadsPerBlock() const {
-#ifndef __CUDA_ARCH__
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE int maxHipThreadsPerBlock() const {
+#if !defined(__HIP_DEVICE_COMPILE__) || (__HIP_DEVICE_COMPILE__ == 0)
     return stream_->deviceProperties().maxThreadsPerBlock;
 #else
     eigen_assert(false && "The default device should be used instead to generate kernel code");
     return 0;
 #endif
   }
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE int maxCudaThreadsPerMultiProcessor() const {
-#ifndef __CUDA_ARCH__
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE int maxHipThreadsPerMultiProcessor() const {
+#if !defined(__HIP_DEVICE_COMPILE__) || (__HIP_DEVICE_COMPILE__ == 0)
     return stream_->deviceProperties().maxThreadsPerMultiProcessor;
 #else
     eigen_assert(false && "The default device should be used instead to generate kernel code");
@@ -301,7 +302,7 @@ struct GpuDevice {
 #endif
   }
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE int sharedMemPerBlock() const {
-#ifndef __CUDA_ARCH__
+#if !defined(__HIP_DEVICE_COMPILE__) || (__HIP_DEVICE_COMPILE__ == 0)
     return stream_->deviceProperties().sharedMemPerBlock;
 #else
     eigen_assert(false && "The default device should be used instead to generate kernel code");
@@ -309,7 +310,7 @@ struct GpuDevice {
 #endif
   }
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE int majorDeviceVersion() const {
-#ifndef __CUDA_ARCH__
+#if !defined(__HIP_DEVICE_COMPILE__) || (__HIP_DEVICE_COMPILE__ == 0)
     return stream_->deviceProperties().major;
 #else
     eigen_assert(false && "The default device should be used instead to generate kernel code");
@@ -317,7 +318,7 @@ struct GpuDevice {
 #endif
   }
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE int minorDeviceVersion() const {
-#ifndef __CUDA_ARCH__
+#if !defined(__HIP_DEVICE_COMPILE__) || (__HIP_DEVICE_COMPILE__ == 0)
     return stream_->deviceProperties().minor;
 #else
     eigen_assert(false && "The default device should be used instead to generate kernel code");
@@ -329,7 +330,7 @@ struct GpuDevice {
     return max_blocks_;
   }
 
-  // This function checks if the CUDA runtime recorded an error for the
+  // This function checks if the HIP runtime recorded an error for the
   // underlying stream device.
   inline bool ok() const {
 #ifdef __HIPCC__
@@ -345,15 +346,15 @@ struct GpuDevice {
   int max_blocks_;
 };
 
-#define LAUNCH_CUDA_KERNEL(kernel, gridsize, blocksize, sharedmem, device, ...)             \
+#define LAUNCH_HIP_KERNEL(kernel, gridsize, blocksize, sharedmem, device, ...)             \
   (kernel) <<< (gridsize), (blocksize), (sharedmem), (device).stream() >>> (__VA_ARGS__);   \
   assert(hipGetLastError() == hipSuccess);
 
 
 // FIXME: Should be device and kernel specific.
 #ifdef __HIPCC__
-static EIGEN_DEVICE_FUNC inline void setCudaSharedMemConfig(hipSharedMemConfig config) {
-#ifndef __CUDA_ARCH__
+static EIGEN_DEVICE_FUNC inline void setHipSharedMemConfig(hipSharedMemConfig config) {
+#if !defined(__HIP_DEVICE_COMPILE__) || (__HIP_DEVICE_COMPILE__ == 0)
   hipError_t status = hipDeviceSetSharedMemConfig(config);
   EIGEN_UNUSED_VARIABLE(status)
   assert(status == hipSuccess);
@@ -365,4 +366,4 @@ static EIGEN_DEVICE_FUNC inline void setCudaSharedMemConfig(hipSharedMemConfig c
 
 }  // end namespace Eigen
 
-#endif  // EIGEN_CXX11_TENSOR_TENSOR_DEVICE_CUDA_H
+#endif  // EIGEN_CXX11_TENSOR_TENSOR_DEVICE_HIP_H

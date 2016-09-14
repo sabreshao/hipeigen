@@ -35,43 +35,45 @@ struct DefaultDevice {
   }
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE size_t numThreads() const {
-#ifndef __CUDA_ARCH__
+#if !defined(__HIP_DEVICE_COMPILE__) || (__HIP_DEVICE_COMPILE__ == 0)
     // Running on the host CPU
     return 1;
 #else
-    // Running on a CUDA device
+    // Running on a HIP device
     return 32;
 #endif
   }
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE size_t firstLevelCacheSize() const {
-#ifndef __CUDA_ARCH__
+#if !defined(__HIP_DEVICE_COMPILE__) || (__HIP_DEVICE_COMPILE__ == 0)
     // Running on the host CPU
     return l1CacheSize();
 #else
-    // Running on a CUDA device, return the amount of shared memory available.
+    // Running on a HIP device, return the amount of shared memory available.
     return 48*1024;
 #endif
   }
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE size_t lastLevelCacheSize() const {
-#ifndef __CUDA_ARCH__
+#if !defined(__HIP_DEVICE_COMPILE__) || (__HIP_DEVICE_COMPILE__ == 0)
     // Running single threaded on the host CPU
     return l3CacheSize();
 #else
-    // Running on a CUDA device
+    // Running on a HIP device
     return firstLevelCacheSize();
 #endif
   }
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE int majorDeviceVersion() const {
-#ifndef __CUDA_ARCH__
+#if !defined(__HIP_DEVICE_COMPILE__) || (__HIP_DEVICE_COMPILE__ == 0)
     // Running single threaded on the host CPU
     // Should return an enum that encodes the ISA supported by the CPU
     return 1;
 #else
-    // Running on a CUDA device
-    return __CUDA_ARCH__ / 100;
+    // Running on a HIP device
+    #ifdef __NVCC__
+        return __CUDA_ARCH__ / 100;
+    #endif
 #endif
   }
 };

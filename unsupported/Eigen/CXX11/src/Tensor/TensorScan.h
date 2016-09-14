@@ -278,7 +278,7 @@ struct ScanLauncher<Self, Reducer, GpuDevice> {
      Index total_size = internal::array_prod(self.dimensions());
      Index num_blocks = (total_size / self.size() + 63) / 64;
      Index block_size = 64;
-     LAUNCH_CUDA_KERNEL((ScanKernel<Self, Reducer>), num_blocks, block_size, 0, self.device(), self, total_size, data);
+     LAUNCH_HIP_KERNEL((ScanKernel<Self, Reducer>), num_blocks, block_size, 0, self.device(), self, total_size, data);
   }
 };
 #endif  // EIGEN_USE_GPU && __HIPCC__

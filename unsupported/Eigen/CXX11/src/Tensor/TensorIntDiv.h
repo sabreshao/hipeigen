@@ -35,7 +35,7 @@ namespace {
   EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE
   typename internal::enable_if<sizeof(T)==4,int>::type count_leading_zeros(const T val)
   {
-#ifdef __CUDA_ARCH__
+#if defined(__HIP_DEVICE_COMPILE__) && (__HIP_DEVICE_COMPILE__ == 1)
     return __clz(val);
 #elif EIGEN_COMP_MSVC
     unsigned long index;
@@ -51,7 +51,7 @@ namespace {
   EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE
   typename internal::enable_if<sizeof(T)==8,int>::type count_leading_zeros(const T val)
   {
-#ifdef __CUDA_ARCH__
+#if defined(__HIP_DEVICE_COMPILE__) && (__HIP_DEVICE_COMPILE__ == 1)
     return __clzll(val);
 #elif EIGEN_COMP_MSVC && EIGEN_ARCH_x86_64
     unsigned long index;
@@ -86,7 +86,7 @@ namespace {
 
   template <typename T>
   EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE uint32_t muluh(const uint32_t a, const T b) {
-#if defined(__CUDA_ARCH__)
+#if defined(__HIP_DEVICE_COMPILE__) && (__HIP_DEVICE_COMPILE__ == 1)
     return __umulhi(a, b);
 #else
     return (static_cast<uint64_t>(a) * b) >> 32;
@@ -95,7 +95,7 @@ namespace {
 
   template <typename T>
   EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE uint64_t muluh(const uint64_t a, const T b) {
-#if defined(__CUDA_ARCH__)
+#if defined(__HIP_DEVICE_COMPILE__) && (__HIP_DEVICE_COMPILE__ == 1)
     return __umul64hi(a, b);
 #elif defined(__SIZEOF_INT128__)
     __uint128_t v = static_cast<__uint128_t>(a) * static_cast<__uint128_t>(b);
@@ -116,7 +116,7 @@ namespace {
   template <typename T>
   struct DividerHelper<64, T> {
     static EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE uint64_t computeMultiplier(const int log_div, const T divider) {
-#if defined(__SIZEOF_INT128__) && !defined(__CUDA_ARCH__)
+#if defined(__SIZEOF_INT128__) && (!defined(__HIP_DEVICE_COMPILE__) || (__HIP_DEVICE_COMPILE__ == 0))
       return static_cast<uint64_t>((static_cast<__uint128_t>(1) << (64+log_div)) / static_cast<__uint128_t>(divider) - (static_cast<__uint128_t>(1) << 64) + 1);
 #else
       const uint64_t shift = 1ULL << log_div;
@@ -195,7 +195,7 @@ class TensorIntDivisor<int32_t, true> {
   }
 
   EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE int divide(const int32_t n) const {
-#ifdef __CUDA_ARCH__
+#if defined(__HIP_DEVICE_COMPILE__) && (__HIP_DEVICE_COMPILE__ == 1)
     return (__umulhi(magic, n) >> shift);
 #else
     uint64_t v = static_cast<uint64_t>(magic) * static_cast<uint64_t>(n);

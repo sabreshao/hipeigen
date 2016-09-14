@@ -442,7 +442,7 @@ struct reducer_traits<ArgMinTupleReducer<T>, Device> {
 
 // Random number generation
 namespace {
-#ifdef __CUDA_ARCH__
+#if defined(__HIP_DEVICE_COMPILE__) && (__HIP_DEVICE_COMPILE__ == 1)
 __device__ int get_random_seed() {
     return clock();
 }
@@ -463,8 +463,9 @@ static inline int get_random_seed() {
 #endif
 }
 
-#if !defined (EIGEN_USE_GPU) || !defined(__HIPCC__) || !defined(__CUDA_ARCH__)
-// We're not compiling a cuda kernel
+#if !defined (EIGEN_USE_GPU) || !defined(__HIPCC__) || \
+    !defined(__HIP_DEVICE_COMPILE__) || (__HIP_DEVICE_COMPILE__ == 0)
+// We're not compiling a hip kernel
 template <typename T> class UniformRandomGenerator {
 
  public:
@@ -580,7 +581,7 @@ template <> class UniformRandomGenerator<double> {
 
 #else
 
-// We're compiling a cuda kernel
+// We're compiling a hip kernel
 template <typename T> class UniformRandomGenerator;
 
 template <> class UniformRandomGenerator<float> {
@@ -706,8 +707,10 @@ struct functor_traits<UniformRandomGenerator<Scalar> > {
 
 
 
-#if (!defined (EIGEN_USE_GPU) || !defined(__HIPCC__) || !defined(__CUDA_ARCH__)) && (__cplusplus > 199711 || EIGEN_COMP_MSVC >= 1900)
-// We're not compiling a cuda kernel
+#if (!defined (EIGEN_USE_GPU) || !defined(__HIPCC__) || \
+    !defined(__HIP_DEVICE_COMPILE__) || (__HIP_DEVICE_COMPILE__ == 0)) && \
+    (defined(__HCC__) || (defined(__NVCC__) && __cplusplus > 199711 || EIGEN_COMP_MSVC >= 1900))
+// We're not compiling a hip kernel
 template <typename T> class NormalRandomGenerator {
  public:
   static const bool PacketAccess = true;
@@ -746,9 +749,9 @@ template <typename T> class NormalRandomGenerator {
   std::mt19937* m_generator;
 };
 
-#elif defined (EIGEN_USE_GPU) && defined(__HIPCC__) && defined(__CUDA_ARCH__)
+#elif defined (EIGEN_USE_GPU) && defined(__HIPCC__) && defined(__HIP_DEVICE_COMPILE__) && (__HIP_DEVICE_COMPILE__ == 1)
 
-// We're compiling a cuda kernel
+// We're compiling a hip kernel
 template <typename T> class NormalRandomGenerator;
 
 template <> class NormalRandomGenerator<float> {

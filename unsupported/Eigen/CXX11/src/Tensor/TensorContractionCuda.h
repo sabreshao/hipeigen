@@ -10,8 +10,8 @@
 // Public License v. 2.0. If a copy of the MPL was not distributed
 // with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#ifndef EIGEN_CXX11_TENSOR_TENSOR_CONTRACTION_CUDA_H
-#define EIGEN_CXX11_TENSOR_TENSOR_CONTRACTION_CUDA_H
+#ifndef EIGEN_CXX11_TENSOR_TENSOR_CONTRACTION_HIP_H
+#define EIGEN_CXX11_TENSOR_TENSOR_CONTRACTION_HIP_H
 
 #if defined(EIGEN_USE_GPU) && defined(__HIPCC__)
 
@@ -1261,7 +1261,7 @@ struct TensorEvaluator<const TensorContractionOp<Indices, LeftArgType, RightArgT
   EIGEN_DEVICE_FUNC TensorEvaluator(const XprType& op, const Device& device) :
       Base(op, device) {}
 
-  // We need to redefine this method to make nvcc happy
+  // We need to redefine this method to make hipcc happy
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE bool evalSubExprsIfNeeded(Scalar* data) {
     this->m_leftImpl.evalSubExprsIfNeeded(NULL);
     this->m_rightImpl.evalSubExprsIfNeeded(NULL);
@@ -1320,7 +1320,7 @@ struct TensorEvaluator<const TensorContractionOp<Indices, LeftArgType, RightArgT
     const Index n_blocks = (n + 63) / 64;
     const dim3 num_blocks(m_blocks, n_blocks, 1);
     const dim3 block_size(8, 8, 8);
-    LAUNCH_CUDA_KERNEL((EigenContractionKernel<Scalar, Index, LhsMapper, RhsMapper, OutputMapper>), num_blocks, block_size, 0, device, lhs, rhs, output, m, n, k);
+    LAUNCH_HIP_KERNEL((EigenContractionKernel<Scalar, Index, LhsMapper, RhsMapper, OutputMapper>), num_blocks, block_size, 0, device, lhs, rhs, output, m, n, k);
     }
   };
 
@@ -1331,13 +1331,13 @@ struct TensorEvaluator<const TensorContractionOp<Indices, LeftArgType, RightArgT
         const Index n_blocks = (n + 63) / 64;
         const dim3 num_blocks(m_blocks, n_blocks, 1);
         const dim3 block_size(16, 16, 1);
-        LAUNCH_CUDA_KERNEL((EigenFloatContractionKernel16x16<Index, LhsMapper, RhsMapper, OutputMapper>), num_blocks, block_size, 0, device, lhs, rhs, output, m, n, k);
+        LAUNCH_HIP_KERNEL((EigenFloatContractionKernel16x16<Index, LhsMapper, RhsMapper, OutputMapper>), num_blocks, block_size, 0, device, lhs, rhs, output, m, n, k);
       } else {
         const Index m_blocks = (m + 127) / 128;
         const Index n_blocks = (n + 63) / 64;
         const dim3 num_blocks(m_blocks, n_blocks, 1);
         const dim3 block_size(8, 32, 1);
-        LAUNCH_CUDA_KERNEL((EigenFloatContractionKernel<Index, LhsMapper, RhsMapper, OutputMapper>), num_blocks, block_size, 0, device, lhs, rhs, output, m, n, k);
+        LAUNCH_HIP_KERNEL((EigenFloatContractionKernel<Index, LhsMapper, RhsMapper, OutputMapper>), num_blocks, block_size, 0, device, lhs, rhs, output, m, n, k);
       }
     }
   };
@@ -1381,7 +1381,7 @@ struct TensorEvaluator<const TensorContractionOp<Indices, LeftArgType, RightArgT
 
     OutputMapper output(buffer, m);
 
-    setCudaSharedMemConfig(hipSharedMemBankSizeEightByte);
+    setHipSharedMemConfig(hipSharedMemBankSizeEightByte);
     LaunchKernels<LhsScalar, RhsScalar, Index, LhsMapper, RhsMapper, OutputMapper>::Run(lhs, rhs, output,  m, n, k, this->m_device);
   }
 };
@@ -1389,4 +1389,4 @@ struct TensorEvaluator<const TensorContractionOp<Indices, LeftArgType, RightArgT
 } // end namespace Eigen
 
 #endif // EIGEN_USE_GPU and __HIPCC__
-#endif // EIGEN_CXX11_TENSOR_TENSOR_CONTRACTION_CUDA_H
+#endif // EIGEN_CXX11_TENSOR_TENSOR_CONTRACTION_HIP_H

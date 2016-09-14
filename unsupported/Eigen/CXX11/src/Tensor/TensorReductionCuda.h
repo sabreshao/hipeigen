@@ -8,8 +8,8 @@
 // Public License v. 2.0. If a copy of the MPL was not distributed
 // with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#ifndef EIGEN_CXX11_TENSOR_TENSOR_REDUCTION_CUDA_H
-#define EIGEN_CXX11_TENSOR_TENSOR_REDUCTION_CUDA_H
+#ifndef EIGEN_CXX11_TENSOR_TENSOR_REDUCTION_HIP_H
+#define EIGEN_CXX11_TENSOR_TENSOR_REDUCTION_HIP_H
 
 namespace Eigen {
 namespace internal {
@@ -18,13 +18,14 @@ namespace internal {
 #if defined(EIGEN_USE_GPU) && defined(__HIPCC__)
 // Full reducers for GPU, don't vectorize for now
 
-// Reducer function that enables multiple cuda thread to safely accumulate at the same
+// Reducer function that enables multiple hip thread to safely accumulate at the same
 // output address. It basically reads the current value of the output variable, and
-// attempts to update it with the new value. If in the meantime another cuda thread
+// attempts to update it with the new value. If in the meantime another hip thread
 // updated the content of the output address it will try again.
 template <typename T, typename R>
 __device__ EIGEN_ALWAYS_INLINE void atomicReduce(T* output, T accum, R& reducer) {
-#if __CUDA_ARCH__ >= 300
+#if defined(__HIP_DEVICE_COMPILE__) && (__HIP_DEVICE_COMPILE__ == 1) && \
+    defined(__HIP_ARCH_HAS_WARP_SHUFFLE__)
   if (sizeof(T) == 4)
   {
     unsigned int oldval = *reinterpret_cast<unsigned int*>(output);
@@ -80,7 +81,7 @@ __device__ inline double atomicExchCustom(double* address, double val) {
   return __longlong_as_double(atomicExch(address_as_ull, __double_as_longlong(val)));
 }
 
-#ifdef EIGEN_HAS_CUDA_FP16
+#ifdef EIGEN_HAS_HIP_FP16
 template <template <typename T> class R>
 __device__ inline void atomicReduce(half2* output, half2 accum, R<half>& reducer) {
   unsigned int oldval = *reinterpret_cast<unsigned int*>(output);
@@ -103,7 +104,8 @@ __device__ inline void atomicReduce(half2* output, half2 accum, R<half>& reducer
 
 template <>
 __device__ inline void atomicReduce(float* output, float accum, SumReducer<float>&) {
-#if __CUDA_ARCH__ >= 300
+#if defined(__HIP_DEVICE_COMPILE__) && (__HIP_DEVICE_COMPILE__ == 1) &&\
+    defined(__HIP_ARCH_HAS_WARP_SHUFFLE__)
   atomicAdd(output, accum);
 #else
   assert(0 && "Shouldn't be called on unsupported device");
@@ -125,7 +127,8 @@ template <int BlockSize, int NumPerThread, typename Self,
           typename Reducer, typename Index>
 __global__ void FullReductionKernel(hipLaunchParm lp, Reducer reducer, const Self input, Index num_coeffs,
                                     typename Self::CoeffReturnType* output, unsigned int* semaphore) {
-#if __CUDA_ARCH__ >= 300
+#if defined(__HIP_DEVICE_COMPILE__) && (__HIP_DEVICE_COMPILE__ == 1) &&\
+    defined(__HIP_ARCH_HAS_WARP_SHUFFLE__)
   // Initialize the output value
   const Index first_index = hipBlockIdx_x * BlockSize * NumPerThread + hipThreadIdx_x;
   if (hipGridDim_x == 1) {
@@ -186,7 +189,7 @@ __global__ void FullReductionKernel(hipLaunchParm lp, Reducer reducer, const Sel
 }
 
 
-#ifdef EIGEN_HAS_CUDA_FP16
+#ifdef EIGEN_HAS_HIP_FP16
 template <typename Self,
           typename Reducer, typename Index>
 __global__ void ReductionInitFullReduxKernelHalfFloat(hipLaunchParm lp, Reducer reducer, const Self input, Index num_coeffs, half2* scratch) {
@@ -298,12 +301,12 @@ struct FullReductionLauncher<
       semaphore = device.semaphore();
     }
 
-    LAUNCH_CUDA_KERNEL((FullReductionKernel<block_size, num_per_thread, Self, Op, Index>),
+    LAUNCH_HIP_KERNEL((FullReductionKernel<block_size, num_per_thread, Self, Op, Index>),
                        num_blocks, block_size, 0, device, reducer, self, num_coeffs, output, semaphore);
   }
 };
 
-#ifdef EIGEN_HAS_CUDA_FP16
+#ifdef EIGEN_HAS_HIP_FP16
 template <typename Self, typename Op>
 struct FullReductionLauncher<Self, Op, Eigen::half, false> {
   static void run(const Self&, Op&, const GpuDevice&, half*, typename Self::Index) {
@@ -324,15 +327,15 @@ struct FullReductionLauncher<Self, Op, Eigen::half, true> {
     if (num_blocks > 1) {
       // We initialize the output and the scrathpad outside the reduction kernel when we can't be sure that there
       // won't be a race conditions between multiple thread blocks.
-      LAUNCH_CUDA_KERNEL((ReductionInitFullReduxKernelHalfFloat<Self, Op, Index>),
+      LAUNCH_HIP_KERNEL((ReductionInitFullReduxKernelHalfFloat<Self, Op, Index>),
                          1, 1, 0, device, reducer, self, num_coeffs, scratch);
     }
 
-    LAUNCH_CUDA_KERNEL((FullReductionKernelHalfFloat<block_size, num_per_thread, Self, Op, Index>),
+    LAUNCH_HIP_KERNEL((FullReductionKernelHalfFloat<block_size, num_per_thread, Self, Op, Index>),
                        num_blocks, block_size, 0, device, reducer, self, num_coeffs, output, scratch);
 
     if (num_blocks > 1) {
-      LAUNCH_CUDA_KERNEL((ReductionCleanupKernelHalfFloat<Op>),
+      LAUNCH_HIP_KERNEL((ReductionCleanupKernelHalfFloat<Op>),
                          1, 1, 0, device, reducer, output, scratch);
     }
   }
@@ -345,7 +348,7 @@ struct FullReducer<Self, Op, GpuDevice, Vectorizable> {
   // Unfortunately nvidia doesn't support well exotic types such as complex,
   // so reduce the scope of the optimized version of the code to the simple cases
   // of doubles, floats and half floats
-#ifdef EIGEN_HAS_CUDA_FP16
+#ifdef EIGEN_HAS_HIP_FP16
   static const bool HasOptimizedImplementation = !Op::IsStateful &&
       (internal::is_same<typename Self::CoeffReturnType, float>::value ||
        internal::is_same<typename Self::CoeffReturnType, double>::value ||
@@ -374,7 +377,8 @@ template <int NumPerThread, typename Self,
           typename Reducer, typename Index>
 __global__ void InnerReductionKernel(hipLaunchParm lp, Reducer reducer, const Self input, Index num_coeffs_to_reduce, Index num_preserved_coeffs,
                                          typename Self::CoeffReturnType* output) {
-#if __CUDA_ARCH__ >= 300
+#if defined(__HIP_DEVICE_COMPILE__) && (__HIP_DEVICE_COMPILE__ == 1) &&\
+    defined(__HIP_ARCH_HAS_WARP_SHUFFLE__)
   typedef typename Self::CoeffReturnType Type;
   eigen_assert(hipBlockDim_y == 1);
   eigen_assert(hipBlockDim_z == 1);
@@ -440,7 +444,7 @@ __global__ void InnerReductionKernel(hipLaunchParm lp, Reducer reducer, const Se
 #endif
 }
 
-#ifdef EIGEN_HAS_CUDA_FP16
+#ifdef EIGEN_HAS_HIP_FP16
 
 template <int NumPerThread, typename Self,
           typename Reducer, typename Index>
@@ -560,30 +564,30 @@ struct InnerReductionLauncher<
     const int block_size = 256;
     const int num_per_thread = 128;
     const int dyn_blocks = divup<int>(num_coeffs, block_size * num_per_thread);
-    const int max_blocks = device.getNumCudaMultiProcessors() *
-                           device.maxCudaThreadsPerMultiProcessor() / block_size;
+    const int max_blocks = device.getNumHipMultiProcessors() *
+                           device.maxHipThreadsPerMultiProcessor() / block_size;
     const int num_blocks = numext::mini<int>(max_blocks, dyn_blocks);
 
     if (num_blocks > 1) {
       // We initialize the outputs outside the reduction kernel when we can't be sure that there
       // won't be a race conditions between multiple thread blocks.
       const int dyn_blocks = divup<int>(num_preserved_vals, 1024);
-      const int max_blocks = device.getNumCudaMultiProcessors() *
-                           device.maxCudaThreadsPerMultiProcessor() / 1024;
+      const int max_blocks = device.getNumHipMultiProcessors() *
+                           device.maxHipThreadsPerMultiProcessor() / 1024;
       const int num_blocks = numext::mini<int>(max_blocks, dyn_blocks);
-      LAUNCH_CUDA_KERNEL((ReductionInitKernel<OutputType, Index>),
+      LAUNCH_HIP_KERNEL((ReductionInitKernel<OutputType, Index>),
                          num_blocks, 1024, 0, device, reducer.initialize(),
                          num_preserved_vals, output);
     }
 
-    LAUNCH_CUDA_KERNEL((InnerReductionKernel<num_per_thread, Self, Op, Index>),
+    LAUNCH_HIP_KERNEL((InnerReductionKernel<num_per_thread, Self, Op, Index>),
                        num_blocks, block_size, 0, device, reducer, self, num_coeffs_to_reduce, num_preserved_vals, output);
 
     return false;
   }
 };
 
-#ifdef EIGEN_HAS_CUDA_FP16
+#ifdef EIGEN_HAS_HIP_FP16
 template <typename Self, typename Op>
 struct InnerReductionLauncher<Self, Op, Eigen::half, false> {
   static bool run(const Self&, Op&, const GpuDevice&, half*, typename Self::Index, typename Self::Index) {
@@ -606,22 +610,22 @@ struct InnerReductionLauncher<Self, Op, Eigen::half, true> {
     const int block_size = /*256*/128;
     const int num_per_thread = /*128*/64;
     const int dyn_blocks = divup<int>(num_coeffs, block_size * num_per_thread);
-    const int max_blocks = device.getNumCudaMultiProcessors() *
-                           device.maxCudaThreadsPerMultiProcessor() / block_size;
+    const int max_blocks = device.getNumHipMultiProcessors() *
+                           device.maxHipThreadsPerMultiProcessor() / block_size;
     const int num_blocks = numext::mini<int>(max_blocks, dyn_blocks);
 
     if (num_blocks > 1) {
       // We initialize the outputs outside the reduction kernel when we can't be sure that there
       // won't be a race conditions between multiple thread blocks.
       const int dyn_blocks = divup<int>(num_preserved_vals, 1024);
-      const int max_blocks = device.getNumCudaMultiProcessors() *
-                           device.maxCudaThreadsPerMultiProcessor() / 1024;
+      const int max_blocks = device.getNumHipMultiProcessors() *
+                           device.maxHipThreadsPerMultiProcessor() / 1024;
       const int num_blocks = numext::mini<int>(max_blocks, dyn_blocks);
-      LAUNCH_CUDA_KERNEL((ReductionInitKernelHalfFloat<Self, Op, Index>),
+      LAUNCH_HIP_KERNEL((ReductionInitKernelHalfFloat<Self, Op, Index>),
                          1, 1, 0, device, reducer, self, num_preserved_vals, output);
     }
 
-    LAUNCH_CUDA_KERNEL((InnerReductionKernelHalfFloat<num_per_thread, Self, Op, Index>),
+    LAUNCH_HIP_KERNEL((InnerReductionKernelHalfFloat<num_per_thread, Self, Op, Index>),
                        num_blocks, block_size, 0, device, reducer, self, num_coeffs_to_reduce, num_preserved_vals, output);
 
     return false;
@@ -635,7 +639,7 @@ struct InnerReducer<Self, Op, GpuDevice> {
   // Unfortunately nvidia doesn't support well exotic types such as complex,
   // so reduce the scope of the optimized version of the code to the simple case
   // of floats and half floats.
-#ifdef EIGEN_HAS_CUDA_FP16
+#ifdef EIGEN_HAS_HIP_FP16
   static const bool HasOptimizedImplementation = !Op::IsStateful &&
       (internal::is_same<typename Self::CoeffReturnType, float>::value ||
        internal::is_same<typename Self::CoeffReturnType, double>::value ||
@@ -719,23 +723,23 @@ struct OuterReducer<Self, Op, GpuDevice> {
     const int block_size = 256;
     const int num_per_thread = 16;
     const int dyn_blocks = divup<int>(num_coeffs, block_size * num_per_thread);
-    const int max_blocks = device.getNumCudaMultiProcessors() *
-                           device.maxCudaThreadsPerMultiProcessor() / block_size;
+    const int max_blocks = device.getNumHipMultiProcessors() *
+                           device.maxHipThreadsPerMultiProcessor() / block_size;
     const int num_blocks = numext::mini<int>(max_blocks, dyn_blocks);
 
     if (num_blocks > 1) {
       // We initialize the outputs in the reduction kernel itself when we don't have to worry
       // about race conditions between multiple thread blocks.
       const int dyn_blocks = divup<int>(num_preserved_vals, 1024);
-      const int max_blocks = device.getNumCudaMultiProcessors() *
-                             device.maxCudaThreadsPerMultiProcessor() / 1024;
+      const int max_blocks = device.getNumHipMultiProcessors() *
+                             device.maxHipThreadsPerMultiProcessor() / 1024;
       const int num_blocks = numext::mini<int>(max_blocks, dyn_blocks);
-      LAUNCH_CUDA_KERNEL((ReductionInitKernel<float, Index>),
+      LAUNCH_HIP_KERNEL((ReductionInitKernel<float, Index>),
                          num_blocks, 1024, 0, device, reducer.initialize(),
                          num_preserved_vals, output);
     }
 
-    LAUNCH_CUDA_KERNEL((OuterReductionKernel<num_per_thread, Self, Op, Index>),
+    LAUNCH_HIP_KERNEL((OuterReductionKernel<num_per_thread, Self, Op, Index>),
                        num_blocks, block_size, 0, device, reducer, self, num_coeffs_to_reduce, num_preserved_vals, output);
 
     return false;
@@ -748,4 +752,4 @@ struct OuterReducer<Self, Op, GpuDevice> {
 } // end namespace internal
 } // end namespace Eigen
 
-#endif // EIGEN_CXX11_TENSOR_TENSOR_REDUCTION_CUDA_H
+#endif // EIGEN_CXX11_TENSOR_TENSOR_REDUCTION_HIP_H

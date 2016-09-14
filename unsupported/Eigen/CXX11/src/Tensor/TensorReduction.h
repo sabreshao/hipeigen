@@ -320,7 +320,7 @@ template <int B, int N, typename S, typename R, typename I>
 __global__ void FullReductionKernel(hipLaunchParm lp, R, const S, I, typename S::CoeffReturnType*, unsigned int*);
 
 
-#ifdef EIGEN_HAS_CUDA_FP16
+#ifdef EIGEN_HAS_HIP_FP16
 template <typename S, typename R, typename I>
 __global__ void ReductionInitFullReduxKernelHalfFloat(hipLaunchParm lp, R, const S, I, half2*);
 template <int B, int N, typename S, typename R, typename I>
@@ -646,7 +646,7 @@ struct TensorEvaluator<const TensorReductionOp<Op, Dims, ArgType>, Device>
 #endif
 #if defined(EIGEN_USE_GPU) && defined(__HIPCC__)
   template <int B, int N, typename S, typename R, typename I> friend void internal::FullReductionKernel(R, const S, I, typename S::CoeffReturnType*, unsigned int*);
-#ifdef EIGEN_HAS_CUDA_FP16
+#ifdef EIGEN_HAS_HIP_FP16
   template <typename S, typename R, typename I> friend void internal::ReductionInitFullReduxKernelHalfFloat(R, const S, I, half2*);
   template <int B, int N, typename S, typename R, typename I> friend void internal::FullReductionKernelHalfFloat(R, const S, I, half*, half2*);
   template <int NPT, typename S, typename R, typename I> friend void internal::InnerReductionKernelHalfFloat(R, const S, I, I, half*);

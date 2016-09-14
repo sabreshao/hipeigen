@@ -388,7 +388,7 @@ memory by accessing it as a TensorRef.  But not always.  So don't count on it.
 The tensor library provides several implementations of the various operations
 such as contractions and convolutions.  The implementations are optimized for
 different environments: single threaded on CPU, multi threaded on CPU, or on a
-GPU using cuda.  Additional implementations may be added later.
+GPU using hip.  Additional implementations may be added later.
 
 You can choose which implementation to use with the ```device()``` call.  If
 you do not choose an implementation explicitly the default implementation that
@@ -442,7 +442,7 @@ This is exactly the same as not inserting a ```device()``` call.
 
 This is presently a bit more complicated than just using a thread pool device.
 You need to create a GPU device but you also need to explicitly allocate the
-memory for tensors with cuda.
+memory for tensors with hip.
 
 
 ## API Reference

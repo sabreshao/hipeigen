@@ -240,7 +240,7 @@ EigenMetaKernel(hipLaunchParm lp, Evaluator memcopied_eval, Index size) {
   const Index first_index = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
   const Index step_size = hipBlockDim_x * hipGridDim_x;
 
-  // Cuda memcopies the kernel arguments. That's fine for POD, but for more
+  // HIP memcopies the kernel arguments. That's fine for POD, but for more
   // complex types such as evaluators we should really conform to the C++
   // standard and call a proper copy constructor.
   Evaluator eval(memcopied_eval);
@@ -256,14 +256,14 @@ inline void TensorExecutor<Expression, GpuDevice, Vectorizable>::run(
   TensorEvaluator<Expression, GpuDevice> evaluator(expr, device);
   const bool needs_assign = evaluator.evalSubExprsIfNeeded(NULL);
   if (needs_assign) {
-    const int block_size = device.maxCudaThreadsPerBlock();
-    const int max_blocks = device.getNumCudaMultiProcessors() *
-                           device.maxCudaThreadsPerMultiProcessor() / block_size;
+    const int block_size = device.maxHipThreadsPerBlock();
+    const int max_blocks = device.getNumHipMultiProcessors() *
+                           device.maxHipThreadsPerMultiProcessor() / block_size;
     const Index size = array_prod(evaluator.dimensions());
     // Create a least one block to ensure we won't crash when tensorflow calls with tensors of size 0.
     const int num_blocks = numext::maxi<int>(numext::mini<int>(max_blocks, divup<int>(size, block_size)), 1);
 
-    LAUNCH_CUDA_KERNEL(
+    LAUNCH_HIP_KERNEL(
         (EigenMetaKernel<TensorEvaluator<Expression, GpuDevice>, Index>),
         num_blocks, block_size, 0, device, evaluator, size);
   }

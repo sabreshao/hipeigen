@@ -9,20 +9,61 @@
 
 #define EIGEN_TEST_NO_LONGDOUBLE
 #define EIGEN_TEST_NO_COMPLEX
-#define EIGEN_TEST_FUNC cxx11_tensor_of_float16_hip
+#define EIGEN_TEST_FUNC cxx11_tensor_of_float16_cuda
 #define EIGEN_DEFAULT_DENSE_INDEX_TYPE int
 #define EIGEN_USE_GPU
 
-
+#if defined __CUDACC_VER__ && __CUDACC_VER__ >= 70500
+#include <cuda_fp16.h>
+#endif
 #include "main.h"
 #include <unsupported/Eigen/CXX11/Tensor>
 
 using Eigen::Tensor;
 
-#ifdef EIGEN_HAS_HIP_FP16
+template<typename>
+void test_cuda_numext() {
+  Eigen::CudaStreamDevice stream;
+  Eigen::GpuDevice gpu_device(&stream);
+  int num_elem = 101;
 
-void test_hip_conversion() {
-  Eigen::HipStreamDevice stream;
+  float* d_float = (float*)gpu_device.allocate(num_elem * sizeof(float));
+  bool* d_res_half = (bool*)gpu_device.allocate(num_elem * sizeof(bool));
+  bool* d_res_float = (bool*)gpu_device.allocate(num_elem * sizeof(bool));
+
+  Eigen::TensorMap<Eigen::Tensor<float, 1>, Eigen::Aligned> gpu_float(
+      d_float, num_elem);
+  Eigen::TensorMap<Eigen::Tensor<bool, 1>, Eigen::Aligned> gpu_res_half(
+      d_res_half, num_elem);
+  Eigen::TensorMap<Eigen::Tensor<bool, 1>, Eigen::Aligned> gpu_res_float(
+      d_res_float, num_elem);
+
+  gpu_float.device(gpu_device) = gpu_float.random() - gpu_float.constant(0.5f);
+  gpu_res_float.device(gpu_device) = gpu_float.unaryExpr(Eigen::internal::scalar_isnan_op<float>());
+  gpu_res_half.device(gpu_device) = gpu_float.cast<Eigen::half>().unaryExpr(Eigen::internal::scalar_isnan_op<Eigen::half>());
+
+  Tensor<bool, 1> half_prec(num_elem);
+  Tensor<bool, 1> full_prec(num_elem);
+  gpu_device.memcpyDeviceToHost(half_prec.data(), d_res_half, num_elem*sizeof(bool));
+  gpu_device.memcpyDeviceToHost(full_prec.data(), d_res_float, num_elem*sizeof(bool));
+  gpu_device.synchronize();
+
+  for (int i = 0; i < num_elem; ++i) {
+    std::cout << "Checking numext " << i << std::endl;
+    VERIFY_IS_EQUAL(full_prec(i), half_prec(i));
+  }
+
+  gpu_device.deallocate(d_float);
+  gpu_device.deallocate(d_res_half);
+  gpu_device.deallocate(d_res_float);
+}
+
+
+#ifdef EIGEN_HAS_CUDA_FP16
+
+template<typename>
+void test_cuda_conversion() {
+  Eigen::CudaStreamDevice stream;
   Eigen::GpuDevice gpu_device(&stream);
   int num_elem = 101;
   
@@ -55,9 +96,9 @@ void test_hip_conversion() {
   gpu_device.deallocate(d_conv);
 }
 
-
-void test_hip_unary() {
-  Eigen::HipStreamDevice stream;
+template<typename>
+void test_cuda_unary() {
+  Eigen::CudaStreamDevice stream;
   Eigen::GpuDevice gpu_device(&stream);
   int num_elem = 101;
 
@@ -92,9 +133,9 @@ void test_hip_unary() {
   gpu_device.deallocate(d_res_float);
 }
 
-
-void test_hip_elementwise() {
-  Eigen::HipStreamDevice stream;
+template<typename>
+void test_cuda_elementwise() {
+  Eigen::CudaStreamDevice stream;
   Eigen::GpuDevice gpu_device(&stream);
   int num_elem = 101;
 
@@ -134,37 +175,47 @@ void test_hip_elementwise() {
   gpu_device.deallocate(d_res_float);
 }
 
-void test_hip_trancendental() {
-  Eigen::HipStreamDevice stream;
+template<typename>
+void test_cuda_trancendental() {
+  Eigen::CudaStreamDevice stream;
   Eigen::GpuDevice gpu_device(&stream);
   int num_elem = 101;
 
   float* d_float1 = (float*)gpu_device.allocate(num_elem * sizeof(float));
   float* d_float2 = (float*)gpu_device.allocate(num_elem * sizeof(float));
+  float* d_float3 = (float*)gpu_device.allocate(num_elem * sizeof(float));
   Eigen::half* d_res1_half = (Eigen::half*)gpu_device.allocate(num_elem * sizeof(Eigen::half));
   Eigen::half* d_res1_float = (Eigen::half*)gpu_device.allocate(num_elem * sizeof(Eigen::half));
   Eigen::half* d_res2_half = (Eigen::half*)gpu_device.allocate(num_elem * sizeof(Eigen::half));
   Eigen::half* d_res2_float = (Eigen::half*)gpu_device.allocate(num_elem * sizeof(Eigen::half));
+  Eigen::half* d_res3_half = (Eigen::half*)gpu_device.allocate(num_elem * sizeof(Eigen::half));
+  Eigen::half* d_res3_float = (Eigen::half*)gpu_device.allocate(num_elem * sizeof(Eigen::half));
 
-  Eigen::TensorMap<Eigen::Tensor<float, 1>, Eigen::Aligned> gpu_float1(
-      d_float1, num_elem);
-  Eigen::TensorMap<Eigen::Tensor<float, 1>, Eigen::Aligned> gpu_float2(
-      d_float2, num_elem);
-  Eigen::TensorMap<Eigen::Tensor<Eigen::half, 1>, Eigen::Aligned> gpu_res1_half(
-      d_res1_half, num_elem);
-  Eigen::TensorMap<Eigen::Tensor<Eigen::half, 1>, Eigen::Aligned> gpu_res1_float(
-      d_res1_float, num_elem);
-  Eigen::TensorMap<Eigen::Tensor<Eigen::half, 1>, Eigen::Aligned> gpu_res2_half(
-      d_res2_half, num_elem);
-  Eigen::TensorMap<Eigen::Tensor<Eigen::half, 1>, Eigen::Aligned> gpu_res2_float(
-      d_res2_float, num_elem);
+  Eigen::TensorMap<Eigen::Tensor<float, 1>, Eigen::Aligned> gpu_float1(d_float1, num_elem);
+  Eigen::TensorMap<Eigen::Tensor<float, 1>, Eigen::Aligned> gpu_float2(d_float2, num_elem);
+  Eigen::TensorMap<Eigen::Tensor<float, 1>, Eigen::Aligned> gpu_float3(d_float3, num_elem);
+  Eigen::TensorMap<Eigen::Tensor<Eigen::half, 1>, Eigen::Aligned> gpu_res1_half(d_res1_half, num_elem);
+  Eigen::TensorMap<Eigen::Tensor<Eigen::half, 1>, Eigen::Aligned> gpu_res1_float(d_res1_float, num_elem);
+  Eigen::TensorMap<Eigen::Tensor<Eigen::half, 1>, Eigen::Aligned> gpu_res2_half(d_res2_half, num_elem);
+  Eigen::TensorMap<Eigen::Tensor<Eigen::half, 1>, Eigen::Aligned> gpu_res2_float(d_res2_float, num_elem);
+  Eigen::TensorMap<Eigen::Tensor<Eigen::half, 1>, Eigen::Aligned> gpu_res3_half(d_res3_half, num_elem);
+  Eigen::TensorMap<Eigen::Tensor<Eigen::half, 1>, Eigen::Aligned> gpu_res3_float(d_res3_float, num_elem);
 
   gpu_float1.device(gpu_device) = gpu_float1.random() - gpu_float1.constant(0.5f);
   gpu_float2.device(gpu_device) = gpu_float2.random() + gpu_float1.constant(0.5f);
+  gpu_float3.device(gpu_device) = gpu_float3.random();
   gpu_res1_float.device(gpu_device) = gpu_float1.exp().cast<Eigen::half>();
   gpu_res2_float.device(gpu_device) = gpu_float2.log().cast<Eigen::half>();
-  gpu_res1_half.device(gpu_device) = gpu_float1.cast<Eigen::half>().exp();
-  gpu_res2_half.device(gpu_device) = gpu_float2.cast<Eigen::half>().log();
+  gpu_res3_float.device(gpu_device) = gpu_float3.log1p().cast<Eigen::half>();
+
+  gpu_res1_half.device(gpu_device) = gpu_float1.cast<Eigen::half>();
+  gpu_res1_half.device(gpu_device) = gpu_res1_half.exp();
+
+  gpu_res2_half.device(gpu_device) = gpu_float2.cast<Eigen::half>();
+  gpu_res2_half.device(gpu_device) = gpu_res2_half.log();
+
+  gpu_res3_half.device(gpu_device) = gpu_float3.cast<Eigen::half>();
+  gpu_res3_half.device(gpu_device) = gpu_res3_half.log1p();
 
   Tensor<float, 1> input1(num_elem);
   Tensor<Eigen::half, 1> half_prec1(num_elem);
@@ -172,12 +223,18 @@ void test_hip_trancendental() {
   Tensor<float, 1> input2(num_elem);
   Tensor<Eigen::half, 1> half_prec2(num_elem);
   Tensor<Eigen::half, 1> full_prec2(num_elem);
+  Tensor<float, 1> input3(num_elem);
+  Tensor<Eigen::half, 1> half_prec3(num_elem);
+  Tensor<Eigen::half, 1> full_prec3(num_elem);
   gpu_device.memcpyDeviceToHost(input1.data(), d_float1, num_elem*sizeof(float));
   gpu_device.memcpyDeviceToHost(input2.data(), d_float2, num_elem*sizeof(float));
+  gpu_device.memcpyDeviceToHost(input3.data(), d_float3, num_elem*sizeof(float));
   gpu_device.memcpyDeviceToHost(half_prec1.data(), d_res1_half, num_elem*sizeof(Eigen::half));
   gpu_device.memcpyDeviceToHost(full_prec1.data(), d_res1_float, num_elem*sizeof(Eigen::half));
   gpu_device.memcpyDeviceToHost(half_prec2.data(), d_res2_half, num_elem*sizeof(Eigen::half));
   gpu_device.memcpyDeviceToHost(full_prec2.data(), d_res2_float, num_elem*sizeof(Eigen::half));
+  gpu_device.memcpyDeviceToHost(half_prec3.data(), d_res3_half, num_elem*sizeof(Eigen::half));
+  gpu_device.memcpyDeviceToHost(full_prec3.data(), d_res3_float, num_elem*sizeof(Eigen::half));
   gpu_device.synchronize();
 
   for (int i = 0; i < num_elem; ++i) {
@@ -186,19 +243,29 @@ void test_hip_trancendental() {
   }
   for (int i = 0; i < num_elem; ++i) {
     std::cout << "Checking elemwise log " << i << " input = " << input2(i) << " full = " << full_prec2(i) << " half = " << half_prec2(i) << std::endl;
-    VERIFY_IS_APPROX(full_prec2(i), half_prec2(i));
+    if(std::abs(input2(i)-1.f)<0.05f) // log lacks accurary nearby 1
+      VERIFY_IS_APPROX(full_prec2(i)+Eigen::half(0.1f), half_prec2(i)+Eigen::half(0.1f));
+    else
+      VERIFY_IS_APPROX(full_prec2(i), half_prec2(i));
+  }
+  for (int i = 0; i < num_elem; ++i) {
+    std::cout << "Checking elemwise plog1 " << i << " input = " << input3(i) << " full = " << full_prec3(i) << " half = " << half_prec3(i) << std::endl;
+    VERIFY_IS_APPROX(full_prec3(i), half_prec3(i));
   }
   gpu_device.deallocate(d_float1);
   gpu_device.deallocate(d_float2);
+  gpu_device.deallocate(d_float3);
   gpu_device.deallocate(d_res1_half);
   gpu_device.deallocate(d_res1_float);
   gpu_device.deallocate(d_res2_half);
   gpu_device.deallocate(d_res2_float);
+  gpu_device.deallocate(d_res3_float);
+  gpu_device.deallocate(d_res3_half);
 }
 
-
-void test_hip_contractions() {
-  Eigen::HipStreamDevice stream;
+template<typename>
+void test_cuda_contractions() {
+  Eigen::CudaStreamDevice stream;
   Eigen::GpuDevice gpu_device(&stream);
   int rows = 23;
   int cols = 23;
@@ -247,13 +314,13 @@ void test_hip_contractions() {
   gpu_device.deallocate(d_res_float);
 }
 
-
-void test_hip_reductions(int size1, int size2, int redux) {
+template<typename>
+void test_cuda_reductions(int size1, int size2, int redux) {
 
    std::cout << "Reducing " << size1 << " by " << size2
              << " tensor along dim " << redux << std::endl; 
 
-  Eigen::HipStreamDevice stream;
+  Eigen::CudaStreamDevice stream;
   Eigen::GpuDevice gpu_device(&stream);
   int num_elem = size1*size2;
   int result_size = (redux == 1 ? size1 : size2);
@@ -296,19 +363,21 @@ void test_hip_reductions(int size1, int size2, int redux) {
   gpu_device.deallocate(d_res_float);
 }
 
-void test_hip_reductions() {
-  test_hip_reductions(13, 13, 0);
-  test_hip_reductions(13, 13, 1);
+template<typename>
+void test_cuda_reductions() {
+  test_cuda_reductions<void>(13, 13, 0);
+  test_cuda_reductions<void>(13, 13, 1);
 
-  test_hip_reductions(35, 36, 0);
-  test_hip_reductions(35, 36, 1);
+  test_cuda_reductions<void>(35, 36, 0);
+  test_cuda_reductions<void>(35, 36, 1);
 
-  test_hip_reductions(36, 35, 0);
-  test_hip_reductions(36, 35, 1);
+  test_cuda_reductions<void>(36, 35, 0);
+  test_cuda_reductions<void>(36, 35, 1);
 }
 
-void test_hip_full_reductions() {
-  Eigen::HipStreamDevice stream;
+template<typename>
+void test_cuda_full_reductions() {
+  Eigen::CudaStreamDevice stream;
   Eigen::GpuDevice gpu_device(&stream);
   int size = 13;
   int num_elem = size*size;
@@ -355,10 +424,10 @@ void test_hip_full_reductions() {
   gpu_device.deallocate(d_res_float);
 }
 
+template<typename>
+void test_cuda_forced_evals() {
 
-void test_hip_forced_evals() {
-
-  Eigen::HipStreamDevice stream;
+  Eigen::CudaStreamDevice stream;
   Eigen::GpuDevice gpu_device(&stream);
   int num_elem = 101;
 
@@ -406,18 +475,20 @@ void test_hip_forced_evals() {
 #endif
 
 
-void test_cxx11_tensor_of_float16_hip()
+void test_cxx11_tensor_of_float16_cuda()
 {
-#ifdef EIGEN_HAS_HIP_FP16
-  CALL_SUBTEST_1(test_hip_conversion());
-  CALL_SUBTEST_1(test_hip_unary());
-  CALL_SUBTEST_1(test_hip_elementwise());
-  CALL_SUBTEST_1(test_hip_trancendental());
-  CALL_SUBTEST_2(test_hip_contractions());
-  CALL_SUBTEST_3(test_hip_reductions());
-  CALL_SUBTEST_4(test_hip_full_reductions());
-  CALL_SUBTEST_5(test_hip_forced_evals());
+  CALL_SUBTEST_1(test_cuda_numext<void>());
+
+#ifdef EIGEN_HAS_CUDA_FP16
+  CALL_SUBTEST_1(test_cuda_conversion<void>());
+  CALL_SUBTEST_1(test_cuda_unary<void>());
+  CALL_SUBTEST_1(test_cuda_elementwise<void>());
+  CALL_SUBTEST_1(test_cuda_trancendental<void>());
+  CALL_SUBTEST_2(test_cuda_contractions<void>());
+  CALL_SUBTEST_3(test_cuda_reductions<void>());
+  CALL_SUBTEST_4(test_cuda_full_reductions<void>());
+  CALL_SUBTEST_5(test_cuda_forced_evals<void>());
 #else
-  std::cout << "Half floats are not supported by this version of hip: skipping the test" << std::endl;
+  std::cout << "Half floats are not supported by this version of cuda: skipping the test" << std::endl;
 #endif
 }

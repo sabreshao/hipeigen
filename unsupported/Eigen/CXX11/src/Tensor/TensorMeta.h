@@ -51,8 +51,8 @@ struct PacketType : internal::packet_traits<Scalar> {
   typedef typename internal::packet_traits<Scalar>::type type;
 };
 
-// For CUDA packet types when using a GpuDevice
-#if defined(EIGEN_USE_GPU) && defined(__HIPCC__) && defined(EIGEN_HAS_CUDA_FP16)
+// For HIP packet types when using a GpuDevice
+#if defined(EIGEN_USE_GPU) && defined(__HIPCC__) && defined(EIGEN_HAS_HIP_FP16)
 template <>
 struct PacketType<half, GpuDevice> {
   typedef half2 type;
@@ -85,7 +85,7 @@ struct PacketType<half, GpuDevice> {
 
 
 
-// Tuple mimics std::pair but works on e.g. nvcc.
+// Tuple mimics std::pair but works on e.g. hipcc.
 template <typename U, typename V> struct Tuple {
  public:
   U first;
@@ -129,7 +129,7 @@ bool operator!=(const Tuple<U, V>& x, const Tuple<U, V>& y) {
 }
 
 
-// Can't use std::pairs on cuda devices
+// Can't use std::pairs on hip devices
 template <typename Idx> struct IndexPair {
   EIGEN_CONSTEXPR EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE IndexPair() : first(0), second(0) {}
   EIGEN_CONSTEXPR EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE IndexPair(Idx f, Idx s) : first(f), second(s) {}

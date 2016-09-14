@@ -119,8 +119,9 @@ template <typename T> EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE
 T loadConstant(const T* address) {
   return *address;
 }
-// Use the texture cache on CUDA devices whenever possible
-#if defined(__CUDA_ARCH__) && __CUDA_ARCH__ >= 350
+// Use the texture cache on HIP devices whenever possible
+#if defined(__HIP_DEVICE_COMPILE__) && (__HIP_DEVICE_COMPILE__ == 1) && \
+    defined(__HIP_ARCH_HAS_WARP_FUNNEL_SHIFT__) && defined(__HIP_ARCH_HAS_DYNAMIC_PARALLEL__)
 template <> EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE
 float loadConstant(const float* address) {
   return __ldg(address);
