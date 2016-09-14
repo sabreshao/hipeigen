@@ -263,9 +263,8 @@ inline void TensorExecutor<Expression, GpuDevice, Vectorizable>::run(
     // Create a least one block to ensure we won't crash when tensorflow calls with tensors of size 0.
     const int num_blocks = numext::maxi<int>(numext::mini<int>(max_blocks, divup<int>(size, block_size)), 1);
 
-    LAUNCH_HIP_KERNEL(
-        (EigenMetaKernel<TensorEvaluator<Expression, GpuDevice>, Index>),
-        num_blocks, block_size, 0, device, evaluator, size);
+    hipLaunchKernel(HIP_KERNEL_NAME(EigenMetaKernel<TensorEvaluator<Expression, GpuDevice>, Index>),
+        dim3(num_blocks), dim3(block_size), 0, device.stream(), evaluator, size);
   }
   evaluator.cleanup();
 }

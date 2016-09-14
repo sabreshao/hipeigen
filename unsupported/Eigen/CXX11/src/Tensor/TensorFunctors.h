@@ -606,8 +606,9 @@ template <> class UniformRandomGenerator<float> {
   }
   template<typename PacketType>
   __device__ float4 packetOp() const {
-    EIGEN_STATIC_ASSERT((is_same<PacketType, float4>::value), YOU_MADE_A_PROGRAMMING_MISTAKE);
-    return curand_uniform4(&m_state);
+    //EIGEN_STATIC_ASSERT((is_same<PacketType, float4>::value), YOU_MADE_A_PROGRAMMING_MISTAKE);
+    //return curand_uniform4(&m_state);
+    return make_float4(0, 0, 0, 0);
   }
 
  private:

@@ -1320,7 +1320,8 @@ struct TensorEvaluator<const TensorContractionOp<Indices, LeftArgType, RightArgT
     const Index n_blocks = (n + 63) / 64;
     const dim3 num_blocks(m_blocks, n_blocks, 1);
     const dim3 block_size(8, 8, 8);
-    LAUNCH_HIP_KERNEL((EigenContractionKernel<Scalar, Index, LhsMapper, RhsMapper, OutputMapper>), num_blocks, block_size, 0, device, lhs, rhs, output, m, n, k);
+    hipLaunchKernel(HIP_KERNEL_NAME(EigenContractionKernel<Scalar, Index, LhsMapper, RhsMapper, OutputMapper>),
+                    dim3(num_blocks), dim3(block_size), 0, device.stream(), lhs, rhs, output, m, n, k);
     }
   };
 
@@ -1331,13 +1332,15 @@ struct TensorEvaluator<const TensorContractionOp<Indices, LeftArgType, RightArgT
         const Index n_blocks = (n + 63) / 64;
         const dim3 num_blocks(m_blocks, n_blocks, 1);
         const dim3 block_size(16, 16, 1);
-        LAUNCH_HIP_KERNEL((EigenFloatContractionKernel16x16<Index, LhsMapper, RhsMapper, OutputMapper>), num_blocks, block_size, 0, device, lhs, rhs, output, m, n, k);
+        hipLaunchKernel(HIP_KERNEL_NAME(EigenFloatContractionKernel16x16<Index, LhsMapper, RhsMapper, OutputMapper>),
+                        dim3(num_blocks), dim3(block_size), 0, device.stream(), lhs, rhs, output, m, n, k);
       } else {
         const Index m_blocks = (m + 127) / 128;
         const Index n_blocks = (n + 63) / 64;
         const dim3 num_blocks(m_blocks, n_blocks, 1);
         const dim3 block_size(8, 32, 1);
-        LAUNCH_HIP_KERNEL((EigenFloatContractionKernel<Index, LhsMapper, RhsMapper, OutputMapper>), num_blocks, block_size, 0, device, lhs, rhs, output, m, n, k);
+        hipLaunchKernel(HIP_KERNEL_NAME(EigenFloatContractionKernel<Index, LhsMapper, RhsMapper, OutputMapper>),
+                        dim3(num_blocks), dim3(block_size), 0, device.stream(), lhs, rhs, output, m, n, k);
       }
     }
   };

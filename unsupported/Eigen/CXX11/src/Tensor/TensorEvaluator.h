@@ -124,15 +124,18 @@ T loadConstant(const T* address) {
     defined(__HIP_ARCH_HAS_WARP_FUNNEL_SHIFT__) && defined(__HIP_ARCH_HAS_DYNAMIC_PARALLEL__)
 template <> EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE
 float loadConstant(const float* address) {
-  return __ldg(address);
+  //TODO:return __ldg(address);
+  return *address;
 }
 template <> EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE
 double loadConstant(const double* address) {
-  return __ldg(address);
+  //TODO:return __ldg(address);
+  return *address;
 }
 template <> EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE
 Eigen::half loadConstant(const Eigen::half* address) {
-  return Eigen::half(half_impl::raw_uint16_to_half(__ldg(&address->x)));
+  //TODO:return Eigen::half(half_impl::raw_uint16_to_half(__ldg(&address->x)));
+  return Eigen::half(half_impl::raw_uint16_to_half(address->x));
 }
 #endif
 }

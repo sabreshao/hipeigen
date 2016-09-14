@@ -10,6 +10,11 @@
 #if defined(EIGEN_USE_GPU) && !defined(EIGEN_CXX11_TENSOR_TENSOR_DEVICE_HIP_H)
 #define EIGEN_CXX11_TENSOR_TENSOR_DEVICE_HIP_H
 
+#ifdef __HIPCC__
+#include "hip_runtime.h"
+#include "hip_runtime_api.h"
+#endif
+
 namespace Eigen {
 
 static const int kHipScratchSize = 1024;
@@ -68,7 +73,7 @@ static void initializeDeviceProp() {
   }
 }
 
-static const hipStream_t default_stream = hipStreamDefault;
+static const hipStream_t default_stream = 0x00;//TODO: Use hipStreamDefault instead of 0x00;
 
 class HipStreamDevice : public StreamInterface {
  public:
@@ -140,7 +145,8 @@ class HipStreamDevice : public StreamInterface {
     if (semaphore_ == NULL) {
       char* scratch = static_cast<char*>(scratchpad()) + kHipScratchSize;
       semaphore_ = reinterpret_cast<unsigned int*>(scratch);
-      hipError_t err = hipMemsetAsync(semaphore_, 0, sizeof(unsigned int), *stream_);
+      //hipError_t err = hipMemsetAsync(semaphore_, 0, sizeof(unsigned int), *stream_);
+      hipError_t err = hipMemset(semaphore_, 0, sizeof(unsigned int));
       EIGEN_UNUSED_VARIABLE(err)
       assert(err == hipSuccess);
     }
@@ -347,7 +353,7 @@ struct GpuDevice {
 };
 
 #define LAUNCH_HIP_KERNEL(kernel, gridsize, blocksize, sharedmem, device, ...)             \
-  (kernel) <<< (gridsize), (blocksize), (sharedmem), (device).stream() >>> (__VA_ARGS__);   \
+  hipLaunchKernel(HIP_KERNEL_NAME(kernel), dim3(gridsize), dim3(blocksize), (sharedmem), (device).stream(), (__VA_ARGS__)); \
   assert(hipGetLastError() == hipSuccess);
 
 
