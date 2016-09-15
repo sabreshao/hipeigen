@@ -244,7 +244,8 @@ struct GpuDevice {
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void memset(void* buffer, int c, size_t n) const {
 #if !defined(__HIP_DEVICE_COMPILE__) || (__HIP_DEVICE_COMPILE__ == 0)
-    hipError_t err = hipMemsetAsync(buffer, c, n, stream_->stream());
+    //TODO:hipError_t err = hipMemsetAsync(buffer, c, n, stream_->stream());
+    hipError_t err = hipMemset(buffer, c, n);
     EIGEN_UNUSED_VARIABLE(err)
     assert(err == hipSuccess);
 #else
@@ -361,7 +362,12 @@ struct GpuDevice {
 #ifdef __HIPCC__
 static EIGEN_DEVICE_FUNC inline void setHipSharedMemConfig(hipSharedMemConfig config) {
 #if !defined(__HIP_DEVICE_COMPILE__) || (__HIP_DEVICE_COMPILE__ == 0)
+#if defined(__NVCC__)
+  //TODO: Enable Shared mem setting once supported in NV platform
+  hipError_t status = hipSuccess;
+#elif defined(__HCC__)
   hipError_t status = hipDeviceSetSharedMemConfig(config);
+#endif
   EIGEN_UNUSED_VARIABLE(status)
   assert(status == hipSuccess);
 #else
