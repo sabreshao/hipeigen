@@ -392,11 +392,9 @@ if(EIGEN_TEST_HIP)
 
         include_directories(${HIP_PATH}/include)
 
-        set(EIGEN_ADD_TEST_FILENAME  "hip_cpp")
-        set(EIGEN_ADD_TEST_FILENAME_EXTENSION  "cpp")
-        ei_add_test(hip_basic)
+        set(EIGEN_ADD_TEST_FILENAME_EXTENSION  "cu")
+        #ei_add_test(hip_basic)
         unset(EIGEN_ADD_TEST_FILENAME_EXTENSION)
-        unset(EIGEN_ADD_TEST_FILENAME)
 
       elseif(${HIP_PLATFORM} STREQUAL "nvcc")
         message("HIP_PLATFORM=nvcc")
