@@ -15,6 +15,9 @@
   #ifdef __NVCC__
     #include <cfloat>
     #include <math_constants.h>
+  #elif __HCC__
+    #include <cfloat>
+    #include "intrinsics.h"
   #endif
 #endif
 
@@ -183,19 +186,19 @@ template<typename T> struct numeric_limits
   static T infinity() { assert(false && "Infinity not supported for this type"); }
   static T quiet_NaN() { assert(false && "quiet_NaN not supported for this type"); }
 };
-//TODO: Use appropriate alternates for CUDART predefined numbers
+//TODO: Use appropriate alternates for HIPRT predefined numbers
 template<> struct numeric_limits<float>
 {
   EIGEN_DEVICE_FUNC
   static float epsilon() { return __FLT_EPSILON__; }
   EIGEN_DEVICE_FUNC
-  static float (max)() { return CUDART_MAX_NORMAL_F; }
+  static float (max)() { return HIPRT_MAX_NORMAL_F; }
   EIGEN_DEVICE_FUNC
   static float (min)() { return FLT_MIN; }
   EIGEN_DEVICE_FUNC
-  static float infinity() { return CUDART_INF_F; }
+  static float infinity() { return HIPRT_INF_F; }
   EIGEN_DEVICE_FUNC
-  static float quiet_NaN() { return CUDART_NAN_F; }
+  static float quiet_NaN() { return HIPRT_NAN_F; }
 };
 template<> struct numeric_limits<double>
 {
@@ -206,9 +209,9 @@ template<> struct numeric_limits<double>
   EIGEN_DEVICE_FUNC
   static double (min)() { return DBL_MIN; }
   EIGEN_DEVICE_FUNC
-  static double infinity() { return CUDART_INF; }
+  static double infinity() { return HIPRT_INF; }
   EIGEN_DEVICE_FUNC
-  static double quiet_NaN() { return CUDART_NAN; }
+  static double quiet_NaN() { return HIPRT_NAN; }
 };
 template<> struct numeric_limits<int>
 {
