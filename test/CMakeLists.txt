@@ -364,40 +364,17 @@ if(EIGEN_TEST_HIP)
     endif()
 
     if(DEFINED HIP_PATH)
-      #store the original g++ settings before changing the compiler to hipcc
-      set(CPU_CMAKE_COMPILER_SETTINGS ${CMAKE_CXX_COMPILER})
-      set(CPU_CMAKE_FLAGS ${CMAKE_CXX_FLAGS})
-
       execute_process(COMMAND ${HIP_PATH}/bin/hipconfig --platform OUTPUT_VARIABLE HIP_PLATFORM)
       message("HIP_PATH=" ${HIP_PATH})
 
       if(${HIP_PLATFORM} STREQUAL "hcc")
         message("HIP_PLATFORM=hcc")
-        set (HSA_PATH $ENV{HSA_PATH})
-        if (NOT DEFINED HSA_PATH)
-          set (HSA_PATH /opt/rocm/hsa)
-        endif()
-
-        add_library(hsa-runtime64 SHARED IMPORTED)
-        set_property(TARGET hsa-runtime64 PROPERTY IMPORTED_LOCATION "${HSA_PATH}/lib/libhsa-runtime64.so")
-
-        set(CMAKE_SHARED_LIBRARY_LINK_CXX_FLAGS)
-        set(CMAKE_SHARED_LIBRARY_LINK_C_FLAGS)
-
-        set(HIPCC ${HIP_PATH}/bin/hipcc)
-        set(CMAKE_CXX_COMPILER ${HIPCC} CACHE FILEPATH "CXX Compiler" FORCE)
-
-        set(HIP_PROPAGATE_HOST_FLAGS OFF)
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -gencode -Wno-deprecated-register")
-
         include_directories(${CMAKE_CURRENT_BINARY_DIR})
         include_directories(${HIP_PATH}/include)
         include_directories(/usr/local/include/eigen3/Eigen/src/Core/arch/HIP/)
-
-        set(EIGEN_ADD_TEST_FILENAME_EXTENSION  "cpp")
+        set(EIGEN_ADD_TEST_FILENAME_EXTENSION  "cu")
         ei_add_test(hip_basic)
         unset(EIGEN_ADD_TEST_FILENAME_EXTENSION)
-
       elseif(${HIP_PLATFORM} STREQUAL "nvcc")
         message("HIP_PLATFORM=nvcc")
 
@@ -420,10 +397,6 @@ if(EIGEN_TEST_HIP)
       else()
         message(FATAL_ERROR "UNKNOWN HIP_PLATFORM=" ${HIP_PLATFORM})
       endif()
-
-    #restore back the original g++ settings
-    set(CMAKE_CXX_COMPILER ${CPU_CMAKE_COMPILER_SETTINGS} CACHE FILEPATH "CXX Compiler" FORCE)
-    set(CMAKE_CXX_FLAGS ${CPU_CMAKE_FLAGS})
   else()
    MESSAGE(STATUS "***********************************HIP_PATH NOT FOUND****************************")
   endif()
