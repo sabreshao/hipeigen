@@ -13,19 +13,26 @@
 #define __HIP_FP16_DECL_PREFIX__ __device__
 
 /*-----------------------HIPRT NUMBERS-----------------------*/
-__HIP_FP16_DECL_PREFIX__ float __hip_int_as_float(int a)
-{
-    union
-    {
-        int a;
-        float b;
-    }u;
-
-    u.a = a;
-
-    return u.b;
+__HIP_FP16_DECL_PREFIX__ float __hip_int_as_float(int a) {
+  union {
+    int a;
+    float b;
+  }u;
+  u.a = a;
+  return u.b;
 }
 
+// HILO INT 2 DOUBLE
+// Combine two 32 bit integer into a 64 bit double
+__device__ double __hip_hiloint2double(int hi, int lo) {
+   uint32_t mostSignificant = hi;
+   uint32_t leastSignificant = lo;
+   uint64_t mergedRes = ((uint64_t)mostSignificant) << 32 | leastSignificant;
+   double res = (double) mergedRes;
+   return res;
+}
+
+// Single Precision Macros
 #define HIPRT_INF_F        __hip_int_as_float(0x7f800000)
 #define HIPRT_NAN_F        __hip_int_as_float(0x7fffffff)
 #define HIPRT_MAX_NORMAL_F __hip_int_as_float(0x7f7fffff)
@@ -33,6 +40,12 @@ __HIP_FP16_DECL_PREFIX__ float __hip_int_as_float(int a)
 #define HIPRT_NEG_ZERO_F   __hip_int_as_float(0x80000000)
 #define HIPRT_ZERO_F       0.0f
 #define HIPRT_ONE_F        1.0f
+
+
+// Double Precision Macros
+#define HIPRT_INF          __hip_hiloint2double(0x7ff00000, 0x00000000)
+#define HIPRT_NAN          __hip_hiloint2double(0xfff80000, 0x00000000)
+
 /*-----------------------HIPRT NUMBERS-----------------------*/
 
 
