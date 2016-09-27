@@ -390,10 +390,12 @@ if(EIGEN_TEST_HIP)
         set(HIP_PROPAGATE_HOST_FLAGS OFF)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -gencode -Wno-deprecated-register")
 
+        include_directories(${CMAKE_CURRENT_BINARY_DIR})
         include_directories(${HIP_PATH}/include)
+        include_directories(/usr/local/include/eigen3/Eigen/src/Core/arch/HIP/)
 
-        set(EIGEN_ADD_TEST_FILENAME_EXTENSION  "cu")
-        #ei_add_test(hip_basic)
+        set(EIGEN_ADD_TEST_FILENAME_EXTENSION  "cpp")
+        ei_add_test(hip_basic)
         unset(EIGEN_ADD_TEST_FILENAME_EXTENSION)
 
       elseif(${HIP_PLATFORM} STREQUAL "nvcc")
