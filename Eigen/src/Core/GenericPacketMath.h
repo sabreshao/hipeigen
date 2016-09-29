@@ -301,10 +301,12 @@ template<typename Scalar> EIGEN_DEVICE_FUNC inline void prefetch(const Scalar* a
 #if defined(__HIP_DEVICE_COMPILE__) && (__HIP_DEVICE_COMPILE__ == 1)
 #if defined(__LP64__)
   // 64-bit pointer operand constraint for inlined asm
-  asm(" prefetch.L1 [ %1 ];" : "=l"(addr) : "l"(addr));
+  //TODO:@Neel/Guru get HIP equivalent for asm operations
+  //asm(" prefetch.L1 [ %1 ];" : "=l"(addr) : "l"(addr));
 #else
   // 32-bit pointer operand constraint for inlined asm
-  asm(" prefetch.L1 [ %1 ];" : "=r"(addr) : "r"(addr));
+  //TODO:@Neel/Guru get HIP equivalent for asm operations
+  //asm(" prefetch.L1 [ %1 ];" : "=r"(addr) : "r"(addr));
 #endif
 #elif (!EIGEN_COMP_MSVC) && (EIGEN_COMP_GNUC || EIGEN_COMP_CLANG || EIGEN_COMP_ICC)
   __builtin_prefetch(addr);

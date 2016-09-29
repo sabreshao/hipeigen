@@ -156,7 +156,7 @@ EIGEN_DEVICE_FUNC inline void* aligned_malloc(size_t size)
 
   void *result;
   #if (EIGEN_DEFAULT_ALIGN_BYTES==0) || EIGEN_MALLOC_ALREADY_ALIGNED
-    result = std::malloc(size);
+    MALLOC(result, size);
     #if EIGEN_DEFAULT_ALIGN_BYTES==16
     eigen_assert((size<16 || (std::size_t(result)%16)==0) && "System's malloc returned an unaligned pointer. Compile with EIGEN_MALLOC_ALREADY_ALIGNED=0 to fallback to handmade alignd memory allocator.");
     #endif
@@ -174,7 +174,7 @@ EIGEN_DEVICE_FUNC inline void* aligned_malloc(size_t size)
 EIGEN_DEVICE_FUNC inline void aligned_free(void *ptr)
 {
   #if (EIGEN_DEFAULT_ALIGN_BYTES==0) || EIGEN_MALLOC_ALREADY_ALIGNED
-    std::free(ptr);
+    FREE(ptr);
   #else
     handmade_aligned_free(ptr);
   #endif
@@ -232,7 +232,7 @@ template<bool Align> EIGEN_DEVICE_FUNC inline void conditional_aligned_free(void
 
 template<> EIGEN_DEVICE_FUNC inline void conditional_aligned_free<false>(void *ptr)
 {
-  std::free(ptr);
+  FREE(ptr);
 }
 
 template<bool Align> inline void* conditional_aligned_realloc(void* ptr, size_t new_size, size_t old_size)

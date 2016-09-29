@@ -150,7 +150,7 @@ template<typename Derived> class ArrayBase
 //     template<typename Dest>
 //     inline void evalTo(Dest& dst) const { dst = matrix(); }
 
-  protected:
+  public:
     EIGEN_DEVICE_FUNC
     ArrayBase() : Base() {}
 
