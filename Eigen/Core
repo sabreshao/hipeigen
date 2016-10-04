@@ -37,13 +37,9 @@
   // All functions callable from HIP code must be qualified with __device__
   #define EIGEN_DEVICE_FUNC __device__ __host__
 
-  #define MALLOC(ptr, size) hipHostMalloc(&ptr, size);
-  #define FREE(ptr) hipHostFree(ptr);
 
 #else
   #define EIGEN_DEVICE_FUNC
-  #define MALLOC(ptr, size)  ptr = std::malloc(size);
-  #define FREE(ptr)  std::free(ptr);
 
 #endif
 

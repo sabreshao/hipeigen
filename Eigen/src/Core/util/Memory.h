@@ -150,13 +150,13 @@ EIGEN_DEVICE_FUNC inline void check_that_malloc_is_allowed()
 /** \internal Allocates \a size bytes. The returned pointer is guaranteed to have 16 or 32 bytes alignment depending on the requirements.
   * On allocation error, the returned pointer is null, and std::bad_alloc is thrown.
   */
-EIGEN_DEVICE_FUNC inline void* aligned_malloc(size_t size)
+inline void* aligned_malloc(size_t size)
 {
   check_that_malloc_is_allowed();
 
   void *result;
   #if (EIGEN_DEFAULT_ALIGN_BYTES==0) || EIGEN_MALLOC_ALREADY_ALIGNED
-    MALLOC(result, size);
+    result = std::malloc(size);
     #if EIGEN_DEFAULT_ALIGN_BYTES==16
     eigen_assert((size<16 || (std::size_t(result)%16)==0) && "System's malloc returned an unaligned pointer. Compile with EIGEN_MALLOC_ALREADY_ALIGNED=0 to fallback to handmade alignd memory allocator.");
     #endif
@@ -171,10 +171,10 @@ EIGEN_DEVICE_FUNC inline void* aligned_malloc(size_t size)
 }
 
 /** \internal Frees memory allocated with aligned_malloc. */
-EIGEN_DEVICE_FUNC inline void aligned_free(void *ptr)
+inline void aligned_free(void *ptr)
 {
   #if (EIGEN_DEFAULT_ALIGN_BYTES==0) || EIGEN_MALLOC_ALREADY_ALIGNED
-    FREE(ptr);
+    std::free(ptr);
   #else
     handmade_aligned_free(ptr);
   #endif
@@ -211,10 +211,10 @@ inline void* aligned_realloc(void *ptr, size_t new_size, size_t old_size)
   */
 template<bool Align> EIGEN_DEVICE_FUNC inline void* conditional_aligned_malloc(size_t size)
 {
-  return aligned_malloc(size);
+  //return aligned_malloc(size);
 }
 
-template<> EIGEN_DEVICE_FUNC inline void* conditional_aligned_malloc<false>(size_t size)
+template<> inline void* conditional_aligned_malloc<false>(size_t size)
 {
   check_that_malloc_is_allowed();
 
@@ -227,12 +227,12 @@ template<> EIGEN_DEVICE_FUNC inline void* conditional_aligned_malloc<false>(size
 /** \internal Frees memory allocated with conditional_aligned_malloc */
 template<bool Align> EIGEN_DEVICE_FUNC inline void conditional_aligned_free(void *ptr)
 {
-  aligned_free(ptr);
+  //aligned_free(ptr);
 }
 
-template<> EIGEN_DEVICE_FUNC inline void conditional_aligned_free<false>(void *ptr)
+template<> inline void conditional_aligned_free<false>(void *ptr)
 {
-  FREE(ptr);
+  std::free(ptr);
 }
 
 template<bool Align> inline void* conditional_aligned_realloc(void* ptr, size_t new_size, size_t old_size)
@@ -295,7 +295,7 @@ EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE void check_size_for_overflow(size_t size)
 template<typename T> EIGEN_DEVICE_FUNC inline T* aligned_new(size_t size)
 {
   check_size_for_overflow<T>(size);
-  T *result = reinterpret_cast<T*>(aligned_malloc(sizeof(T)*size));
+  //T *result = reinterpret_cast<T*>(aligned_malloc(sizeof(T)*size));
   EIGEN_TRY
   {
     return construct_elements_of_array(result, size);
