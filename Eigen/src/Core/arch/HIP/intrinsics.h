@@ -24,12 +24,18 @@ __HIP_FP16_DECL_PREFIX__ float __hip_int_as_float(int a) {
 
 // HILO INT 2 DOUBLE
 // Combine two 32 bit integer into a 64 bit double
-__device__ double __hip_hiloint2double(int hi, int lo) {
-   uint32_t mostSignificant = hi;
-   uint32_t leastSignificant = lo;
-   uint64_t mergedRes = ((uint64_t)mostSignificant) << 32 | leastSignificant;
-   double res = (double) mergedRes;
-   return res;
+__HIP_FP16_DECL_PREFIX__  double __hip_hiloint2double(int hi, int lo) {
+   union {
+      long longType;
+      double doubleType;
+   }u;
+
+   long mostSignificantBits = (long)hi & 0xFFFFFFFF;
+   long leastSignificantBits = (long)lo & 0xFFFFFFFF;
+   /* Store the hi as 32 MSB and lo as 32 LSB of double */
+   u.longType = (mostSignificantBits << 32) | leastSignificantBits;
+   /* Return the equivalent double type */
+   return u.doubleType;
 }
 
 // Single Precision Macros
