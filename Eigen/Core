@@ -369,13 +369,24 @@ using std::ptrdiff_t;
 #endif
 
 // Half float support
-#include "src/Core/arch/HIP/Half.h"
-#include "src/Core/arch/HIP/PacketMathHalf.h"
-#include "src/Core/arch/HIP/TypeCasting.h"
+#ifdef __NVCC__
+  #include "src/Core/arch/HIP/nvcc/Half.h"
+  #include "src/Core/arch/HIP/nvcc/PacketMathHalf.h"
+  #include "src/Core/arch/HIP/nvcc/TypeCasting.h"
+#else
+  #include "src/Core/arch/HIP/hcc/Half.h"
+  #include "src/Core/arch/HIP/hcc/PacketMathHalf.h"
+  #include "src/Core/arch/HIP/hcc/TypeCasting.h"
+#endif
 
 #if defined(EIGEN_VECTORIZE_CUDA) || defined(EIGEN_VECTORIZE_HIP)
-  #include "src/Core/arch/HIP/PacketMath.h"
-  #include "src/Core/arch/HIP/MathFunctions.h"
+  #ifdef __NVCC__
+    #include "src/Core/arch/HIP/nvcc/PacketMath.h"
+    #include "src/Core/arch/HIP/nvcc/MathFunctions.h"
+  #else
+    #include "src/Core/arch/HIP/hcc/PacketMath.h"
+    #include "src/Core/arch/HIP/hcc/MathFunctions.h"
+  #endif
 #endif
 
 #include "src/Core/arch/Default/Settings.h"

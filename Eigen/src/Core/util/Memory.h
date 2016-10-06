@@ -211,7 +211,7 @@ inline void* aligned_realloc(void *ptr, size_t new_size, size_t old_size)
   */
 template<bool Align> EIGEN_DEVICE_FUNC inline void* conditional_aligned_malloc(size_t size)
 {
-  //return aligned_malloc(size);
+  return NULL;//TODO:aligned_malloc(size);
 }
 
 template<> inline void* conditional_aligned_malloc<false>(size_t size)
@@ -227,7 +227,7 @@ template<> inline void* conditional_aligned_malloc<false>(size_t size)
 /** \internal Frees memory allocated with conditional_aligned_malloc */
 template<bool Align> EIGEN_DEVICE_FUNC inline void conditional_aligned_free(void *ptr)
 {
-  //aligned_free(ptr);
+  //TODO:aligned_free(ptr);
 }
 
 template<> inline void conditional_aligned_free<false>(void *ptr)
@@ -295,14 +295,15 @@ EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE void check_size_for_overflow(size_t size)
 template<typename T> EIGEN_DEVICE_FUNC inline T* aligned_new(size_t size)
 {
   check_size_for_overflow<T>(size);
-  //T *result = reinterpret_cast<T*>(aligned_malloc(sizeof(T)*size));
+  //TODO:T *result = reinterpret_cast<T*>(aligned_malloc(sizeof(T)*size));
   EIGEN_TRY
   {
-    return construct_elements_of_array(result, size);
+    //TODO:return construct_elements_of_array(result, size);
+    return NULL;
   }
   EIGEN_CATCH(...)
   {
-    aligned_free(result);
+    //TODO:aligned_free(result);
     EIGEN_THROW;
   }
 }
