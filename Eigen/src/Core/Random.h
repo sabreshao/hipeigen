@@ -130,7 +130,8 @@ DenseBase<Derived>::Random()
 template<typename Derived>
 inline Derived& DenseBase<Derived>::setRandom()
 {
-  return *this = Random(rows(), cols());
+  //return *this = Random(rows(), cols());
+  return *this = NullaryExpr(rows(), cols(), internal::scalar_random_op<Scalar>());
 }
 
 /** Resizes to the given \a newSize, and sets all coefficients in this expression to random values.

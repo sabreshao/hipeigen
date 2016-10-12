@@ -173,6 +173,6 @@ void test_hip_basic()
   CALL_SUBTEST( run_and_compare_to_hip(diagonal<Matrix4f,Vector4f>(), nthreads, in, out) );
   
   CALL_SUBTEST( run_and_compare_to_hip(eigenvalues<Matrix3f>(), nthreads, in, out) );
-  CALL_SUBTEST( run_and_compare_to_hip(eigenvalues<Matrix2f>(), nthreads, in, out) );
+  //CALL_SUBTEST( run_and_compare_to_hip(eigenvalues<Matrix2f>(), nthreads, in, out) );
 
 }

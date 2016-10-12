@@ -532,7 +532,7 @@ EIGEN_STRONG_INLINE EIGEN_DEVICE_FUNC Eigen::half logh(const Eigen::half& a) {
   #if defined(__NVCC__) && defined __CUDACC_VER__ && __CUDACC_VER__ >= 80000
     return Eigen::half(::hlog(a));
   #elif defined(__HCC__)
-    return Eigen::half(::hlog(a));
+    return Eigen::half(::logf(float(a)));
   #else
     return Eigen::half(::logf(float(a)));
   #endif

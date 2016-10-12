@@ -399,7 +399,8 @@ EIGEN_DEVICE_FUNC
 SelfAdjointEigenSolver<MatrixType>& SelfAdjointEigenSolver<MatrixType>
 ::compute(const EigenBase<InputType>& a_matrix, int options)
 {
-  check_template_parameters();
+  //check_template_parameters();
+  EIGEN_STATIC_ASSERT_NON_INTEGER(Scalar);
   
   const InputType &matrix(a_matrix.derived());
   
