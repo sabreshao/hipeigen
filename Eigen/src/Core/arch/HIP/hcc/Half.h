@@ -62,23 +62,23 @@ namespace half_impl {
 
 #if !defined(EIGEN_HAS_HIP_FP16)
 
-// Make our own __half definition that is similar to HIP's.
-struct __half {
-  EIGEN_DEVICE_FUNC __half() {}
-  explicit EIGEN_DEVICE_FUNC __half(unsigned short raw) : x(raw) {}
+// Make our own __hip_half definition that is similar to HIP's.
+struct __hip_half {
+  EIGEN_DEVICE_FUNC __hip_half() {}
+  explicit EIGEN_DEVICE_FUNC __hip_half(unsigned short raw) : x(raw) {}
   unsigned short x;
 };
 
 #endif
 
-EIGEN_STRONG_INLINE EIGEN_DEVICE_FUNC __half raw_uint16_to_half(unsigned short x);
-EIGEN_STRONG_INLINE EIGEN_DEVICE_FUNC __half float_to_half_rtne(float ff);
-EIGEN_STRONG_INLINE EIGEN_DEVICE_FUNC float half_to_float(__half h);
+EIGEN_STRONG_INLINE EIGEN_DEVICE_FUNC __hip_half raw_uint16_to_half(unsigned short x);
+EIGEN_STRONG_INLINE EIGEN_DEVICE_FUNC __hip_half float_to_half_rtne(float ff);
+EIGEN_STRONG_INLINE EIGEN_DEVICE_FUNC float half_to_float(__hip_half h);
 
-struct half_base : public __half {
+struct half_base : public __hip_half {
   EIGEN_DEVICE_FUNC half_base() {}
-  EIGEN_DEVICE_FUNC half_base(const half_base& h) : __half(h) {}
-  EIGEN_DEVICE_FUNC half_base(const __half& h) : __half(h) {}
+  EIGEN_DEVICE_FUNC half_base(const half_base& h) : __hip_half(h) {}
+  EIGEN_DEVICE_FUNC half_base(const __hip_half& h) : __hip_half(h) {}
 };
 
 } // namespace half_impl
@@ -86,12 +86,12 @@ struct half_base : public __half {
 // Class definition.
 struct half : public half_impl::half_base {
   #if !defined(EIGEN_HAS_HIP_FP16)
-    typedef half_impl::__half __half;
+    typedef half_impl::__hip_half __hip_half;
   #endif
 
   EIGEN_DEVICE_FUNC half() {}
 
-  EIGEN_DEVICE_FUNC half(const __half& h) : half_impl::half_base(h) {}
+  EIGEN_DEVICE_FUNC half(const __hip_half& h) : half_impl::half_base(h) {}
   EIGEN_DEVICE_FUNC half(const half& h) : half_impl::half_base(h) {}
 
   explicit EIGEN_DEVICE_FUNC half(bool b)
@@ -159,21 +159,21 @@ namespace half_impl {
 // conversion steps back and forth.
 
 __device__ half operator + (const half& a, const half& b) {
-  return __hadd(a, b);
+  return __hip_hadd(a, b);
 }
 __device__ half operator * (const half& a, const half& b) {
-  return __hmul(a, b);
+  return __hip_hmul(a, b);
 }
 __device__ half operator - (const half& a, const half& b) {
-  return __hsub(a, b);
+  return __hip_hsub(a, b);
 }
 __device__ half operator / (const half& a, const half& b) {
-  float num = __half2float(a);
-  float denom = __half2float(b);
-  return __float2half(num / denom);
+  float num = __hip_half2float(a);
+  float denom = __hip_half2float(b);
+  return __hip_float2half(num / denom);
 }
 __device__ half operator - (const half& a) {
-  return __hneg(a);
+  return __hip_hneg(a);
 }
 __device__ half& operator += (half& a, const half& b) {
   a = a + b;
@@ -192,22 +192,22 @@ __device__ half& operator /= (half& a, const half& b) {
   return a;
 }
 __device__ bool operator == (const half& a, const half& b) {
-  return __heq(a, b);
+  return __hip_heq(a, b);
 }
 __device__ bool operator != (const half& a, const half& b) {
-  return __hne(a, b);
+  return __hip_hne(a, b);
 }
 __device__ bool operator < (const half& a, const half& b) {
-  return __hlt(a, b);
+  return __hip_hlt(a, b);
 }
 __device__ bool operator <= (const half& a, const half& b) {
-  return __hle(a, b);
+  return __hip_hle(a, b);
 }
 __device__ bool operator > (const half& a, const half& b) {
-  return __hgt(a, b);
+  return __hip_hgt(a, b);
 }
 __device__ bool operator >= (const half& a, const half& b) {
-  return __hge(a, b);
+  return __hip_hge(a, b);
 }
 
 #else  // Emulate support for half floats
@@ -280,8 +280,8 @@ EIGEN_STRONG_INLINE EIGEN_DEVICE_FUNC half operator / (const half& a, Index b) {
 // these in hardware. If we need more performance on older/other CPUs, they are
 // also possible to vectorize directly.
 
-EIGEN_STRONG_INLINE EIGEN_DEVICE_FUNC __half raw_uint16_to_half(unsigned short x) {
-  __half h;
+EIGEN_STRONG_INLINE EIGEN_DEVICE_FUNC __hip_half raw_uint16_to_half(unsigned short x) {
+  __hip_half h;
   h.x = x;
   return h;
 }
@@ -291,14 +291,14 @@ union FP32 {
   float f;
 };
 
-EIGEN_STRONG_INLINE EIGEN_DEVICE_FUNC __half float_to_half_rtne(float ff) {
+EIGEN_STRONG_INLINE EIGEN_DEVICE_FUNC __hip_half float_to_half_rtne(float ff) {
 #if defined(EIGEN_HAS_HIP_FP16) && \
     (defined(__HIP_DEVICE_COMPILE__) && (__HIP_DEVICE_COMPILE__ == 1)) && \
     defined(__HIP_ARCH_HAS_WARP_SHUFFLE__)
-  return __float2half(ff);
+  return __hip_float2half(ff);
 
 #elif defined(EIGEN_HAS_FP16_C)
-  __half h;
+  __hip_half h;
   h.x = _cvtss_sh(ff, 0);
   return h;
 
@@ -309,7 +309,7 @@ EIGEN_STRONG_INLINE EIGEN_DEVICE_FUNC __half float_to_half_rtne(float ff) {
   const FP32 f16max = { (127 + 16) << 23 };
   const FP32 denorm_magic = { ((127 - 15) + (23 - 10) + 1) << 23 };
   unsigned int sign_mask = 0x80000000u;
-  __half o;
+  __hip_half o;
   o.x = static_cast<unsigned short>(0x0u);
 
   unsigned int sign = f.u & sign_mask;
@@ -348,11 +348,11 @@ EIGEN_STRONG_INLINE EIGEN_DEVICE_FUNC __half float_to_half_rtne(float ff) {
 #endif
 }
 
-EIGEN_STRONG_INLINE EIGEN_DEVICE_FUNC float half_to_float(__half h) {
+EIGEN_STRONG_INLINE EIGEN_DEVICE_FUNC float half_to_float(__hip_half h) {
 #if defined(EIGEN_HAS_HIP_FP16) && \
     (defined(__HIP_DEVICE_COMPILE__) && (__HIP_DEVICE_COMPILE__ == 1)) && \
     defined(__HIP_ARCH_HAS_WARP_SHUFFLE__)
-  return __half2float(h);
+  return __hip_half2float(h);
 
 #elif defined(EIGEN_HAS_FP16_C)
   return _cvtsh_ss(h.x);
@@ -386,7 +386,7 @@ EIGEN_STRONG_INLINE EIGEN_DEVICE_FUNC bool (isinf)(const half& a) {
 }
 EIGEN_STRONG_INLINE EIGEN_DEVICE_FUNC bool (isnan)(const half& a) {
 #if defined(EIGEN_HAS_HIP_FP16) && defined(__HIP_ARCH_HAS_HALF_PRECISION_SUPPORT__)
-  return __hisnan(a);
+  return __hip_hisnan(a);
 #else
   return (a.x & 0x7fff) > 0x7c00;
 #endif
@@ -449,7 +449,7 @@ EIGEN_STRONG_INLINE EIGEN_DEVICE_FUNC half ceil(const half& a) {
 
 EIGEN_STRONG_INLINE EIGEN_DEVICE_FUNC half (min)(const half& a, const half& b) {
 #if defined(EIGEN_HAS_HIP_FP16) && defined(__HIP_ARCH_HAS_HALF_PRECISION_SUPPORT__)
-  return __hlt(b, a) ? b : a;
+  return __hip_hlt(b, a) ? b : a;
 #else
   const float f1 = static_cast<float>(a);
   const float f2 = static_cast<float>(b);
@@ -458,7 +458,7 @@ EIGEN_STRONG_INLINE EIGEN_DEVICE_FUNC half (min)(const half& a, const half& b) {
 }
 EIGEN_STRONG_INLINE EIGEN_DEVICE_FUNC half (max)(const half& a, const half& b) {
 #if defined(EIGEN_HAS_HIP_FP16) && defined(__HIP_ARCH_HAS_HALF_PRECISION_SUPPORT__)
-  return __hlt(a, b) ? b : a;
+  return __hip_hlt(a, b) ? b : a;
 #else
   const float f1 = static_cast<float>(a);
   const float f2 = static_cast<float>(b);

@@ -22,7 +22,7 @@ struct scalar_cast_op<float, Eigen::half> {
     #if defined(EIGEN_HAS_HIP_FP16) && \
         (defined(__HIP_DEVICE_COMPILE__) && (__HIP_DEVICE_COMPILE__ == 1) && \
         defined(__HIP_ARCH_HAS_WARP_SHUFFLE__))
-      return __float2half(a);
+      return __hip_float2half(a);
     #else
       return Eigen::half(a);
     #endif
@@ -42,7 +42,7 @@ struct scalar_cast_op<int, Eigen::half> {
     #if defined(EIGEN_HAS_HIP_FP16) && \
         (defined(__HIP_DEVICE_COMPILE__) && (__HIP_DEVICE_COMPILE__ == 1) && \
         defined(__HIP_ARCH_HAS_WARP_SHUFFLE__))
-      return __float2half(static_cast<float>(a));
+      return __hip_float2half(static_cast<float>(a));
     #else
       return Eigen::half(static_cast<float>(a));
     #endif
@@ -62,7 +62,7 @@ struct scalar_cast_op<Eigen::half, float> {
     #if defined(EIGEN_HAS_HIP_FP16) && \
         (defined(__HIP_DEVICE_COMPILE__) && (__HIP_DEVICE_COMPILE__ == 1) && \
         defined(__HIP_ARCH_HAS_WARP_SHUFFLE__))
-      return __half2float(a);
+      return __hip_half2float(a);
     #else
       return static_cast<float>(a);
     #endif
@@ -89,8 +89,8 @@ struct type_casting_traits<Eigen::half, float> {
 };
 
 template<> EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE float4 pcast<half2, float4>(const half2& a, const half2& b) {
-  float2 r1 = __half22float2(a);
-  float2 r2 = __half22float2(b);
+  float2 r1 = __hip_half22float2(a);
+  float2 r2 = __hip_half22float2(b);
   return make_float4(r1.x, r1.y, r2.x, r2.y);
 }
 
@@ -105,7 +105,7 @@ struct type_casting_traits<float, Eigen::half> {
 
 template<> EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE half2 pcast<float4, half2>(const float4& a) {
   // Simply discard the second half of the input
-  return __floats2half2_rn(a.x, a.y);
+  return __hip_floats2half2_rn(a.x, a.y);
 }
 
 #elif defined EIGEN_VECTORIZE_AVX

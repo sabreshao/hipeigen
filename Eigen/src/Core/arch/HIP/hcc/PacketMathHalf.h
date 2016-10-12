@@ -51,7 +51,7 @@ template<> struct packet_traits<Eigen::half> : default_packet_traits
 template<> struct unpacket_traits<half2> { typedef Eigen::half type; enum {size=2, alignment=Aligned16}; typedef half2 half; };
 
 template<> EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE half2 pset1<half2>(const Eigen::half& from) {
-  return __half2half2(from);
+  return __hip_half2half2(from);
 }
 
 template<> EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE half2 pload<half2>(const Eigen::half* from) {
@@ -59,11 +59,11 @@ template<> EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE half2 pload<half2>(const Eigen:
 }
 
 template<> EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE half2 ploadu<half2>(const Eigen::half* from) {
-  return __halves2half2(from[0], from[1]);
+  return __hip_halves2half2(from[0], from[1]);
 }
 
 template<> EIGEN_STRONG_INLINE half2 ploaddup<half2>(const Eigen::half*  from) {
-  return __halves2half2(from[0], from[0]);
+  return __hip_halves2half2(from[0], from[0]);
 }
 
 template<> EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void pstore<Eigen::half>(Eigen::half* to, const half2& from) {
@@ -71,17 +71,17 @@ template<> EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void pstore<Eigen::half>(Eigen:
 }
 
 template<> EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void pstoreu<Eigen::half>(Eigen::half* to, const half2& from) {
-  to[0] = __low2half(from);
-  to[1] = __high2half(from);
+  to[0] = __hip_low2half(from);
+  to[1] = __hip_high2half(from);
 }
 
 template<>
  EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE half2 ploadt_ro<half2, Aligned>(const Eigen::half* from) {
 #if defined(__HIP_DEVICE_COMPILE__) && (HIP_DEVICE_COMPILE__ == 1) && \
     defined(__HIP_ARCH_HAS_WARP_FUNNEL_SHIFT__) && defined(__HIP_ARCH_HAS_DYNAMIC_PARALLEL__)
-   return __ldg((const half2*)from);
+   return __hip_ldg((const half2*)from);
 #else
-  return __halves2half2(*(from+0), *(from+1));
+  return __hip_halves2half2(*(from+0), *(from+1));
 #endif
 }
 
@@ -89,23 +89,23 @@ template<>
 EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE half2 ploadt_ro<half2, Unaligned>(const Eigen::half* from) {
 #if defined(__HIP_DEVICE_COMPILE__) && (HIP_DEVICE_COMPILE__ == 1) && \
     defined(__HIP_ARCH_HAS_WARP_FUNNEL_SHIFT__) && defined(__HIP_ARCH_HAS_DYNAMIC_PARALLEL__)
-   return __halves2half2(__ldg(from+0), __ldg(from+1));
+   return __hip_halves2half2(__hip_ldg(from+0), __hip_ldg(from+1));
 #else
-  return __halves2half2(*(from+0), *(from+1));
+  return __hip_halves2half2(*(from+0), *(from+1));
 #endif
 }
 
 template<> EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE half2 pgather<Eigen::half, half2>(const Eigen::half* from, Index stride) {
-  return __halves2half2(from[0*stride], from[1*stride]);
+  return __hip_halves2half2(from[0*stride], from[1*stride]);
 }
 
 template<> EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void pscatter<Eigen::half, half2>(Eigen::half* to, const half2& from, Index stride) {
-  to[stride*0] = __low2half(from);
-  to[stride*1] = __high2half(from);
+  to[stride*0] = __hip_low2half(from);
+  to[stride*1] = __hip_high2half(from);
 }
 
 template<> EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE Eigen::half pfirst<half2>(const half2& a) {
-  return __low2half(a);
+  return __hip_low2half(a);
 }
 
 template<> EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE half2 pabs<half2>(const half2& a) {
@@ -117,58 +117,58 @@ template<> EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE half2 pabs<half2>(const half2& 
 
 EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void
 ptranspose(PacketBlock<half2,2>& kernel) {
-  __half a1 = __low2half(kernel.packet[0]);
-  __half a2 = __high2half(kernel.packet[0]);
-  __half b1 = __low2half(kernel.packet[1]);
-  __half b2 = __high2half(kernel.packet[1]);
-  kernel.packet[0] = __halves2half2(a1, b1);
-  kernel.packet[1] = __halves2half2(a2, b2);
+  __hip_half a1 = __hip_low2half(kernel.packet[0]);
+  __hip_half a2 = __hip_high2half(kernel.packet[0]);
+  __hip_half b1 = __hip_low2half(kernel.packet[1]);
+  __hip_half b2 = __hip_high2half(kernel.packet[1]);
+  kernel.packet[0] = __hip_halves2half2(a1, b1);
+  kernel.packet[1] = __hip_halves2half2(a2, b2);
 }
 
 template<> EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE half2 plset<half2>(const Eigen::half& a) {
 #ifdef __HIP_ARCH_HAS_HALF_PRECISION_SUPPORT__
-  return __halves2half2(a, __hadd(a, __float2half(1.0f)));
+  return __hip_halves2half2(a, __hip_hadd(a, __hip_float2half(1.0f)));
 #else
   float f = __half2float(a) + 1.0f;
-  return __halves2half2(a, __float2half(f));
+  return __hip_halves2half2(a, __hip_float2half(f));
 #endif
 }
 
 template<> EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE half2 padd<half2>(const half2& a, const half2& b) {
 #ifdef __HIP_ARCH_HAS_HALF_PRECISION_SUPPORT__
-  return __hadd2(a, b);
+  return __hip_hadd2(a, b);
 #else
-  float a1 = __low2float(a);
-  float a2 = __high2float(a);
-  float b1 = __low2float(b);
-  float b2 = __high2float(b);
+  float a1 = __hip_low2float(a);
+  float a2 = __hip_high2float(a);
+  float b1 = __hip_low2float(b);
+  float b2 = __hip_high2float(b);
   float r1 = a1 + b1;
   float r2 = a2 + b2;
-  return __floats2half2_rn(r1, r2);
+  return __hip_floats2half2_rn(r1, r2);
 #endif
 }
 
 template<> EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE half2 psub<half2>(const half2& a, const half2& b) {
 #ifdef __HIP_ARCH_HAS_HALF_PRECISION_SUPPORT__
-  return __hsub2(a, b);
+  return __hip_hsub2(a, b);
 #else
-  float a1 = __low2float(a);
-  float a2 = __high2float(a);
-  float b1 = __low2float(b);
-  float b2 = __high2float(b);
+  float a1 = __hip_low2float(a);
+  float a2 = __hip_high2float(a);
+  float b1 = __hip_low2float(b);
+  float b2 = __hip_high2float(b);
   float r1 = a1 - b1;
   float r2 = a2 - b2;
-  return __floats2half2_rn(r1, r2);
+  return __hip_floats2half2_rn(r1, r2);
 #endif
 }
 
 template<> EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE half2 pnegate(const half2& a) {
 #ifdef __HIP_ARCH_HAS_HALF_PRECISION_SUPPORT__
-  return __hneg2(a);
+  return __hip_hneg2(a);
 #else
-  float a1 = __low2float(a);
-  float a2 = __high2float(a);
-  return __floats2half2_rn(-a1, -a2);
+  float a1 = __hip_low2float(a);
+  float a2 = __hip_high2float(a);
+  return __hip_floats2half2_rn(-a1, -a2);
 #endif
 }
 
@@ -176,114 +176,114 @@ template<> EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE half2 pconj(const half2& a) { r
 
 template<> EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE half2 pmul<half2>(const half2& a, const half2& b) {
 #ifdef __HIP_ARCH_HAS_HALF_PRECISION_SUPPORT__
-  return __hmul2(a, b);
+  return __hip_hmul2(a, b);
 #else
-  float a1 = __low2float(a);
-  float a2 = __high2float(a);
-  float b1 = __low2float(b);
-  float b2 = __high2float(b);
+  float a1 = __hip_low2float(a);
+  float a2 = __hip_high2float(a);
+  float b1 = __hip_low2float(b);
+  float b2 = __hip_high2float(b);
   float r1 = a1 * b1;
   float r2 = a2 * b2;
-  return __floats2half2_rn(r1, r2);
+  return __hip_floats2half2_rn(r1, r2);
 #endif
 }
 
 template<> EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE half2 pmadd<half2>(const half2& a, const half2& b, const half2& c) {
 #ifdef __HIP_ARCH_HAS_HALF_PRECISION_SUPPORT__
-   return __hfma2(a, b, c);
+   return __hip_hfma2(a, b, c);
 #else
-  float a1 = __low2float(a);
-  float a2 = __high2float(a);
-  float b1 = __low2float(b);
-  float b2 = __high2float(b);
-  float c1 = __low2float(c);
-  float c2 = __high2float(c);
+  float a1 = __hip_low2float(a);
+  float a2 = __hip_high2float(a);
+  float b1 = __hip_low2float(b);
+  float b2 = __hip_high2float(b);
+  float c1 = __hip_low2float(c);
+  float c2 = __hip_high2float(c);
   float r1 = a1 * b1 + c1;
   float r2 = a2 * b2 + c2;
-  return __floats2half2_rn(r1, r2);
+  return __hip_floats2half2_rn(r1, r2);
 #endif
 }
 
 template<> EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE half2 pdiv<half2>(const half2& a, const half2& b) {
-  float a1 = __low2float(a);
-  float a2 = __high2float(a);
-  float b1 = __low2float(b);
-  float b2 = __high2float(b);
+  float a1 = __hip_low2float(a);
+  float a2 = __hip_high2float(a);
+  float b1 = __hip_low2float(b);
+  float b2 = __hip_high2float(b);
   float r1 = a1 / b1;
   float r2 = a2 / b2;
-  return __floats2half2_rn(r1, r2);
+  return __hip_floats2half2_rn(r1, r2);
 }
 
 template<> EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE half2 pmin<half2>(const half2& a, const half2& b) {
-  float a1 = __low2float(a);
-  float a2 = __high2float(a);
-  float b1 = __low2float(b);
-  float b2 = __high2float(b);
-  __half r1 = a1 < b1 ? __low2half(a) : __low2half(b);
-  __half r2 = a2 < b2 ? __high2half(a) : __high2half(b);
-  return __halves2half2(r1, r2);
+  float a1 = __hip_low2float(a);
+  float a2 = __hip_high2float(a);
+  float b1 = __hip_low2float(b);
+  float b2 = __hip_high2float(b);
+  __hip_half r1 = a1 < b1 ? __hip_low2half(a) : __hip_low2half(b);
+  __hip_half r2 = a2 < b2 ? __hip_high2half(a) : __hip_high2half(b);
+  return __hip_halves2half2(r1, r2);
 }
 
 template<> EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE half2 pmax<half2>(const half2& a, const half2& b) {
-  float a1 = __low2float(a);
-  float a2 = __high2float(a);
-  float b1 = __low2float(b);
-  float b2 = __high2float(b);
-  __half r1 = a1 > b1 ? __low2half(a) : __low2half(b);
-  __half r2 = a2 > b2 ? __high2half(a) : __high2half(b);
-  return __halves2half2(r1, r2);
+  float a1 = __hip_low2float(a);
+  float a2 = __hip_high2float(a);
+  float b1 = __hip_low2float(b);
+  float b2 = __hip_high2float(b);
+  __hip_half r1 = a1 > b1 ? __hip_low2half(a) : __hip_low2half(b);
+  __hip_half r2 = a2 > b2 ? __hip_high2half(a) : __hip_high2half(b);
+  return __hip_halves2half2(r1, r2);
 }
 
 template<> EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE Eigen::half predux<half2>(const half2& a) {
 #ifdef __HIP_ARCH_HAS_HALF_PRECISION_SUPPORT__
-  return __hadd(__low2half(a), __high2half(a));
+  return __hip_hadd(__hip_low2half(a), __hip_high2half(a));
 #else
-  float a1 = __low2float(a);
-  float a2 = __high2float(a);
-  return Eigen::half(half_impl::raw_uint16_to_half(__float2half_rn(a1 + a2)));
+  float a1 = __hip_low2float(a);
+  float a2 = __hip_high2float(a);
+  return Eigen::half(half_impl::raw_uint16_to_half(__hip_float2half_rn(a1 + a2)));
 #endif
 }
 
 template<> EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE Eigen::half predux_max<half2>(const half2& a) {
 #ifdef __HIP_ARCH_HAS_HALF_PRECISION_SUPPORT__
-  __half first = __low2half(a);
-  __half second = __high2half(a);
-  return __hgt(first, second) ? first : second;
+  __hip_half first = __hip_low2half(a);
+  __hip_half second = __hip_high2half(a);
+  return __hip_hgt(first, second) ? first : second;
 #else
-  float a1 = __low2float(a);
-  float a2 = __high2float(a);
-  return a1 > a2 ? __low2half(a) : __high2half(a);
+  float a1 = __hip_low2float(a);
+  float a2 = __hip_high2float(a);
+  return a1 > a2 ? __hip_low2half(a) : __hip_high2half(a);
 #endif
 }
 
 template<> EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE Eigen::half predux_min<half2>(const half2& a) {
 #ifdef __HIP_ARCH_HAS_HALF_PRECISION_SUPPORT__
-  __half first = __low2half(a);
-  __half second = __high2half(a);
-  return __hlt(first, second) ? first : second;
+  __hip_half first = __hip_low2half(a);
+  __hip_half second = __hip_high2half(a);
+  return __hip_hlt(first, second) ? first : second;
 #else
-  float a1 = __low2float(a);
-  float a2 = __high2float(a);
-  return a1 < a2 ? __low2half(a) : __high2half(a);
+  float a1 = __hip_low2float(a);
+  float a2 = __hip_high2float(a);
+  return a1 < a2 ? __hip_low2half(a) : __hip_high2half(a);
 #endif
 }
 
 template<> EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE Eigen::half predux_mul<half2>(const half2& a) {
 #ifdef __HIP_ARCH_HAS_HALF_PRECISION_SUPPORT__
-  return __hmul(__low2half(a), __high2half(a));
+  return __hip_hmul(__hip_low2half(a), __hip_high2half(a));
 #else
-  float a1 = __low2float(a);
-  float a2 = __high2float(a);
-  return Eigen::half(half_impl::raw_uint16_to_half(__float2half_rn(a1 * a2)));
+  float a1 = __hip_low2float(a);
+  float a2 = __hip_high2float(a);
+  return Eigen::half(half_impl::raw_uint16_to_half(__hip_float2half_rn(a1 * a2)));
 #endif
 }
 
 template<> EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE half2 plog1p<half2>(const half2& a) {
-  float a1 = __low2float(a);
-  float a2 = __high2float(a);
+  float a1 = __hip_low2float(a);
+  float a2 = __hip_high2float(a);
   float r1 = log1pf(a1);
   float r2 = log1pf(a2);
-  return __floats2half2_rn(r1, r2);
+  return __hip_floats2half2_rn(r1, r2);
 }
 
 #if defined(__HIP_ARCH_HAS_HALF_PRECISION_SUPPORT__) && (defined(__HCC__) || \
@@ -312,35 +312,35 @@ half2 prsqrt<half2>(const half2& a) {
 #else
 
 template<> EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE half2 plog<half2>(const half2& a) {
-  float a1 = __low2float(a);
-  float a2 = __high2float(a);
+  float a1 = __hip_low2float(a);
+  float a2 = __hip_high2float(a);
   float r1 = logf(a1);
   float r2 = logf(a2);
-  return __floats2half2_rn(r1, r2);
+  return __hip_floats2half2_rn(r1, r2);
 }
 
 template<> EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE half2 pexp<half2>(const half2& a) {
-  float a1 = __low2float(a);
-  float a2 = __high2float(a);
+  float a1 = __hip_low2float(a);
+  float a2 = __hip_high2float(a);
   float r1 = expf(a1);
   float r2 = expf(a2);
-  return __floats2half2_rn(r1, r2);
+  return __hip_floats2half2_rn(r1, r2);
 }
 
 template<> EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE half2 psqrt<half2>(const half2& a) {
-  float a1 = __low2float(a);
-  float a2 = __high2float(a);
+  float a1 = __hip_low2float(a);
+  float a2 = __hip_high2float(a);
   float r1 = sqrtf(a1);
   float r2 = sqrtf(a2);
-  return __floats2half2_rn(r1, r2);
+  return __hip_floats2half2_rn(r1, r2);
 }
 
 template<> EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE half2 prsqrt<half2>(const half2& a) {
-  float a1 = __low2float(a);
-  float a2 = __high2float(a);
+  float a1 = __hip_low2float(a);
+  float a2 = __hip_high2float(a);
   float r1 = rsqrtf(a1);
   float r2 = rsqrtf(a2);
-  return __floats2half2_rn(r1, r2);
+  return __hip_floats2half2_rn(r1, r2);
 }
 
 #endif
