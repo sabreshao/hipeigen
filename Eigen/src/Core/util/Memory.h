@@ -211,7 +211,11 @@ inline void* aligned_realloc(void *ptr, size_t new_size, size_t old_size)
   */
 template<bool Align> EIGEN_DEVICE_FUNC inline void* conditional_aligned_malloc(size_t size)
 {
-  return NULL;//TODO:aligned_malloc(size);
+  #if defined(__HIP_DEVICE_COMPILE__) && (__HIP_DEVICE_COMPILE__ == 1)
+    //TODO: aligned_malloc(size);
+  #else
+    aligned_malloc(size);
+  #endif
 }
 
 template<> inline void* conditional_aligned_malloc<false>(size_t size)
@@ -227,7 +231,11 @@ template<> inline void* conditional_aligned_malloc<false>(size_t size)
 /** \internal Frees memory allocated with conditional_aligned_malloc */
 template<bool Align> EIGEN_DEVICE_FUNC inline void conditional_aligned_free(void *ptr)
 {
-  //TODO:aligned_free(ptr);
+  #if defined(__HIP_DEVICE_COMPILE__) && (__HIP_DEVICE_COMPILE__ == 1)
+    //TODO: aligned_free(ptr);
+  #else
+    aligned_free(ptr);
+  #endif
 }
 
 template<> inline void conditional_aligned_free<false>(void *ptr)
@@ -295,15 +303,27 @@ EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE void check_size_for_overflow(size_t size)
 template<typename T> EIGEN_DEVICE_FUNC inline T* aligned_new(size_t size)
 {
   check_size_for_overflow<T>(size);
-  //TODO:T *result = reinterpret_cast<T*>(aligned_malloc(sizeof(T)*size));
+  #if defined(__HIP_DEVICE_COMPILE__) && (__HIP_DEVICE_COMPILE__ == 1)
+    //TODO:T *result = reinterpret_cast<T*>(aligned_malloc(sizeof(T)*size));
+  #else
+    T *result = reinterpret_cast<T*>(aligned_malloc(sizeof(T)*size));
+  #endif
   EIGEN_TRY
   {
-    //TODO:return construct_elements_of_array(result, size);
-    return NULL;
+    #if defined(__HIP_DEVICE_COMPILE__) && (__HIP_DEVICE_COMPILE__ == 1)
+      //TODO:return construct_elements_of_array(result, size);
+      return NULL;
+    #else
+      return construct_elements_of_array(result, size);
+    #endif
   }
   EIGEN_CATCH(...)
   {
-    //TODO:aligned_free(result);
+    #if defined(__HIP_DEVICE_COMPILE__) && (__HIP_DEVICE_COMPILE__ == 1)
+      //TODO:aligned_free(result);
+    #else
+      aligned_free(result);
+    #endif
     EIGEN_THROW;
   }
 }
