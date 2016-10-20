@@ -18,7 +18,7 @@
 #define EIGEN_TEST_FUNC hip_basic
 #define EIGEN_DEFAULT_DENSE_INDEX_TYPE int
 
-#include <hip_runtime.h>
+#include <hip/hip_runtime.h>
 #ifdef __NVCC__
   #include <math_constants.h>
   #if defined __CUDACC_VER__ && __CUDACC_VER__ >= 70500

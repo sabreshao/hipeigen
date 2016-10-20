@@ -150,13 +150,17 @@ EIGEN_DEVICE_FUNC inline void check_that_malloc_is_allowed()
 /** \internal Allocates \a size bytes. The returned pointer is guaranteed to have 16 or 32 bytes alignment depending on the requirements.
   * On allocation error, the returned pointer is null, and std::bad_alloc is thrown.
   */
-inline void* aligned_malloc(size_t size)
+EIGEN_DEVICE_FUNC inline void* aligned_malloc(size_t size)
 {
   check_that_malloc_is_allowed();
 
   void *result;
   #if (EIGEN_DEFAULT_ALIGN_BYTES==0) || EIGEN_MALLOC_ALREADY_ALIGNED
+    #if (!defined(__HIP_DEVICE_COMPILE__)) || (__HIP_DEVICE_COMPILE__ == 0)
     result = std::malloc(size);
+    #else
+    result = aligned_malloc(size);
+    #endif
     #if EIGEN_DEFAULT_ALIGN_BYTES==16
     eigen_assert((size<16 || (std::size_t(result)%16)==0) && "System's malloc returned an unaligned pointer. Compile with EIGEN_MALLOC_ALREADY_ALIGNED=0 to fallback to handmade alignd memory allocator.");
     #endif
@@ -171,10 +175,14 @@ inline void* aligned_malloc(size_t size)
 }
 
 /** \internal Frees memory allocated with aligned_malloc. */
-inline void aligned_free(void *ptr)
+EIGEN_DEVICE_FUNC inline void aligned_free(void *ptr)
 {
   #if (EIGEN_DEFAULT_ALIGN_BYTES==0) || EIGEN_MALLOC_ALREADY_ALIGNED
+    #if (!defined(__HIP_DEVICE_COMPILE__)) || (__HIP_DEVICE_COMPILE__ == 0)
     std::free(ptr);
+    #else
+    aligned_free(ptr);
+    #endif
   #else
     handmade_aligned_free(ptr);
   #endif
@@ -211,18 +219,18 @@ inline void* aligned_realloc(void *ptr, size_t new_size, size_t old_size)
   */
 template<bool Align> EIGEN_DEVICE_FUNC inline void* conditional_aligned_malloc(size_t size)
 {
-  #if defined(__HIP_DEVICE_COMPILE__) && (__HIP_DEVICE_COMPILE__ == 1)
-    //TODO: aligned_malloc(size);
-  #else
-    aligned_malloc(size);
-  #endif
+  return aligned_malloc(size);
 }
 
-template<> inline void* conditional_aligned_malloc<false>(size_t size)
+template<> EIGEN_DEVICE_FUNC inline void* conditional_aligned_malloc<false>(size_t size)
 {
   check_that_malloc_is_allowed();
 
+  #if (!defined(__HIP_DEVICE_COMPILE__)) || (__HIP_DEVICE_COMPILE__ == 0)
   void *result = std::malloc(size);
+  #else
+  void *result = aligned_malloc(size);
+  #endif
   if(!result && size)
     throw_std_bad_alloc();
   return result;
@@ -231,16 +239,16 @@ template<> inline void* conditional_aligned_malloc<false>(size_t size)
 /** \internal Frees memory allocated with conditional_aligned_malloc */
 template<bool Align> EIGEN_DEVICE_FUNC inline void conditional_aligned_free(void *ptr)
 {
-  #if defined(__HIP_DEVICE_COMPILE__) && (__HIP_DEVICE_COMPILE__ == 1)
-    //TODO: aligned_free(ptr);
-  #else
-    aligned_free(ptr);
-  #endif
+  aligned_free(ptr);
 }
 
-template<> inline void conditional_aligned_free<false>(void *ptr)
+template<> EIGEN_DEVICE_FUNC inline void conditional_aligned_free<false>(void *ptr)
 {
+  #if (!defined(__HIP_DEVICE_COMPILE__)) || (__HIP_DEVICE_COMPILE__ == 0)
   std::free(ptr);
+  #else
+  aligned_free(ptr);
+  #endif
 }
 
 template<bool Align> inline void* conditional_aligned_realloc(void* ptr, size_t new_size, size_t old_size)
@@ -303,27 +311,14 @@ EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE void check_size_for_overflow(size_t size)
 template<typename T> EIGEN_DEVICE_FUNC inline T* aligned_new(size_t size)
 {
   check_size_for_overflow<T>(size);
-  #if defined(__HIP_DEVICE_COMPILE__) && (__HIP_DEVICE_COMPILE__ == 1)
-    //TODO:T *result = reinterpret_cast<T*>(aligned_malloc(sizeof(T)*size));
-  #else
-    T *result = reinterpret_cast<T*>(aligned_malloc(sizeof(T)*size));
-  #endif
+  T *result = reinterpret_cast<T*>(aligned_malloc(sizeof(T)*size));
   EIGEN_TRY
   {
-    #if defined(__HIP_DEVICE_COMPILE__) && (__HIP_DEVICE_COMPILE__ == 1)
-      //TODO:return construct_elements_of_array(result, size);
-      return NULL;
-    #else
-      return construct_elements_of_array(result, size);
-    #endif
+    return construct_elements_of_array(result, size);
   }
   EIGEN_CATCH(...)
   {
-    #if defined(__HIP_DEVICE_COMPILE__) && (__HIP_DEVICE_COMPILE__ == 1)
-      //TODO:aligned_free(result);
-    #else
-      aligned_free(result);
-    #endif
+    aligned_free(result);
     EIGEN_THROW;
   }
 }
