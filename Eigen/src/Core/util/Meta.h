@@ -17,7 +17,7 @@
     #include <math_constants.h>
   #elif __HCC__
     #include <cfloat>
-    #include "intrinsics.h"
+    #include "hcc/intrinsics.h"
   #endif
 #endif
 

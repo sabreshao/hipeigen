@@ -25,7 +25,7 @@
     #include <cuda_fp16.h>
   #endif
 #else
-  #include "intrinsics.h"
+  #include "hcc/intrinsics.h"
 #endif
 
 #include "main.h"
