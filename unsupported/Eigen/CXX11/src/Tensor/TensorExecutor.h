@@ -234,7 +234,7 @@ struct EigenMetaKernelEval<Evaluator, Index, true> {
 
 template <typename Evaluator, typename Index>
 __global__ void
-__launch_bounds__(1024)
+__launch_bounds__(1024, 1)
 EigenMetaKernel(hipLaunchParm lp, Evaluator memcopied_eval, Index size) {
 
   const Index first_index = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;

@@ -500,7 +500,7 @@ EigenContractionKernelInternal(const LhsMapper lhs, const RhsMapper rhs,
 template<typename Scalar, typename Index, typename LhsMapper,
          typename RhsMapper, typename OutputMapper>
 __global__ void
-__launch_bounds__(512)
+__launch_bounds__(512, 1)
 EigenContractionKernel(hipLaunchParm lp, const LhsMapper lhs, const RhsMapper rhs,
                        const OutputMapper output,
                        const Index m_size, const Index n_size, const Index k_size) {
@@ -1140,7 +1140,7 @@ EigenFloatContractionKernelInternal(const LhsMapper lhs, const RhsMapper rhs,
 template<typename Index, typename LhsMapper,
          typename RhsMapper, typename OutputMapper>
 __global__ void
-__launch_bounds__(256)
+__launch_bounds__(256, 1)
 EigenFloatContractionKernel(hipLaunchParm lp, const LhsMapper lhs, const RhsMapper rhs,
                        const OutputMapper output,
                        const Index m_size, const Index n_size, const Index k_size) {
@@ -1186,7 +1186,7 @@ EigenFloatContractionKernel(hipLaunchParm lp, const LhsMapper lhs, const RhsMapp
 template<typename Index, typename LhsMapper,
          typename RhsMapper, typename OutputMapper>
 __global__ void
-__launch_bounds__(256)
+__launch_bounds__(256, 1)
 EigenFloatContractionKernel16x16(hipLaunchParm lp, const LhsMapper lhs, const RhsMapper rhs,
                        const OutputMapper output,
                        const Index m_size, const Index n_size, const Index k_size) {
