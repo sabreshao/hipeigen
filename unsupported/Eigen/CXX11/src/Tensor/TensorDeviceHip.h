@@ -11,8 +11,8 @@
 #define EIGEN_CXX11_TENSOR_TENSOR_DEVICE_HIP_H
 
 #ifdef __HIPCC__
-#include "hip_runtime.h"
-#include "hip_runtime_api.h"
+#include "hip/hip_runtime.h"
+#include "hip/hip_runtime_api.h"
 #endif
 
 namespace Eigen {
