@@ -11,6 +11,10 @@
 #ifndef EIGEN_CXX11_TENSOR_TENSOR_REDUCTION_HIP_H
 #define EIGEN_CXX11_TENSOR_TENSOR_REDUCTION_HIP_H
 
+#ifdef __HCC__
+#include "Eigen/src/Core/arch/HIP/hcc/intrinsics.h"
+#endif
+
 namespace Eigen {
 namespace internal {
 
@@ -78,7 +82,11 @@ __device__ inline Type atomicExchCustom(Type* address, Type val) {
 template <>
 __device__ inline double atomicExchCustom(double* address, double val) {
   unsigned long long int* address_as_ull = reinterpret_cast<unsigned long long int*>(address);
+  #ifdef __NVCC__
   return __longlong_as_double(atomicExch(address_as_ull, __double_as_longlong(val)));
+  #elif __HCC__
+  return __hip_longlong_as_double(atomicExch(address_as_ull, __hip_double_as_longlong(val)));
+  #endif
 }
 
 #ifdef EIGEN_HAS_HIP_FP16
