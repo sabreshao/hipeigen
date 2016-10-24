@@ -38,6 +38,26 @@ __HIP_FP16_DECL_PREFIX__  double __hip_hiloint2double(int hi, int lo) {
    return u.doubleType;
 }
 
+__HIP_FP16_DECL_PREFIX__ double __hip_longlong_as_double(const long long x) {
+   union {
+      long long a;
+      double b;
+   }u;
+
+   u.a = x;
+   return u.b;
+}
+
+__HIP_FP16_DECL_PREFIX__ long long __hip_double_as_longlong(const double x) {
+   union {
+      long long a;
+      double b;
+   }u;
+
+   u.b = x;
+   return u.a;
+}
+
 // Single Precision Macros
 #define HIPRT_INF_F        __hip_int_as_float(0x7f800000)
 #define HIPRT_NAN_F        __hip_int_as_float(0x7fffffff)
