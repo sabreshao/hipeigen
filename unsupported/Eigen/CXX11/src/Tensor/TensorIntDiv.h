@@ -10,6 +10,9 @@
 #ifndef EIGEN_CXX11_TENSOR_TENSOR_INTDIV_H
 #define EIGEN_CXX11_TENSOR_TENSOR_INTDIV_H
 
+#ifdef __HCC__
+#include "Eigen/src/Core/arch/HIP/hcc/intrinsics.h"
+#endif
 
 namespace Eigen {
 
@@ -196,7 +199,11 @@ class TensorIntDivisor<int32_t, true> {
 
   EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE int divide(const int32_t n) const {
 #if defined(__HIP_DEVICE_COMPILE__) && (__HIP_DEVICE_COMPILE__ == 1)
+    #ifdef __NVCC__
     return (__umulhi(magic, n) >> shift);
+    #else
+    return (__hip_umulhi(magic, n) >> shift);
+    #endif
 #else
     uint64_t v = static_cast<uint64_t>(magic) * static_cast<uint64_t>(n);
     return (static_cast<uint32_t>(v >> 32) >> shift);
