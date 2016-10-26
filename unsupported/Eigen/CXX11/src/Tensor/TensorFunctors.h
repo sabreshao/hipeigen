@@ -692,14 +692,16 @@ template <> class UniformRandomGenerator<std::complex<float> > {
     curand_init(seed, tid, 0, &m_state);
     #endif
   }
+#ifdef __NVCC__
   __device__ std::complex<float> operator()() const {
-    #ifdef __NVCC__
     float4 vals = curand_uniform4(&m_state);
-    #else
-    float4 vals = make_float4(0, 0, 0, 0);
-    #endif
     return std::complex<float>(vals.x, vals.y);
   }
+#else
+  __device__ float4 operator()() const {
+    return make_float4(0, 0, 0, 0);
+  }
+#endif
 
  private:
   bool m_deterministic;
@@ -727,14 +729,16 @@ template <> class UniformRandomGenerator<std::complex<double> > {
     curand_init(seed, tid, 0, &m_state);
     #endif
   }
+#ifdef __NVCC__
   __device__ std::complex<double> operator()() const {
-    #ifdef __NVCC__
     double2 vals = curand_uniform2_double(&m_state);
-    #else
-    double2 vals = make_double2(0, 0);
-    #endif
     return std::complex<double>(vals.x, vals.y);
   }
+#else
+  __device__ double2 operator()() const {
+    return make_double2(0, 0);
+  }
+#endif
 
  private:
   bool m_deterministic;
@@ -908,14 +912,16 @@ template <> class NormalRandomGenerator<std::complex<float> > {
     curand_init(seed, tid, 0, &m_state);
     #endif
   }
+#ifdef __NVCC__
   __device__ std::complex<float> operator()() const {
-    #ifdef __NVCC__
     float4 vals = curand_normal4(&m_state);
-    #else
-    float4 vals = make_float4(0, 0, 0, 0);
-    #endif
     return std::complex<float>(vals.x, vals.y);
   }
+#else
+  __device__ float4 operator()() const {
+    return make_float4(0, 0, 0, 0);
+  }
+#endif
 
  private:
   bool m_deterministic;
@@ -943,14 +949,16 @@ template <> class NormalRandomGenerator<std::complex<double> > {
     curand_init(seed, tid, 0, &m_state);
     #endif
   }
+#ifdef __NVCC__
   __device__ std::complex<double> operator()() const {
-    #ifdef __NVCC__
     double2 vals = curand_normal2_double(&m_state);
-    #else
-    double2 vals = make_double2(0, 0);
-    #endif
     return std::complex<double>(vals.x, vals.y);
   }
+#else
+  __device__ double2 operator()() const {
+    return make_double2(0, 0);
+  }
+#endif
 
  private:
   bool m_deterministic;
