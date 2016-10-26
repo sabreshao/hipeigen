@@ -591,29 +591,43 @@ template <> class UniformRandomGenerator<float> {
   __device__ UniformRandomGenerator(bool deterministic = true) : m_deterministic(deterministic) {
     const int tid = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
     const int seed = deterministic ? 0 : get_random_seed();
+    #ifdef __NVCC__
     curand_init(seed, tid, 0, &m_state);
+    #endif
   }
 
   __device__ UniformRandomGenerator(const UniformRandomGenerator& other) {
     m_deterministic = other.m_deterministic;
     const int tid = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
     const int seed = m_deterministic ? 0 : get_random_seed();
-     curand_init(seed, tid, 0, &m_state);
+    #ifdef __NVCC__
+    curand_init(seed, tid, 0, &m_state);
+    #endif
   }
 
   __device__ float operator()() const {
+    #ifdef __NVCC__
     return curand_uniform(&m_state);
+    #else
+    return 0.0;
+    #endif
   }
   template<typename PacketType>
   __device__ float4 packetOp() const {
     //EIGEN_STATIC_ASSERT((is_same<PacketType, float4>::value), YOU_MADE_A_PROGRAMMING_MISTAKE);
+    #ifdef __NVCC__
     //return curand_uniform4(&m_state);
     return make_float4(0, 0, 0, 0);
+    #else
+    return make_float4(0, 0, 0, 0);
+    #endif
   }
 
  private:
   bool m_deterministic;
+  #ifdef __NVCC__
   mutable curandStatePhilox4_32_10_t m_state;
+  #endif
 };
 
 template <> class UniformRandomGenerator<double> {
@@ -623,26 +637,40 @@ template <> class UniformRandomGenerator<double> {
   __device__ UniformRandomGenerator(bool deterministic = true) : m_deterministic(deterministic) {
     const int tid = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
     const int seed = deterministic ? 0 : get_random_seed();
+    #ifdef __NVCC__
     curand_init(seed, tid, 0, &m_state);
+    #endif
   }
   __device__ UniformRandomGenerator(const UniformRandomGenerator& other) {
     m_deterministic = other.m_deterministic;
     const int tid = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
     const int seed = m_deterministic ? 0 : get_random_seed();
+    #ifdef __NVCC__
     curand_init(seed, tid, 0, &m_state);
+    #endif
   }
   __device__ double operator()() const {
+    #ifdef __NVCC__
     return curand_uniform_double(&m_state);
+    #else
+    return 0.0;
+    #endif
   }
   template<typename PacketType>
   __device__ double2 packetOp() const {
     EIGEN_STATIC_ASSERT((is_same<PacketType, double2>::value), YOU_MADE_A_PROGRAMMING_MISTAKE);
+    #ifdef __NVCC__
     return curand_uniform2_double(&m_state);
+    #else
+    return make_double2(0, 0);
+    #endif
   }
 
  private:
   bool m_deterministic;
+  #ifdef __NVCC__
   mutable curandStatePhilox4_32_10_t m_state;
+  #endif
 };
 
 template <> class UniformRandomGenerator<std::complex<float> > {
@@ -652,22 +680,32 @@ template <> class UniformRandomGenerator<std::complex<float> > {
   __device__ UniformRandomGenerator(bool deterministic = true) : m_deterministic(deterministic) {
     const int tid = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
     const int seed = deterministic ? 0 : get_random_seed();
+    #ifdef __NVCC__
     curand_init(seed, tid, 0, &m_state);
+    #endif
   }
   __device__ UniformRandomGenerator(const UniformRandomGenerator& other) {
     m_deterministic = other.m_deterministic;
     const int tid = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
     const int seed = m_deterministic ? 0 : get_random_seed();
+    #ifdef __NVCC__
     curand_init(seed, tid, 0, &m_state);
+    #endif
   }
   __device__ std::complex<float> operator()() const {
+    #ifdef __NVCC__
     float4 vals = curand_uniform4(&m_state);
+    #else
+    float4 vals = make_float4(0, 0, 0, 0);
+    #endif
     return std::complex<float>(vals.x, vals.y);
   }
 
  private:
   bool m_deterministic;
+  #ifdef __NVCC__
   mutable curandStatePhilox4_32_10_t m_state;
+  #endif
 };
 
 template <> class UniformRandomGenerator<std::complex<double> > {
@@ -677,22 +715,32 @@ template <> class UniformRandomGenerator<std::complex<double> > {
   __device__ UniformRandomGenerator(bool deterministic = true) : m_deterministic(deterministic) {
     const int tid = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
     const int seed = deterministic ? 0 : get_random_seed();
+    #ifdef __NVCC__
     curand_init(seed, tid, 0, &m_state);
+    #endif
   }
   __device__ UniformRandomGenerator(const UniformRandomGenerator& other) {
     m_deterministic = other.m_deterministic;
     const int tid = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
     const int seed = m_deterministic ? 0 : get_random_seed();
+    #ifdef __NVCC__
     curand_init(seed, tid, 0, &m_state);
+    #endif
   }
   __device__ std::complex<double> operator()() const {
+    #ifdef __NVCC__
     double2 vals = curand_uniform2_double(&m_state);
+    #else
+    double2 vals = make_double2(0, 0);
+    #endif
     return std::complex<double>(vals.x, vals.y);
   }
 
  private:
   bool m_deterministic;
+  #ifdef __NVCC__
   mutable curandStatePhilox4_32_10_t m_state;
+  #endif
 };
 
 #endif
@@ -762,26 +810,40 @@ template <> class NormalRandomGenerator<float> {
   __device__ NormalRandomGenerator(bool deterministic = true) : m_deterministic(deterministic) {
     const int tid = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
     const int seed = deterministic ? 0 : get_random_seed();
+    #ifdef __NVCC__
     curand_init(seed, tid, 0, &m_state);
+    #endif
   }
   __device__ NormalRandomGenerator(const NormalRandomGenerator<float>& other) {
     m_deterministic = other.m_deterministic;
     const int tid = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
     const int seed = m_deterministic ? 0 : get_random_seed();
+    #ifdef __NVCC__
     curand_init(seed, tid, 0, &m_state);
+    #endif
   }
   __device__ float operator()() const {
+    #ifdef __NVCC__
     return curand_normal(&m_state);
+    #else
+    return 0.0;
+    #endif
   }
   template<typename PacketType>
    __device__ float4 packetOp() const {
     EIGEN_STATIC_ASSERT((is_same<PacketType, float4>::value), YOU_MADE_A_PROGRAMMING_MISTAKE);
+    #ifdef __NVCC__
     return curand_normal4(&m_state);
+    #else
+    return make_float4(0, 0, 0, 0);
+    #endif
   }
 
  private:
   bool m_deterministic;
+  #ifdef __NVCC__
   mutable curandStatePhilox4_32_10_t m_state;
+  #endif
 };
 
 template <> class NormalRandomGenerator<double> {
@@ -791,26 +853,40 @@ template <> class NormalRandomGenerator<double> {
   __device__ NormalRandomGenerator(bool deterministic = true) : m_deterministic(deterministic) {
     const int tid = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
     const int seed = deterministic ? 0 : get_random_seed();
+    #ifdef __NVCC__
     curand_init(seed, tid, 0, &m_state);
+    #endif
   }
   __device__ NormalRandomGenerator(const NormalRandomGenerator<double>& other) {
     m_deterministic = other.m_deterministic;
     const int tid = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
     const int seed = m_deterministic ? 0 : get_random_seed();
+    #ifdef __NVCC__
     curand_init(seed, tid, 0, &m_state);
+    #endif
   }
   __device__ double operator()() const {
+    #ifdef __NVCC__
     return curand_normal_double(&m_state);
+    #else
+    return 0.0;
+    #endif
   }
   template<typename PacketType>
   __device__ double2 packetOp() const {
     EIGEN_STATIC_ASSERT((is_same<PacketType, double2>::value), YOU_MADE_A_PROGRAMMING_MISTAKE);
+    #ifdef __NVCC__
     return curand_normal2_double(&m_state);
+    #else
+    return make_double2(0, 0);
+    #endif
   }
 
  private:
   bool m_deterministic;
+  #ifdef __NVCC__
   mutable curandStatePhilox4_32_10_t m_state;
+  #endif
 };
 
 template <> class NormalRandomGenerator<std::complex<float> > {
@@ -820,22 +896,32 @@ template <> class NormalRandomGenerator<std::complex<float> > {
   __device__ NormalRandomGenerator(bool deterministic = true) : m_deterministic(deterministic) {
     const int tid = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
     const int seed = deterministic ? 0 : get_random_seed();
+    #ifdef __NVCC__
     curand_init(seed, tid, 0, &m_state);
+    #endif
   }
   __device__ NormalRandomGenerator(const NormalRandomGenerator& other) {
     m_deterministic = other.m_deterministic;
     const int tid = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
     const int seed = m_deterministic ? 0 : get_random_seed();
+    #ifdef __NVCC__
     curand_init(seed, tid, 0, &m_state);
+    #endif
   }
   __device__ std::complex<float> operator()() const {
+    #ifdef __NVCC__
     float4 vals = curand_normal4(&m_state);
+    #else
+    float4 vals = make_float4(0, 0, 0, 0);
+    #endif
     return std::complex<float>(vals.x, vals.y);
   }
 
  private:
   bool m_deterministic;
+  #ifdef __NVCC__
   mutable curandStatePhilox4_32_10_t m_state;
+  #endif
 };
 
 template <> class NormalRandomGenerator<std::complex<double> > {
@@ -845,22 +931,32 @@ template <> class NormalRandomGenerator<std::complex<double> > {
   __device__ NormalRandomGenerator(bool deterministic = true) : m_deterministic(deterministic) {
     const int tid = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
     const int seed = deterministic ? 0 : get_random_seed();
+    #ifdef __NVCC__
     curand_init(seed, tid, 0, &m_state);
+    #endif
   }
   __device__ NormalRandomGenerator(const NormalRandomGenerator& other) {
     m_deterministic = other.m_deterministic;
     const int tid = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
     const int seed = m_deterministic ? 0 : get_random_seed();
+    #ifdef __NVCC__
     curand_init(seed, tid, 0, &m_state);
+    #endif
   }
   __device__ std::complex<double> operator()() const {
+    #ifdef __NVCC__
     double2 vals = curand_normal2_double(&m_state);
+    #else
+    double2 vals = make_double2(0, 0);
+    #endif
     return std::complex<double>(vals.x, vals.y);
   }
 
  private:
   bool m_deterministic;
+  #ifdef __NVCC__
   mutable curandStatePhilox4_32_10_t m_state;
+  #endif
 };
 
 #else
