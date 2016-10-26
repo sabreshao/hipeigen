@@ -23,9 +23,9 @@ using Eigen::Tensor;
 template <int Layout>
 void test_hip_simple_argmax()
 {
-  Tensor<double, 3, Layout> in(Eigen::array<DenseIndex, 3>(72,53,97));
-  Tensor<DenseIndex, 1, Layout> out_max(Eigen::array<DenseIndex, 1>(1));
-  Tensor<DenseIndex, 1, Layout> out_min(Eigen::array<DenseIndex, 1>(1));
+  Tensor<double, 3, Layout> in(Eigen::array<DenseIndex, 3>{72,53,97});
+  Tensor<DenseIndex, 1, Layout> out_max(Eigen::array<DenseIndex, 1>{1});
+  Tensor<DenseIndex, 1, Layout> out_min(Eigen::array<DenseIndex, 1>{1});
   in.setRandom();
   in *= in.constant(100.0);
   in(0, 0, 0) = -1000.0;
@@ -46,9 +46,9 @@ void test_hip_simple_argmax()
   Eigen::HipStreamDevice stream;
   Eigen::GpuDevice gpu_device(&stream);
 
-  Eigen::TensorMap<Eigen::Tensor<double, 3, Layout>, Aligned > gpu_in(d_in, Eigen::array<DenseIndex, 3>(72,53,97));
-  Eigen::TensorMap<Eigen::Tensor<DenseIndex, 1, Layout>, Aligned > gpu_out_max(d_out_max, Eigen::array<DenseIndex, 1>(1));
-  Eigen::TensorMap<Eigen::Tensor<DenseIndex, 1, Layout>, Aligned > gpu_out_min(d_out_min, Eigen::array<DenseIndex, 1>(1));
+  Eigen::TensorMap<Eigen::Tensor<double, 3, Layout>, Aligned > gpu_in(d_in, Eigen::array<DenseIndex, 3>{72,53,97});
+  Eigen::TensorMap<Eigen::Tensor<DenseIndex, 1, Layout>, Aligned > gpu_out_max(d_out_max, Eigen::array<DenseIndex, 1>{1});
+  Eigen::TensorMap<Eigen::Tensor<DenseIndex, 1, Layout>, Aligned > gpu_out_min(d_out_min, Eigen::array<DenseIndex, 1>{1});
 
   gpu_out_max.device(gpu_device) = gpu_in.argmax();
   gpu_out_min.device(gpu_device) = gpu_in.argmin();
@@ -57,8 +57,8 @@ void test_hip_simple_argmax()
   assert(hipMemcpyAsync(out_min.data(), d_out_min, out_bytes, hipMemcpyDeviceToHost, gpu_device.stream()) == hipSuccess);
   assert(hipStreamSynchronize(gpu_device.stream()) == hipSuccess);
 
-  VERIFY_IS_EQUAL(out_max(Eigen::array<DenseIndex, 1>(0)), 72*53*97 - 1);
-  VERIFY_IS_EQUAL(out_min(Eigen::array<DenseIndex, 1>(0)), 0);
+  VERIFY_IS_EQUAL(out_max(Eigen::array<DenseIndex, 1>{0}), 72*53*97 - 1);
+  VERIFY_IS_EQUAL(out_min(Eigen::array<DenseIndex, 1>{0}), 0);
 
   hipFree(d_in);
   hipFree(d_out_max);
@@ -108,7 +108,7 @@ void test_hip_argmax_dim()
     Eigen::HipStreamDevice stream;
     Eigen::GpuDevice gpu_device(&stream);
 
-    Eigen::TensorMap<Eigen::Tensor<float, 4, DataLayout>, Aligned > gpu_in(d_in, Eigen::array<DenseIndex, 4>(2, 3, 5, 7));
+    Eigen::TensorMap<Eigen::Tensor<float, 4, DataLayout>, Aligned > gpu_in(d_in, Eigen::array<DenseIndex, 4>{2, 3, 5, 7});
     Eigen::TensorMap<Eigen::Tensor<DenseIndex, 3, DataLayout>, Aligned > gpu_out(d_out, out_shape);
 
     gpu_out.device(gpu_device) = gpu_in.argmax(dim);
@@ -197,7 +197,7 @@ void test_hip_argmin_dim()
     Eigen::HipStreamDevice stream;
     Eigen::GpuDevice gpu_device(&stream);
 
-    Eigen::TensorMap<Eigen::Tensor<float, 4, DataLayout>, Aligned > gpu_in(d_in, Eigen::array<DenseIndex, 4>(2, 3, 5, 7));
+    Eigen::TensorMap<Eigen::Tensor<float, 4, DataLayout>, Aligned > gpu_in(d_in, Eigen::array<DenseIndex, 4>{2, 3, 5, 7});
     Eigen::TensorMap<Eigen::Tensor<DenseIndex, 3, DataLayout>, Aligned > gpu_out(d_out, out_shape);
 
     gpu_out.device(gpu_device) = gpu_in.argmin(dim);
