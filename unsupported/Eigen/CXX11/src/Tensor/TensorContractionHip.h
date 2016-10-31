@@ -567,11 +567,8 @@ EigenFloatContractionKernelInternal16x16(const LhsMapper lhs, const RhsMapper rh
   Index lhs_vert = base_m+hipThreadIdx_x*4;
 
   for (Index k = 0; k < k_size; k += 16) {
-    //TODO:Enable them once bug is fixed
-    //lhs_pf0 = internal::pset1<float4>(0);
-    //rhs_pf0 = internal::pset1<float4>(0);
-    lhs_pf0 = make_float4(0.0, 0.0, 0.0, 0.0);
-    rhs_pf0 = make_float4(0.0, 0.0, 0.0, 0.0);
+    lhs_pf0 = internal::pset1<float4>(0);
+    rhs_pf0 = internal::pset1<float4>(0);
 
     Index lhs_horiz = hipThreadIdx_y+k;
     prefetch_lhs(lhs_pf0, lhs_vert, lhs_horiz)
@@ -784,22 +781,13 @@ EigenFloatContractionKernelInternal(const LhsMapper lhs, const RhsMapper rhs,
 
   Index lhs_vert = base_m+hipThreadIdx_x*4+(hipThreadIdx_y%4)*32;
   for (Index k = 0; k < k_size; k += 32) {
-    //TODO:Enable them once bug is fixed
-    //lhs_pf0 = internal::pset1<float4>(0);
-    //lhs_pf1 = internal::pset1<float4>(0);
-    //lhs_pf2 = internal::pset1<float4>(0);
-    //lhs_pf3 = internal::pset1<float4>(0);
+    lhs_pf0 = internal::pset1<float4>(0);
+    lhs_pf1 = internal::pset1<float4>(0);
+    lhs_pf2 = internal::pset1<float4>(0);
+    lhs_pf3 = internal::pset1<float4>(0);
 
-    //rhs_pf0 = internal::pset1<float4>(0);
-    //rhs_pf1 = internal::pset1<float4>(0);
-
-    lhs_pf0 = make_float4(0.0, 0.0, 0.0, 0.0);
-    lhs_pf1 = make_float4(0.0, 0.0, 0.0, 0.0);
-    lhs_pf2 = make_float4(0.0, 0.0, 0.0, 0.0);
-    lhs_pf3 = make_float4(0.0, 0.0, 0.0, 0.0);
-
-    rhs_pf0 = make_float4(0.0, 0.0, 0.0, 0.0);
-    rhs_pf1 = make_float4(0.0, 0.0, 0.0, 0.0);
+    rhs_pf0 = internal::pset1<float4>(0);
+    rhs_pf1 = internal::pset1<float4>(0);
 
      if (!CHECK_LHS_BOUNDARY) {
       if ((hipThreadIdx_y/4+k+24) < k_size) {
