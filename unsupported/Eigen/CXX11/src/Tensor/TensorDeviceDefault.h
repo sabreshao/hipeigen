@@ -40,7 +40,11 @@ struct DefaultDevice {
     return 1;
 #else
     // Running on a HIP device
-    return 32;
+    #ifdef __NVCC__
+        return 32;
+    #else
+        return 64;
+    #endif
 #endif
   }
 
@@ -73,6 +77,8 @@ struct DefaultDevice {
     // Running on a HIP device
     #ifdef __NVCC__
         return __CUDA_ARCH__ / 100;
+    #else
+        return 1;          // Temporary fix : Return 1 as major for hcc backend
     #endif
 #endif
   }
