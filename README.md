@@ -7,7 +7,7 @@ Installation Steps
 
 1. Clone the repo
 
-              * git clone https://PRN@bitbucket.org/multicoreware/hipeigen.git
+              * git clone https://bitbucket.org/multicoreware/hipeigen.git
 
 2. Build and Test
 
@@ -17,7 +17,4 @@ Installation Steps
 
              * sudo make install 
 
-             * make check 
-
-             
-                  
+             * make check
