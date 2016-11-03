@@ -39,7 +39,11 @@ namespace {
   typename internal::enable_if<sizeof(T)==4,int>::type count_leading_zeros(const T val)
   {
 #if defined(__HIP_DEVICE_COMPILE__) && (__HIP_DEVICE_COMPILE__ == 1)
+    #ifdef __NVCC__
     return __clz(val);
+    #elif __HCC__
+    return __hip_clz(val);
+    #endif
 #elif EIGEN_COMP_MSVC
     unsigned long index;
     _BitScanReverse(&index, val);
@@ -55,7 +59,11 @@ namespace {
   typename internal::enable_if<sizeof(T)==8,int>::type count_leading_zeros(const T val)
   {
 #if defined(__HIP_DEVICE_COMPILE__) && (__HIP_DEVICE_COMPILE__ == 1)
+    #ifdef __NVCC__
     return __clzll(val);
+    #elif __HCC__
+    return __hip_clzll(val);
+    #endif
 #elif EIGEN_COMP_MSVC && EIGEN_ARCH_x86_64
     unsigned long index;
     _BitScanReverse64(&index, val);
@@ -90,7 +98,11 @@ namespace {
   template <typename T>
   EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE uint32_t muluh(const uint32_t a, const T b) {
 #if defined(__HIP_DEVICE_COMPILE__) && (__HIP_DEVICE_COMPILE__ == 1)
+    #ifdef __NVCC__
     return __umulhi(a, b);
+    #elif __HCC__
+    return __hip_umulhi(a, b);
+    #endif
 #else
     return (static_cast<uint64_t>(a) * b) >> 32;
 #endif
@@ -99,7 +111,11 @@ namespace {
   template <typename T>
   EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE uint64_t muluh(const uint64_t a, const T b) {
 #if defined(__HIP_DEVICE_COMPILE__) && (__HIP_DEVICE_COMPILE__ == 1)
+    #ifdef __NVCC__
     return __umul64hi(a, b);
+    #elif __HCC__
+    return __hip_umulhi(a, b);
+    #endif
 #elif defined(__SIZEOF_INT128__)
     __uint128_t v = static_cast<__uint128_t>(a) * static_cast<__uint128_t>(b);
     return static_cast<uint64_t>(v >> 64);
