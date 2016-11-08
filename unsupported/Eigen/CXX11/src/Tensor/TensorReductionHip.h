@@ -10,6 +10,12 @@
 #ifndef EIGEN_CXX11_TENSOR_TENSOR_REDUCTION_HIP_H
 #define EIGEN_CXX11_TENSOR_TENSOR_REDUCTION_HIP_H
 
+#ifdef __NVCC__
+#define HIP_WARP_SIZE 32
+#elif defined(__HCC__)
+#define HIP_WARP_SIZE 64
+#endif
+
 namespace Eigen {
 namespace internal {
 
@@ -170,11 +176,11 @@ __global__ void FullReductionKernel(hipLaunchParm lp, Reducer reducer, const Sel
   }
 
 #pragma unroll
-  for (int offset = hipWarpSize/2; offset > 0; offset /= 2) {
-    reducer.reduce(__shfl_down(accum, offset, hipWarpSize), &accum);
+  for (int offset = HIP_WARP_SIZE/2; offset > 0; offset /= 2) {
+    reducer.reduce(__shfl_down(accum, offset, HIP_WARP_SIZE), &accum);
   }
 
-  if ((hipThreadIdx_x & (hipWarpSize - 1)) == 0) {
+  if ((hipThreadIdx_x & (HIP_WARP_SIZE - 1)) == 0) {
     atomicReduce(output, accum, reducer);
   }
 
@@ -246,11 +252,11 @@ __global__ void FullReductionKernelHalfFloat(hipLaunchParm lp, Reducer reducer, 
   }
 
 #pragma unroll
-  for (int offset = hipWarpSize/2; offset > 0; offset /= 2) {
-    reducer.reducePacket(__shfl_down(accum, offset, hipWarpSize), &accum);
+  for (int offset = HIP_WARP_SIZE/2; offset > 0; offset /= 2) {
+    reducer.reducePacket(__shfl_down(accum, offset, HIP_WARP_SIZE), &accum);
   }
 
-  if ((hipThreadIdx_x & (hipWarpSize - 1)) == 0) {
+  if ((hipThreadIdx_x & (HIP_WARP_SIZE - 1)) == 0) {
     atomicReduce(scratch, accum, reducer);
   }
 
@@ -429,11 +435,11 @@ __global__ void InnerReductionKernel(hipLaunchParm lp, Reducer reducer, const Se
       }
 
 #pragma unroll
-      for (int offset = hipWarpSize/2; offset > 0; offset /= 2) {
+      for (int offset = HIP_WARP_SIZE/2; offset > 0; offset /= 2) {
         reducer.reduce(__shfl_down(reduced_val, offset), &reduced_val);
       }
 
-      if ((hipThreadIdx_x & (hipWarpSize - 1)) == 0) {
+      if ((hipThreadIdx_x & (HIP_WARP_SIZE - 1)) == 0) {
         atomicReduce(&(output[row]), reduced_val, reducer);
       }
     }
@@ -519,9 +525,9 @@ __global__ void InnerReductionKernelHalfFloat(hipLaunchParm lp, Reducer reducer,
       }
 
 #pragma unroll
-      for (int offset = hipWarpSize/2; offset > 0; offset /= 2) {
-        reducer.reducePacket(__shfl_down(reduced_val1, offset, hipWarpSize), &reduced_val1);
-        reducer.reducePacket(__shfl_down(reduced_val2, offset, hipWarpSize), &reduced_val2);
+      for (int offset = HIP_WARP_SIZE/2; offset > 0; offset /= 2) {
+        reducer.reducePacket(__shfl_down(reduced_val1, offset, HIP_WARP_SIZE), &reduced_val1);
+        reducer.reducePacket(__shfl_down(reduced_val2, offset, HIP_WARP_SIZE), &reduced_val2);
       }
 
       half val1 =  __low2half(reduced_val1);
@@ -530,7 +536,7 @@ __global__ void InnerReductionKernelHalfFloat(hipLaunchParm lp, Reducer reducer,
       reducer.reduce(__high2half(reduced_val2), &val2);
       half2 val = __halves2half2(val1, val2);
 
-      if ((hipThreadIdx_x & (hipWarpSize - 1)) == 0) {
+      if ((hipThreadIdx_x & (HIP_WARP_SIZE - 1)) == 0) {
         half* loc = output + row;
         atomicReduce((half2*)loc, val, reducer);
       }
