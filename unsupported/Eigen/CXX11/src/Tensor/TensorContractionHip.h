@@ -543,12 +543,20 @@ EigenFloatContractionKernelInternal16x16(const LhsMapper lhs, const RhsMapper rh
 #define prefetch_lhs(reg, row, col)                   \
     if (!CHECK_LHS_BOUNDARY) {                        \
       if (col < k_size) {                             \
-        reg =lhs.loadPacket<Unaligned>(row, col);     \
+        /*reg =lhs.loadPacket<Unaligned>(row, col);*/     \
+        reg.x = lhs(row + 0, col);                    \
+        reg.y = lhs(row + 1, col);                    \
+        reg.z = lhs(row + 2, col);                    \
+        reg.w = lhs(row + 3, col);                    \
       }                                               \
     } else {                                          \
       if (col < k_size) {                             \
         if (row + 3 < m_size) {                       \
-          reg =lhs.loadPacket<Unaligned>(row, col);   \
+          /*reg =lhs.loadPacket<Unaligned>(row, col);*/   \
+          reg.x = lhs(row + 0, col);                  \
+          reg.y = lhs(row + 1, col);                  \
+          reg.z = lhs(row + 2, col);                  \
+          reg.w = lhs(row + 3, col);                  \
         } else if (row + 2 < m_size) {                \
           reg.x =lhs(row + 0, col);                   \
           reg.y =lhs(row + 1, col);                   \
@@ -573,7 +581,11 @@ EigenFloatContractionKernelInternal16x16(const LhsMapper lhs, const RhsMapper rh
     rhs_pf0 = make_float4(0.0, 0.0, 0.0, 0.0);
 
     Index lhs_horiz = hipThreadIdx_y+k;
-    prefetch_lhs(lhs_pf0, lhs_vert, lhs_horiz)
+    //iprefetch_lhs(lhs_pf0, lhs_vert, lhs_horiz);
+    lhs_pf0.x = lhs(lhs_vert, lhs_horiz);
+    lhs_pf0.y = lhs(lhs_vert + 1, lhs_horiz);
+    lhs_pf0.z = lhs(lhs_vert + 2, lhs_horiz);
+    lhs_pf0.w = lhs(lhs_vert + 3, lhs_horiz);
 
     Index rhs_vert = k+(hipThreadIdx_x%4)*4;
     Index rhs_horiz0 = (hipThreadIdx_x>>2)+hipThreadIdx_y*4+base_n;
@@ -581,7 +593,11 @@ EigenFloatContractionKernelInternal16x16(const LhsMapper lhs, const RhsMapper rh
     if (!CHECK_RHS_BOUNDARY) {
       if ((rhs_vert + 3) < k_size) {
         // just CHECK_RHS_BOUNDARY
-        rhs_pf0 = rhs.loadPacket<Unaligned>(rhs_vert, rhs_horiz0);
+        //rhs_pf0 = rhs.loadPacket<Unaligned>(rhs_vert, rhs_horiz0);
+        rhs_pf0.x = rhs(rhs_vert, rhs_horiz0);
+        rhs_pf0.y = rhs(rhs_vert + 1, rhs_horiz0);
+        rhs_pf0.z = rhs(rhs_vert + 2, rhs_horiz0);
+        rhs_pf0.w = rhs(rhs_vert + 3, rhs_horiz0);
       } else if (rhs_vert + 2 < k_size) {
         // just CHECK_RHS_BOUNDARY
         rhs_pf0.x = rhs(rhs_vert, rhs_horiz0);
@@ -596,7 +612,11 @@ EigenFloatContractionKernelInternal16x16(const LhsMapper lhs, const RhsMapper rh
     } else {
       if (rhs_horiz0 < n_size) {
         if ((rhs_vert + 3) < k_size) {
-          rhs_pf0 = rhs.loadPacket<Unaligned>(rhs_vert, rhs_horiz0);
+          //rhs_pf0 = rhs.loadPacket<Unaligned>(rhs_vert, rhs_horiz0);
+          rhs_pf0.x = rhs(rhs_vert, rhs_horiz0);
+          rhs_pf0.y = rhs(rhs_vert + 1, rhs_horiz0);
+          rhs_pf0.z = rhs(rhs_vert + 2, rhs_horiz0);
+          rhs_pf0.w = rhs(rhs_vert + 3, rhs_horiz0);
         } else if ((rhs_vert + 2) < k_size) {
           rhs_pf0.x = rhs(rhs_vert, rhs_horiz0);
           rhs_pf0.y = rhs(rhs_vert + 1, rhs_horiz0);
@@ -802,37 +822,117 @@ EigenFloatContractionKernelInternal(const LhsMapper lhs, const RhsMapper rhs,
 
      if (!CHECK_LHS_BOUNDARY) {
       if ((hipThreadIdx_y/4+k+24) < k_size) {
-        lhs_pf0 =lhs.loadPacket<Unaligned>(lhs_vert, (hipThreadIdx_y/4+k));
-        lhs_pf1 =lhs.loadPacket<Unaligned>(lhs_vert, (hipThreadIdx_y/4+k+8));
-        lhs_pf2 =lhs.loadPacket<Unaligned>(lhs_vert, (hipThreadIdx_y/4+k+16));
-        lhs_pf3 =lhs.loadPacket<Unaligned>(lhs_vert, (hipThreadIdx_y/4+k+24));
+        //lhs_pf0 =lhs.loadPacket<Unaligned>(lhs_vert, (hipThreadIdx_y/4+k));
+        //lhs_pf1 =lhs.loadPacket<Unaligned>(lhs_vert, (hipThreadIdx_y/4+k+8));
+        //lhs_pf2 =lhs.loadPacket<Unaligned>(lhs_vert, (hipThreadIdx_y/4+k+16));
+        //lhs_pf3 =lhs.loadPacket<Unaligned>(lhs_vert, (hipThreadIdx_y/4+k+24));
+        lhs_pf0.x =lhs(lhs_vert + 0, (hipThreadIdx_y/4+k));
+        lhs_pf0.y =lhs(lhs_vert + 1, (hipThreadIdx_y/4+k));
+        lhs_pf0.z =lhs(lhs_vert + 2, (hipThreadIdx_y/4+k));
+        lhs_pf0.w =lhs(lhs_vert + 3, (hipThreadIdx_y/4+k));
+        lhs_pf1.x =lhs(lhs_vert + 0, (hipThreadIdx_y/4+k+8));
+        lhs_pf1.y =lhs(lhs_vert + 1, (hipThreadIdx_y/4+k+8));
+        lhs_pf1.z =lhs(lhs_vert + 2, (hipThreadIdx_y/4+k+8));
+        lhs_pf1.w =lhs(lhs_vert + 3, (hipThreadIdx_y/4+k+8));
+        lhs_pf2.x =lhs(lhs_vert + 0, (hipThreadIdx_y/4+k+16));
+        lhs_pf2.y =lhs(lhs_vert + 1, (hipThreadIdx_y/4+k+16));
+        lhs_pf2.z =lhs(lhs_vert + 2, (hipThreadIdx_y/4+k+16));
+        lhs_pf2.w =lhs(lhs_vert + 3, (hipThreadIdx_y/4+k+16));
+        lhs_pf3.x =lhs(lhs_vert + 0, (hipThreadIdx_y/4+k+24));
+        lhs_pf3.y =lhs(lhs_vert + 1, (hipThreadIdx_y/4+k+24));
+        lhs_pf3.z =lhs(lhs_vert + 2, (hipThreadIdx_y/4+k+24));
+        lhs_pf3.w =lhs(lhs_vert + 3, (hipThreadIdx_y/4+k+24));
       } else if ((hipThreadIdx_y/4+k+16) < k_size) {
-        lhs_pf0 =lhs.loadPacket<Unaligned>(lhs_vert, (hipThreadIdx_y/4+k));
-        lhs_pf1 =lhs.loadPacket<Unaligned>(lhs_vert, (hipThreadIdx_y/4+k+8));
-        lhs_pf2 =lhs.loadPacket<Unaligned>(lhs_vert, (hipThreadIdx_y/4+k+16));
+        //lhs_pf0 =lhs.loadPacket<Unaligned>(lhs_vert, (hipThreadIdx_y/4+k));
+        //lhs_pf1 =lhs.loadPacket<Unaligned>(lhs_vert, (hipThreadIdx_y/4+k+8));
+        //lhs_pf2 =lhs.loadPacket<Unaligned>(lhs_vert, (hipThreadIdx_y/4+k+16));
+        lhs_pf0.x =lhs(lhs_vert + 0, (hipThreadIdx_y/4+k));
+        lhs_pf0.y =lhs(lhs_vert + 1, (hipThreadIdx_y/4+k));
+        lhs_pf0.z =lhs(lhs_vert + 2, (hipThreadIdx_y/4+k));
+        lhs_pf0.w =lhs(lhs_vert + 3, (hipThreadIdx_y/4+k));
+        lhs_pf1.x =lhs(lhs_vert + 0, (hipThreadIdx_y/4+k+8));
+        lhs_pf1.y =lhs(lhs_vert + 1, (hipThreadIdx_y/4+k+8));
+        lhs_pf1.z =lhs(lhs_vert + 2, (hipThreadIdx_y/4+k+8));
+        lhs_pf1.w =lhs(lhs_vert + 3, (hipThreadIdx_y/4+k+8));
+        lhs_pf2.x =lhs(lhs_vert + 0, (hipThreadIdx_y/4+k+16));
+        lhs_pf2.y =lhs(lhs_vert + 1, (hipThreadIdx_y/4+k+16));
+        lhs_pf2.z =lhs(lhs_vert + 2, (hipThreadIdx_y/4+k+16));
+        lhs_pf2.w =lhs(lhs_vert + 3, (hipThreadIdx_y/4+k+16));
       } else if ((hipThreadIdx_y/4+k+8) < k_size) {
-        lhs_pf0 =lhs.loadPacket<Unaligned>(lhs_vert, (hipThreadIdx_y/4+k));
-        lhs_pf1 =lhs.loadPacket<Unaligned>(lhs_vert, (hipThreadIdx_y/4+k+8));
+        //lhs_pf0 =lhs.loadPacket<Unaligned>(lhs_vert, (hipThreadIdx_y/4+k));
+        //lhs_pf1 =lhs.loadPacket<Unaligned>(lhs_vert, (hipThreadIdx_y/4+k+8));
+        lhs_pf0.x =lhs(lhs_vert + 0, (hipThreadIdx_y/4+k));
+        lhs_pf0.y =lhs(lhs_vert + 1, (hipThreadIdx_y/4+k));
+        lhs_pf0.z =lhs(lhs_vert + 2, (hipThreadIdx_y/4+k));
+        lhs_pf0.w =lhs(lhs_vert + 3, (hipThreadIdx_y/4+k));
+        lhs_pf1.x =lhs(lhs_vert + 0, (hipThreadIdx_y/4+k+8));
+        lhs_pf1.y =lhs(lhs_vert + 1, (hipThreadIdx_y/4+k+8));
+        lhs_pf1.z =lhs(lhs_vert + 2, (hipThreadIdx_y/4+k+8));
+        lhs_pf1.w =lhs(lhs_vert + 3, (hipThreadIdx_y/4+k+8));
       } else if ((hipThreadIdx_y/4+k) < k_size) {
-        lhs_pf0 =lhs.loadPacket<Unaligned>(lhs_vert, (hipThreadIdx_y/4+k));
+        //lhs_pf0 =lhs.loadPacket<Unaligned>(lhs_vert, (hipThreadIdx_y/4+k));
+        lhs_pf0.x =lhs(lhs_vert + 0, (hipThreadIdx_y/4+k));
+        lhs_pf0.y =lhs(lhs_vert + 1, (hipThreadIdx_y/4+k));
+        lhs_pf0.z =lhs(lhs_vert + 2, (hipThreadIdx_y/4+k));
+        lhs_pf0.w =lhs(lhs_vert + 3, (hipThreadIdx_y/4+k));
       }
     } else {
       // just CHECK_LHS_BOUNDARY
       if (lhs_vert + 3 < m_size) {
         if ((hipThreadIdx_y/4+k+24) < k_size) {
-          lhs_pf0 =lhs.loadPacket<Unaligned>(lhs_vert, (hipThreadIdx_y/4+k));
-          lhs_pf1 =lhs.loadPacket<Unaligned>(lhs_vert, (hipThreadIdx_y/4+k+8));
-          lhs_pf2 =lhs.loadPacket<Unaligned>(lhs_vert, (hipThreadIdx_y/4+k+16));
-          lhs_pf3 =lhs.loadPacket<Unaligned>(lhs_vert, (hipThreadIdx_y/4+k+24));
+          //lhs_pf0 =lhs.loadPacket<Unaligned>(lhs_vert, (hipThreadIdx_y/4+k));
+          //lhs_pf1 =lhs.loadPacket<Unaligned>(lhs_vert, (hipThreadIdx_y/4+k+8));
+          //lhs_pf2 =lhs.loadPacket<Unaligned>(lhs_vert, (hipThreadIdx_y/4+k+16));
+          //lhs_pf3 =lhs.loadPacket<Unaligned>(lhs_vert, (hipThreadIdx_y/4+k+24));
+          lhs_pf0.x =lhs(lhs_vert + 0, (hipThreadIdx_y/4+k));
+          lhs_pf0.y =lhs(lhs_vert + 1, (hipThreadIdx_y/4+k));
+          lhs_pf0.z =lhs(lhs_vert + 2, (hipThreadIdx_y/4+k));
+          lhs_pf0.w =lhs(lhs_vert + 3, (hipThreadIdx_y/4+k));
+          lhs_pf1.x =lhs(lhs_vert + 0, (hipThreadIdx_y/4+k+8));
+          lhs_pf1.y =lhs(lhs_vert + 1, (hipThreadIdx_y/4+k+8));
+          lhs_pf1.z =lhs(lhs_vert + 2, (hipThreadIdx_y/4+k+8));
+          lhs_pf1.w =lhs(lhs_vert + 3, (hipThreadIdx_y/4+k+8));
+          lhs_pf2.x =lhs(lhs_vert + 0, (hipThreadIdx_y/4+k+16));
+          lhs_pf2.y =lhs(lhs_vert + 1, (hipThreadIdx_y/4+k+16));
+          lhs_pf2.z =lhs(lhs_vert + 2, (hipThreadIdx_y/4+k+16));
+          lhs_pf2.w =lhs(lhs_vert + 3, (hipThreadIdx_y/4+k+16));
+          lhs_pf3.x =lhs(lhs_vert + 0, (hipThreadIdx_y/4+k+24));
+          lhs_pf3.y =lhs(lhs_vert + 1, (hipThreadIdx_y/4+k+24));
+          lhs_pf3.z =lhs(lhs_vert + 2, (hipThreadIdx_y/4+k+24));
+          lhs_pf3.w =lhs(lhs_vert + 3, (hipThreadIdx_y/4+k+24));
         } else if ((hipThreadIdx_y/4+k+16) < k_size) {
-          lhs_pf0 =lhs.loadPacket<Unaligned>(lhs_vert, (hipThreadIdx_y/4+k));
-          lhs_pf1 =lhs.loadPacket<Unaligned>(lhs_vert, (hipThreadIdx_y/4+k+8));
-          lhs_pf2 =lhs.loadPacket<Unaligned>(lhs_vert, (hipThreadIdx_y/4+k+16));
+          //lhs_pf0 =lhs.loadPacket<Unaligned>(lhs_vert, (hipThreadIdx_y/4+k));
+          //lhs_pf1 =lhs.loadPacket<Unaligned>(lhs_vert, (hipThreadIdx_y/4+k+8));
+          //lhs_pf2 =lhs.loadPacket<Unaligned>(lhs_vert, (hipThreadIdx_y/4+k+16));
+          lhs_pf0.x =lhs(lhs_vert + 0, (hipThreadIdx_y/4+k));
+          lhs_pf0.y =lhs(lhs_vert + 1, (hipThreadIdx_y/4+k));
+          lhs_pf0.z =lhs(lhs_vert + 2, (hipThreadIdx_y/4+k));
+          lhs_pf0.w =lhs(lhs_vert + 3, (hipThreadIdx_y/4+k));
+          lhs_pf1.x =lhs(lhs_vert + 0, (hipThreadIdx_y/4+k+8));
+          lhs_pf1.y =lhs(lhs_vert + 1, (hipThreadIdx_y/4+k+8));
+          lhs_pf1.z =lhs(lhs_vert + 2, (hipThreadIdx_y/4+k+8));
+          lhs_pf1.w =lhs(lhs_vert + 3, (hipThreadIdx_y/4+k+8));
+          lhs_pf2.x =lhs(lhs_vert + 0, (hipThreadIdx_y/4+k+16));
+          lhs_pf2.y =lhs(lhs_vert + 1, (hipThreadIdx_y/4+k+16));
+          lhs_pf2.z =lhs(lhs_vert + 2, (hipThreadIdx_y/4+k+16));
+          lhs_pf2.w =lhs(lhs_vert + 3, (hipThreadIdx_y/4+k+16));
         } else if ((hipThreadIdx_y/4+k+8) < k_size) {
-          lhs_pf0 =lhs.loadPacket<Unaligned>(lhs_vert, (hipThreadIdx_y/4+k));
-          lhs_pf1 =lhs.loadPacket<Unaligned>(lhs_vert, (hipThreadIdx_y/4+k+8));
+          //lhs_pf0 =lhs.loadPacket<Unaligned>(lhs_vert, (hipThreadIdx_y/4+k));
+          //lhs_pf1 =lhs.loadPacket<Unaligned>(lhs_vert, (hipThreadIdx_y/4+k+8));
+          lhs_pf0.x =lhs(lhs_vert + 0, (hipThreadIdx_y/4+k));
+          lhs_pf0.y =lhs(lhs_vert + 1, (hipThreadIdx_y/4+k));
+          lhs_pf0.z =lhs(lhs_vert + 2, (hipThreadIdx_y/4+k));
+          lhs_pf0.w =lhs(lhs_vert + 3, (hipThreadIdx_y/4+k));
+          lhs_pf1.x =lhs(lhs_vert + 0, (hipThreadIdx_y/4+k+8));
+          lhs_pf1.y =lhs(lhs_vert + 1, (hipThreadIdx_y/4+k+8));
+          lhs_pf1.z =lhs(lhs_vert + 2, (hipThreadIdx_y/4+k+8));
+          lhs_pf1.w =lhs(lhs_vert + 3, (hipThreadIdx_y/4+k+8));
         } else if ((hipThreadIdx_y/4+k) < k_size) {
-          lhs_pf0 =lhs.loadPacket<Unaligned>(lhs_vert, (hipThreadIdx_y/4+k));
+          //lhs_pf0 =lhs.loadPacket<Unaligned>(lhs_vert, (hipThreadIdx_y/4+k));
+          lhs_pf0.x =lhs(lhs_vert + 0, (hipThreadIdx_y/4+k));
+          lhs_pf0.y =lhs(lhs_vert + 1, (hipThreadIdx_y/4+k));
+          lhs_pf0.z =lhs(lhs_vert + 2, (hipThreadIdx_y/4+k));
+          lhs_pf0.w =lhs(lhs_vert + 3, (hipThreadIdx_y/4+k));
         }
       } else if (lhs_vert + 2 < m_size) {
         if ((hipThreadIdx_y/4+k+24) < k_size) {
@@ -921,8 +1021,16 @@ EigenFloatContractionKernelInternal(const LhsMapper lhs, const RhsMapper rhs,
     if (!CHECK_RHS_BOUNDARY) {
       if ((rhs_vert + 3) < k_size) {
         // just CHECK_RHS_BOUNDARY
-        rhs_pf0 = rhs.loadPacket<Unaligned>(rhs_vert, rhs_horiz0);
-        rhs_pf1 = rhs.loadPacket<Unaligned>(rhs_vert, rhs_horiz1);
+        //rhs_pf0 = rhs.loadPacket<Unaligned>(rhs_vert, rhs_horiz0);
+        //rhs_pf1 = rhs.loadPacket<Unaligned>(rhs_vert, rhs_horiz1);
+        rhs_pf0.x = rhs(rhs_vert, rhs_horiz0);
+        rhs_pf0.y = rhs(rhs_vert + 1, rhs_horiz0);
+        rhs_pf0.z = rhs(rhs_vert + 2, rhs_horiz0);
+        rhs_pf0.w = rhs(rhs_vert + 3, rhs_horiz0);
+        rhs_pf1.x = rhs(rhs_vert, rhs_horiz1);
+        rhs_pf1.y = rhs(rhs_vert + 1, rhs_horiz1);
+        rhs_pf1.z = rhs(rhs_vert + 2, rhs_horiz1);
+        rhs_pf1.w = rhs(rhs_vert + 3, rhs_horiz1);
       } else if (rhs_vert + 2 < k_size) {
         // just CHECK_RHS_BOUNDARY
         rhs_pf0.x = rhs(rhs_vert, rhs_horiz0);
@@ -944,8 +1052,16 @@ EigenFloatContractionKernelInternal(const LhsMapper lhs, const RhsMapper rhs,
       if (rhs_horiz1 < n_size) {
         if ((rhs_vert + 3) < k_size) {
           // just CHECK_RHS_BOUNDARY
-          rhs_pf0 = rhs.loadPacket<Unaligned>(rhs_vert, rhs_horiz0);
-          rhs_pf1 = rhs.loadPacket<Unaligned>(rhs_vert, rhs_horiz1);
+          //rhs_pf0 = rhs.loadPacket<Unaligned>(rhs_vert, rhs_horiz0);
+          //rhs_pf1 = rhs.loadPacket<Unaligned>(rhs_vert, rhs_horiz1);
+          rhs_pf0.x = rhs(rhs_vert, rhs_horiz0);
+          rhs_pf0.y = rhs(rhs_vert + 1, rhs_horiz0);
+          rhs_pf0.z = rhs(rhs_vert + 2, rhs_horiz0);
+          rhs_pf0.w = rhs(rhs_vert + 3, rhs_horiz0);
+          rhs_pf1.x = rhs(rhs_vert, rhs_horiz1);
+          rhs_pf1.y = rhs(rhs_vert + 1, rhs_horiz1);
+          rhs_pf1.z = rhs(rhs_vert + 2, rhs_horiz1);
+          rhs_pf1.w = rhs(rhs_vert + 3, rhs_horiz1);
         } else if (rhs_vert + 2 < k_size) {
           // just CHECK_RHS_BOUNDARY
           rhs_pf0.x = rhs(rhs_vert, rhs_horiz0);
@@ -966,7 +1082,11 @@ EigenFloatContractionKernelInternal(const LhsMapper lhs, const RhsMapper rhs,
       } else if (rhs_horiz0 < n_size) {
         if ((rhs_vert + 3) < k_size) {
           // just CHECK_RHS_BOUNDARY
-          rhs_pf0 = rhs.loadPacket<Unaligned>(rhs_vert, rhs_horiz0);
+          //rhs_pf0 = rhs.loadPacket<Unaligned>(rhs_vert, rhs_horiz0);
+          rhs_pf0.x = rhs(rhs_vert, rhs_horiz0);
+          rhs_pf0.y = rhs(rhs_vert + 1, rhs_horiz0);
+          rhs_pf0.z = rhs(rhs_vert + 2, rhs_horiz0);
+          rhs_pf0.w = rhs(rhs_vert + 3, rhs_horiz0);
         } else if ((rhs_vert + 2) < k_size) {
           // just CHECK_RHS_BOUNDARY
           rhs_pf0.x = rhs(rhs_vert, rhs_horiz0);
