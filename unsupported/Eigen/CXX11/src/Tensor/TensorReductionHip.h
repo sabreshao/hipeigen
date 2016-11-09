@@ -164,13 +164,13 @@ __global__ void FullReductionKernel(hipLaunchParm lp, Reducer reducer, const Sel
 
   __syncthreads();
 
-  eigen_assert(hipGridDim_x == 1 || *semaphore >= 2u);
+  assert(hipGridDim_x == 1 || *semaphore >= 2u);
 
   typename Self::CoeffReturnType accum = reducer.initialize();
   Index max_iter = numext::mini<Index>(num_coeffs - first_index, NumPerThread*BlockSize);
   for (Index i = 0; i < max_iter; i+=BlockSize) {
     const Index index = first_index + i;
-    eigen_assert(index < num_coeffs);
+    assert(index < num_coeffs);
     typename Self::CoeffReturnType val = input.m_impl.coeff(index);
     reducer.reduce(val, &accum);
   }
@@ -385,13 +385,13 @@ __global__ void InnerReductionKernel(hipLaunchParm lp, Reducer reducer, const Se
 #if defined(__HIP_DEVICE_COMPILE__) && (__HIP_DEVICE_COMPILE__ == 1) &&\
     defined(__HIP_ARCH_HAS_WARP_SHUFFLE__)
   typedef typename Self::CoeffReturnType Type;
-  eigen_assert(hipBlockDim_y == 1);
-  eigen_assert(hipBlockDim_z == 1);
-  eigen_assert(hipGridDim_y == 1);
-  eigen_assert(hipGridDim_z == 1);
+  assert(hipBlockDim_y == 1);
+  assert(hipBlockDim_z == 1);
+  assert(hipGridDim_y == 1);
+  assert(hipGridDim_z == 1);
 
   const int unroll_times = 16;
-  eigen_assert(NumPerThread % unroll_times == 0);
+  assert(NumPerThread % unroll_times == 0);
 
   const Index input_col_blocks = divup<Index>(num_coeffs_to_reduce, hipBlockDim_x * NumPerThread);
   const Index num_input_blocks = input_col_blocks * num_preserved_coeffs;
