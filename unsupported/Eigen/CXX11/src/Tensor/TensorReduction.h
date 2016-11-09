@@ -644,15 +644,15 @@ struct TensorEvaluator<const TensorReductionOp<Op, Dims, ArgType>, Device>
   template <typename S, typename O, bool V> friend struct internal::FullReducerShard;
 #endif
 #if defined(EIGEN_USE_GPU) && defined(__HIPCC__)
-  template <int B, int N, typename S, typename R, typename I> friend void internal::FullReductionKernel(R, const S, I, typename S::CoeffReturnType*, unsigned int*);
+  template <int B, int N, typename S, typename R, typename I> friend void internal::FullReductionKernel(hipLaunchParm, R, const S, I, typename S::CoeffReturnType*, unsigned int*);
 #ifdef EIGEN_HAS_HIP_FP16
-  template <typename S, typename R, typename I> friend void internal::ReductionInitFullReduxKernelHalfFloat(R, const S, I, half2*);
-  template <int B, int N, typename S, typename R, typename I> friend void internal::FullReductionKernelHalfFloat(R, const S, I, half*, half2*);
-  template <int NPT, typename S, typename R, typename I> friend void internal::InnerReductionKernelHalfFloat(R, const S, I, I, half*);
+  template <typename S, typename R, typename I> friend void internal::ReductionInitFullReduxKernelHalfFloat(hipLaunchParm, R, const S, I, half2*);
+  template <int B, int N, typename S, typename R, typename I> friend void internal::FullReductionKernelHalfFloat(hipLaunchParm, R, const S, I, half*, half2*);
+  template <int NPT, typename S, typename R, typename I> friend void internal::InnerReductionKernelHalfFloat(hipLaunchParm, R, const S, I, I, half*);
 #endif
-  template <int NPT, typename S, typename R, typename I> friend void internal::InnerReductionKernel(R, const S, I, I, typename S::CoeffReturnType*);
+  template <int NPT, typename S, typename R, typename I> friend void internal::InnerReductionKernel(hipLaunchParm, R, const S, I, I, typename S::CoeffReturnType*);
 
-  template <int NPT, typename S, typename R, typename I> friend void internal::OuterReductionKernel(R, const S, I, I, typename S::CoeffReturnType*);
+  template <int NPT, typename S, typename R, typename I> friend void internal::OuterReductionKernel(hipLaunchParm, R, const S, I, I, typename S::CoeffReturnType*);
 #endif
 
   template <typename S, typename O, typename D> friend struct internal::InnerReducer;
