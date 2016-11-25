@@ -242,7 +242,7 @@ if(EIGEN_TEST_HIP)
         include_directories(${HIP_PATH}/include)
 
         set(EIGEN_ADD_TEST_FILENAME_EXTENSION  "cu")
-        #ei_add_test(cxx11_tensor_device)
+        ei_add_test(cxx11_tensor_device)
         #ei_add_test(cxx11_tensor_hip)
         ei_add_test(cxx11_tensor_contract_hip)
         ei_add_test(cxx11_tensor_reduction_hip)
