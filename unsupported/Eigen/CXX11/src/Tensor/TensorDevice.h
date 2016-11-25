@@ -30,9 +30,10 @@ template <typename ExpressionType, typename DeviceType> class TensorDevice {
 
     template<typename OtherDerived>
     EIGEN_STRONG_INLINE TensorDevice& operator=(const OtherDerived& other) {
-      typedef TensorAssignOp<ExpressionType, const OtherDerived> Assign;
-      Assign assign(m_expression, other);
-      internal::TensorExecutor<const Assign, DeviceType>::run(assign, m_device);
+      //TODO: Enable these operations
+      //typedef TensorAssignOp<ExpressionType, const OtherDerived> Assign;
+      //Assign assign(m_expression, other);
+      //internal::TensorExecutor<const Assign, DeviceType>::run(assign, m_device);
       return *this;
     }
 
