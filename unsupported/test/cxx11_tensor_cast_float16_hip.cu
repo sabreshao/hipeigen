@@ -44,8 +44,8 @@ void test_hip_conversion() {
 
   gpu_device.memcpyHostToDevice(d_float, floats.data(), num_elem*sizeof(float));
 
-  //gpu_half.device(gpu_device) = gpu_float.cast<Eigen::half>();
-  //gpu_conv.device(gpu_device) = gpu_half.cast<float>();
+  gpu_half.device(gpu_device) = gpu_float.cast<Eigen::half>();
+  gpu_conv.device(gpu_device) = gpu_half.cast<float>();
 
   Tensor<float, 1> initial(num_elem);
   Tensor<float, 1> final(num_elem);
@@ -79,6 +79,6 @@ void test_fallback_conversion() {
 
 void test_cxx11_tensor_cast_float16_hip()
 {
-  //CALL_SUBTEST(test_hip_conversion());
+  CALL_SUBTEST(test_hip_conversion());
   CALL_SUBTEST(test_fallback_conversion());
 }
