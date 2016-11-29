@@ -651,7 +651,7 @@ void test_hip_lgamma(const Scalar stddev)
 
   for (int i = 0; i < 72; ++i) {
     for (int j = 0; j < 97; ++j) {
-      VERIFY_IS_APPROX(out(i,j), (std::lgamma)(in(i,j)));
+      VERIFY_IS_APPROX(out(i,j), lgamma(in(i,j)));
     }
   }
 
@@ -1020,7 +1020,7 @@ void test_hip_erf(const Scalar stddev)
 
   for (int i = 0; i < 72; ++i) {
     for (int j = 0; j < 97; ++j) {
-      VERIFY_IS_APPROX(out(i,j), (std::erf)(in(i,j)));
+      VERIFY_IS_APPROX(out(i,j), erf(in(i,j)));
     }
   }
 
@@ -1059,7 +1059,7 @@ void test_hip_erfc(const Scalar stddev)
 
   for (int i = 0; i < 72; ++i) {
     for (int j = 0; j < 97; ++j) {
-      VERIFY_IS_APPROX(out(i,j), (std::erfc)(in(i,j)));
+      VERIFY_IS_APPROX(out(i,j), erfc(in(i,j)));
     }
   }
 

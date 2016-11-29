@@ -257,12 +257,12 @@ if(EIGEN_TEST_HIP)
         #include_directories("${CMAKE_CURRENT_BINARY_DIR}" "${CUDA_TOOLKIT_ROOT_DIR}/include")
         set(EIGEN_ADD_TEST_FILENAME_EXTENSION "cu")
 
-        #ei_add_test(cxx11_tensor_device)
-        #ei_add_test(cxx11_tensor_hip)
+        ei_add_test(cxx11_tensor_device)
+        ei_add_test(cxx11_tensor_hip)
         ei_add_test(cxx11_tensor_contract_hip)
         ei_add_test(cxx11_tensor_reduction_hip)
         ei_add_test(cxx11_tensor_argmax_hip)
-        #ei_add_test(cxx11_tensor_cast_float16_hip)
+        ei_add_test(cxx11_tensor_cast_float16_hip)
         ei_add_test(cxx11_tensor_scan_hip)
 
         # The random number generation code requires arch 3.5 or greater.

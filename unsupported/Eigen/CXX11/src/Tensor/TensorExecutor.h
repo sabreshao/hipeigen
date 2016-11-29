@@ -253,7 +253,7 @@ template <typename Expression, bool Vectorizable>
 inline void TensorExecutor<Expression, GpuDevice, Vectorizable>::run(
     const Expression& expr, const GpuDevice& device) {
   TensorEvaluator<Expression, GpuDevice> evaluator(expr, device);
-  const bool needs_assign = evaluator.evalSubExprsIfNeeded(NULL);
+  const bool needs_assign = true;//evaluator.evalSubExprsIfNeeded(NULL);
   if (needs_assign) {
     const int block_size = device.maxHipThreadsPerBlock();
     const int max_blocks = device.getNumHipMultiProcessors() *
@@ -262,8 +262,8 @@ inline void TensorExecutor<Expression, GpuDevice, Vectorizable>::run(
     // Create a least one block to ensure we won't crash when tensorflow calls with tensors of size 0.
     const int num_blocks = numext::maxi<int>(numext::mini<int>(max_blocks, divup<int>(size, block_size)), 1);
 
-    hipLaunchKernel(HIP_KERNEL_NAME(EigenMetaKernel<TensorEvaluator<Expression, GpuDevice>, Index>),
-        dim3(num_blocks), dim3(block_size), 0, device.stream(), evaluator, size);
+    //hipLaunchKernel(HIP_KERNEL_NAME(EigenMetaKernel<TensorEvaluator<Expression, GpuDevice>, Index>),
+    //    dim3(num_blocks), dim3(block_size), 0, device.stream(), evaluator, size);
   }
   evaluator.cleanup();
 }
