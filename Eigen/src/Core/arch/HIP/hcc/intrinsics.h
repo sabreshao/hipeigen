@@ -217,14 +217,14 @@ __HIP_FP16_DECL_PREFIX__ __hip_half2 __hip_floats2half2_rn(const float f1, const
     return res;
 }
 
-__HIP_FP16_DECL_PREFIX__ float_2 __hip_make_float2(float x, float y);
+__HIP_FP16_DECL_PREFIX__ float2 __hip_make_float2(float x, float y);
 
-__HIP_FP16_DECL_PREFIX__ float_2 __hip_half22float2(const __hip_half2 l)
+__HIP_FP16_DECL_PREFIX__ float2 __hip_half22float2(const __hip_half2 l)
 {
     float hi_float = __hip_low2float(l);
     float low_float = __hip_high2float(l);
 
-    float_2 res = __hip_make_float2(low_float, hi_float);
+    float2 res = __hip_make_float2(low_float, hi_float);
     return res;
 }
 
