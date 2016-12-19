@@ -93,10 +93,10 @@ template<> EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE double2 pset1<double2>(const do
 }
 
 
-template<> EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE float4 plset<float4>(const float& a) {
+EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE float4 plset(const float& a) {
   return make_float4(a, a+1, a+2, a+3);
 }
-template<> EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE double2 plset<double2>(const double& a) {
+EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE double2 plset(const double& a) {
   return make_double2(a, a+1);
 }
 
@@ -194,8 +194,8 @@ template<> EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void pstoreu<double>(double* to
   to[1] = from.y;
 }
 
-template<>
-EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE float4 ploadt_ro<float4, Aligned>(const float* from) {
+/*template<>
+EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE float4 ploadt_ro<Aligned>(const float* from) {
 #if (defined(__HIP_DEVICE_COMPILE__) && (__HIP_DEVICE_COMPILE__ == 1)) && \
     (defined(__HIP_ARCH_HAS_WARP_FUNNEL_SHIFT__) && defined(__HIP_ARCH_HAS_DYNAMIC_PARALLEL__))
   return __hip_ldg((const float4*)from);
@@ -204,7 +204,7 @@ EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE float4 ploadt_ro<float4, Aligned>(const fl
 #endif
 }
 template<>
-EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE double2 ploadt_ro<double2, Aligned>(const double* from) {
+EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE double2 ploadt_ro<Aligned>(const double* from) {
 #if (defined(__HIP_DEVICE_COMPILE__) && (__HIP_DEVICE_COMPILE__ == 1)) && \
     (defined(__HIP_ARCH_HAS_WARP_FUNNEL_SHIFT__) && defined(__HIP_ARCH_HAS_DYNAMIC_PARALLEL__))
   return __hip_ldg((const double2*)from);
@@ -214,7 +214,7 @@ EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE double2 ploadt_ro<double2, Aligned>(const 
 }
 
 template<>
-EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE float4 ploadt_ro<float4, Unaligned>(const float* from) {
+EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE float4 ploadt_ro<Unaligned>(const float* from) {
 #if (defined(__HIP_DEVICE_COMPILE__) && (__HIP_DEVICE_COMPILE__ == 1)) && \
     (defined(__HIP_ARCH_HAS_WARP_FUNNEL_SHIFT__) && defined(__HIP_ARCH_HAS_DYNAMIC_PARALLEL__))
   return make_float4(__hip_ldg(from+0), __hip_ldg(from+1), __hip_ldg(from+2), __hip_ldg(from+3));
@@ -223,13 +223,19 @@ EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE float4 ploadt_ro<float4, Unaligned>(const 
 #endif
 }
 template<>
-EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE double2 ploadt_ro<double2, Unaligned>(const double* from) {
+EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE double2 ploadt_ro<Unaligned>(const double* from) {
 #if (defined(__HIP_DEVICE_COMPILE__) && (__HIP_DEVICE_COMPILE__ == 1)) && \
     (defined(__HIP_ARCH_HAS_WARP_FUNNEL_SHIFT__) && defined(__HIP_ARCH_HAS_DYNAMIC_PARALLEL__))
   return make_double2(__hip_ldg(from+0), __hip_ldg(from+1));
 #else
   return make_double2(from[0], from[1]);
 #endif
+}*/
+EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE float4 ploadt_ro(const float* from) {
+  return make_float4(from[0], from[1], from[2], from[3]);
+}
+EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE double2 ploadt_ro(const double* from) {
+  return make_double2(from[0], from[1]);
 }
 
 template<> EIGEN_DEVICE_FUNC inline float4 pgather<float, float4>(const float* from, Index stride) {
