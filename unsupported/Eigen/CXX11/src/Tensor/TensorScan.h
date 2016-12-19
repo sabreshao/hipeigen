@@ -187,7 +187,7 @@ struct TensorEvaluator<const TensorScanOp<Op, ArgType>, Device> {
   }
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE TensorOpCost costPerCoeff(bool) const {
-    return TensorOpCost(sizeof(CoeffReturnType), 0, 0);
+    return TensorOpCost(sizeof(CoeffReturnType), 0, 0, 0);
   }
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void cleanup() {

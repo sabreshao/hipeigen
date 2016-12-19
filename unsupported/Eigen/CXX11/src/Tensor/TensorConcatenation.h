@@ -272,7 +272,7 @@ struct TensorEvaluator<const TensorConcatenationOp<Axis, LeftArgType, RightArgTy
                m_leftImpl.costPerCoeff(vectorized) +
            (rhs_size / (lhs_size + rhs_size)) *
                m_rightImpl.costPerCoeff(vectorized) +
-           TensorOpCost(0, 0, compute_cost);
+           TensorOpCost(0, 0, compute_cost, 0);
   }
 
   EIGEN_DEVICE_FUNC Scalar* data() const { return NULL; }

@@ -244,7 +244,7 @@ struct TensorEvaluator<const TensorPaddingOp<PaddingDimensions, ArgType>, Device
     cost *= reduction;
     if (first) {
       cost += TensorOpCost(0, 0, 2 * TensorOpCost::AddCost<Index>() +
-                    reduction * (1 * TensorOpCost::AddCost<Index>()));
+                    reduction * (1 * TensorOpCost::AddCost<Index>()), 0);
     } else {
       cost += TensorOpCost(0, 0, 2 * TensorOpCost::AddCost<Index>() +
                                  2 * TensorOpCost::MulCost<Index>() +

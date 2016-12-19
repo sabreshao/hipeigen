@@ -150,7 +150,7 @@ struct TensorEvaluator<const TensorGeneratorOp<Generator, ArgType>, Device>
     // TODO(rmlarsen): This is just a placeholder. Define interface to make
     // generators return their cost.
     return TensorOpCost(0, 0, TensorOpCost::AddCost<Scalar>() +
-                                  TensorOpCost::MulCost<Scalar>());
+                                  TensorOpCost::MulCost<Scalar>(), 0);
   }
 
   EIGEN_DEVICE_FUNC Scalar* data() const { return NULL; }

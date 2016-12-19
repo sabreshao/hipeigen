@@ -52,7 +52,7 @@ class TensorOpCost {
   }
 
   TensorOpCost() : bytes_loaded_(0), bytes_stored_(0), compute_cycles_(0) {}
-  TensorOpCost(double bytes_loaded, double bytes_stored, double compute_cycles)
+  TensorOpCost(double bytes_loaded, double bytes_stored, double compute_cycles, int dummy)
       : bytes_loaded_(bytes_loaded),
         bytes_stored_(bytes_stored),
         compute_cycles_(compute_cycles) {}
@@ -96,7 +96,7 @@ class TensorOpCost {
     double bytes_loaded = numext::mini(bytes_loaded_, rhs.bytes_loaded());
     double bytes_stored = numext::mini(bytes_stored_, rhs.bytes_stored());
     double compute_cycles = numext::mini(compute_cycles_, rhs.compute_cycles());
-    return TensorOpCost(bytes_loaded, bytes_stored, compute_cycles);
+    return TensorOpCost(bytes_loaded, bytes_stored, compute_cycles, 0);
   }
 
   // TODO(rmlarsen): Define max in terms of total cost, not elementwise.
@@ -105,7 +105,7 @@ class TensorOpCost {
     double bytes_loaded = numext::maxi(bytes_loaded_, rhs.bytes_loaded());
     double bytes_stored = numext::maxi(bytes_stored_, rhs.bytes_stored());
     double compute_cycles = numext::maxi(compute_cycles_, rhs.compute_cycles());
-    return TensorOpCost(bytes_loaded, bytes_stored, compute_cycles);
+    return TensorOpCost(bytes_loaded, bytes_stored, compute_cycles, 0);
   }
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE TensorOpCost& operator+=(

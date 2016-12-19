@@ -454,7 +454,7 @@ struct TensorEvaluator<const TensorSlicingOp<StartIndices, Sizes, ArgType>, Devi
   }
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE TensorOpCost costPerCoeff(bool vectorized) const {
-    return m_impl.costPerCoeff(vectorized) + TensorOpCost(0, 0, NumDims);
+    return m_impl.costPerCoeff(vectorized) + TensorOpCost(0, 0, NumDims, 0);
   }
 
 
@@ -804,7 +804,7 @@ struct TensorEvaluator<const TensorStridingSlicingOp<StartIndices, StopIndices, 
   }
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE TensorOpCost costPerCoeff(bool vectorized) const {
-    return m_impl.costPerCoeff(vectorized) + TensorOpCost(0, 0, NumDims);
+    return m_impl.costPerCoeff(vectorized) + TensorOpCost(0, 0, NumDims, 0);
   }
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE Scalar* data() const {
