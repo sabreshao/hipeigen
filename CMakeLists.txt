@@ -26,6 +26,8 @@ if(    NOT cmake_build_type_tolower STREQUAL "debug"
   message(FATAL_ERROR "Unknown build type \"${CMAKE_BUILD_TYPE}\". Allowed values are Debug, Release, RelWithDebInfo (case-insensitive).")
 endif()
 
+# Set default install path to /opt/rocm
+set(CMAKE_INSTALL_PREFIX "/opt/rocm/hipeigen")
 
 #############################################################################
 # retrieve version infomation                                               #
