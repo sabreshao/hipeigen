@@ -19,7 +19,7 @@ void run_on_cpu(const Kernel& ker, int n, const Input& in, Output& out)
 
 
 template<typename Kernel, typename Input, typename Output>
-__global__
+__global__ __attribute__((used))
 void run_on_hip_meta_kernel(hipLaunchParm lp, const Kernel ker, int n, const Input* in, Output* out)
 {
   int i = hipThreadIdx_x + hipBlockIdx_x*hipBlockDim_x;
