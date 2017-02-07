@@ -245,10 +245,10 @@ void test_hip_argmin_dim()
 
 void test_cxx11_tensor_hip()
 {
-  CALL_SUBTEST_1(test_hip_simple_argmax<RowMajor>());
-  CALL_SUBTEST_1(test_hip_simple_argmax<ColMajor>());
-  CALL_SUBTEST_2(test_hip_argmax_dim<RowMajor>());
-  CALL_SUBTEST_2(test_hip_argmax_dim<ColMajor>());
-  CALL_SUBTEST_3(test_hip_argmin_dim<RowMajor>());
-  CALL_SUBTEST_3(test_hip_argmin_dim<ColMajor>());
+  CALL_SUBTEST(test_hip_simple_argmax<RowMajor>());
+  CALL_SUBTEST(test_hip_simple_argmax<ColMajor>());
+  CALL_SUBTEST(test_hip_argmax_dim<RowMajor>());
+  CALL_SUBTEST(test_hip_argmax_dim<ColMajor>());
+  CALL_SUBTEST(test_hip_argmin_dim<RowMajor>());
+  CALL_SUBTEST(test_hip_argmin_dim<ColMajor>());
 }

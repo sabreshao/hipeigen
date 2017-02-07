@@ -59,8 +59,8 @@ static void test_full_reductions() {
 }
 
 void test_cxx11_tensor_reduction_hip() {
-  CALL_SUBTEST_1((test_full_reductions<float, ColMajor>()));
-  CALL_SUBTEST_1((test_full_reductions<double, ColMajor>()));
-  CALL_SUBTEST_2((test_full_reductions<float, RowMajor>()));
-  CALL_SUBTEST_2((test_full_reductions<double, RowMajor>()));
+  CALL_SUBTEST((test_full_reductions<float, ColMajor>()));
+  CALL_SUBTEST((test_full_reductions<double, ColMajor>()));
+  CALL_SUBTEST((test_full_reductions<float, RowMajor>()));
+  CALL_SUBTEST((test_full_reductions<double, RowMajor>()));
 }

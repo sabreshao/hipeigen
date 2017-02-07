@@ -199,21 +199,21 @@ void test_hip_contraction_sizes() {
 
 void test_cxx11_tensor_hip()
 {
-  CALL_SUBTEST_1(test_hip_contraction<ColMajor>(128, 128, 128));
-  CALL_SUBTEST_1(test_hip_contraction<RowMajor>(128, 128, 128));
+  CALL_SUBTEST(test_hip_contraction<ColMajor>(128, 128, 128));
+  CALL_SUBTEST(test_hip_contraction<RowMajor>(128, 128, 128));
 
-  CALL_SUBTEST_1(test_scalar<ColMajor>(128, 128, 128));
-  CALL_SUBTEST_1(test_scalar<RowMajor>(128, 128, 128));
+  CALL_SUBTEST(test_scalar<ColMajor>(128, 128, 128));
+  CALL_SUBTEST(test_scalar<RowMajor>(128, 128, 128));
 
-  CALL_SUBTEST_2(test_hip_contraction_m<ColMajor>());
-  CALL_SUBTEST_3(test_hip_contraction_m<RowMajor>());
+  //CALL_SUBTEST(test_hip_contraction_m<ColMajor>());
+  //CALL_SUBTEST(test_hip_contraction_m<RowMajor>());
 
-  CALL_SUBTEST_4(test_hip_contraction_k<ColMajor>());
-  CALL_SUBTEST_5(test_hip_contraction_k<RowMajor>());
+  //CALL_SUBTEST(test_hip_contraction_k<ColMajor>());
+  //CALL_SUBTEST(test_hip_contraction_k<RowMajor>());
 
-  CALL_SUBTEST_6(test_hip_contraction_n<ColMajor>());
-  CALL_SUBTEST_7(test_hip_contraction_n<RowMajor>());
+  //CALL_SUBTEST(test_hip_contraction_n<ColMajor>());
+  //CALL_SUBTEST(test_hip_contraction_n<RowMajor>());
 
-  CALL_SUBTEST_8(test_hip_contraction_sizes<ColMajor>());
-  CALL_SUBTEST_9(test_hip_contraction_sizes<RowMajor>());
+  //CALL_SUBTEST(test_hip_contraction_sizes<ColMajor>());
+  //CALL_SUBTEST(test_hip_contraction_sizes<RowMajor>());
 }
