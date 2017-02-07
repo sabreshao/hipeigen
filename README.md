@@ -3,7 +3,7 @@
 For more information go to http://eigen.tuxfamily.org/.
 
 
-Installation Steps
+## Installation Steps ##
 
 1. Clone the repo
 
@@ -18,3 +18,8 @@ Installation Steps
              * sudo make install 
 
              * make check
+
+### Branches and Platforms ###
+* *dev* - NV platform
+* *hccBackend* - AMD platform with clang3.5 setup
+* *hccClang4.0Support* - AMD platform with clang4.0 setup
