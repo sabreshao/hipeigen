@@ -528,7 +528,7 @@ struct TensorContractionEvaluatorBase
   }
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE TensorOpCost costPerCoeff(bool) const {
-    return TensorOpCost(sizeof(CoeffReturnType), 0, 0);
+    return TensorOpCost(sizeof(CoeffReturnType), 0, 0, 0);
   }
 
   template<int LoadMode>

@@ -159,7 +159,7 @@ struct TensorEvaluator<const TensorAssignOp<LeftArgType, RightArgType>, Device>
     return m_rightImpl.costPerCoeff(vectorized) +
            TensorOpCost(
                numext::maxi(0.0, left.bytes_loaded() - sizeof(CoeffReturnType)),
-               left.bytes_stored(), left.compute_cycles()) +
+               left.bytes_stored(), left.compute_cycles(), 0) +
            TensorOpCost(0, sizeof(CoeffReturnType), 0, vectorized, PacketSize);
   }
 

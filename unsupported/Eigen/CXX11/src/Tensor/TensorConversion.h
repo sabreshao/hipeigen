@@ -238,9 +238,9 @@ struct TensorEvaluator<const TensorConversionOp<TargetType, ArgType>, Device>
       const double TgtCoeffRatio =
           internal::type_casting_traits<SrcType, TargetType>::TgtCoeffRatio;
       return m_impl.costPerCoeff(vectorized) * (SrcCoeffRatio / PacketSize) +
-          TensorOpCost(0, 0, TgtCoeffRatio * (cast_cost / PacketSize));
+          TensorOpCost(0, 0, TgtCoeffRatio * (cast_cost / PacketSize), 0);
     } else {
-      return m_impl.costPerCoeff(vectorized) + TensorOpCost(0, 0, cast_cost);
+      return m_impl.costPerCoeff(vectorized) + TensorOpCost(0, 0, cast_cost, 0);
     }
   }
 
