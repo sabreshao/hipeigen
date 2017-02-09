@@ -479,17 +479,17 @@ void test_hip_forced_evals() {
 
 void test_cxx11_tensor_of_float16_hip()
 {
-  CALL_SUBTEST_1(test_hip_numext<void>());
+  CALL_SUBTEST(test_hip_numext<void>());
 
 #ifdef EIGEN_HAS_HIP_FP16
-  CALL_SUBTEST_1(test_hip_conversion<void>());
-  CALL_SUBTEST_1(test_hip_unary<void>());
-  CALL_SUBTEST_1(test_hip_elementwise<void>());
-  CALL_SUBTEST_1(test_hip_trancendental<void>());
-  CALL_SUBTEST_2(test_hip_contractions<void>());
-  CALL_SUBTEST_3(test_hip_reductions<void>());
-  CALL_SUBTEST_4(test_hip_full_reductions<void>());
-  CALL_SUBTEST_5(test_hip_forced_evals<void>());
+  CALL_SUBTEST(test_hip_conversion<void>());
+  CALL_SUBTEST(test_hip_unary<void>());
+  CALL_SUBTEST(test_hip_elementwise<void>());
+  CALL_SUBTEST(test_hip_trancendental<void>());
+  CALL_SUBTEST(test_hip_contractions<void>());
+  CALL_SUBTEST(test_hip_reductions<void>());
+  CALL_SUBTEST(test_hip_full_reductions<void>());
+  CALL_SUBTEST(test_hip_forced_evals<void>());
 #else
   std::cout << "Half floats are not supported by this version of hip: skipping the test" << std::endl;
 #endif

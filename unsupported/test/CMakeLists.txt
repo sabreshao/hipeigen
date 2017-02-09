@@ -256,7 +256,7 @@ if(EIGEN_TEST_HIP)
           #ei_add_test(cxx11_tensor_random_hip)
         #endif()
 
-        ei_add_test(cxx11_tensor_of_float16_hip)
+        #ei_add_test(cxx11_tensor_of_float16_hip)
 
         unset(EIGEN_ADD_TEST_FILENAME_EXTENSION)
       elseif(${HIP_PLATFORM} STREQUAL "nvcc")
