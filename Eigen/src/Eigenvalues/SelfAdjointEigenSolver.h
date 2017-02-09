@@ -756,7 +756,7 @@ struct direct_selfadjoint_eigenvalues<SolverType,2,false>
     // compute the eigen vectors
     if(computeEigenvectors)
     {
-      if((eivals(1)-eivals(0))<=abs(eivals(1))*Eigen::NumTraits<Scalar>::epsilon())
+      if((eivals(1)-eivals(0))<=numext::abs(eivals(1))*Eigen::NumTraits<Scalar>::epsilon())
       {
         eivecs.setIdentity();
       }
