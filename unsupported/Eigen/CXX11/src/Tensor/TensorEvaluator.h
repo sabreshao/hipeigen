@@ -257,11 +257,7 @@ struct TensorEvaluator<const TensorCwiseNullaryOp<NullaryOp, ArgType>, Device>
   template<int LoadMode>
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE PacketReturnType packet(Index index) const
   {
-    #ifdef __HCC__
-    return _mm_setr_ps((float)index, float(index), float(index), float(index));
-    #else
     return m_wrapper.template packetOp<PacketReturnType, Index>(m_functor, index);
-    #endif
   }
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE TensorOpCost
