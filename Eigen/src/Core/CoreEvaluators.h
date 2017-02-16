@@ -13,7 +13,7 @@
 #ifndef EIGEN_COREEVALUATORS_H
 #define EIGEN_COREEVALUATORS_H
 
-#if defined(__HIP_DEVICE_COMPILE__)
+#if defined(__NVCC__) || defined(__HCC__)
 #include <hip/hip_vector_types.h>
 #endif
 
@@ -399,7 +399,7 @@ struct nullary_wrapper<Scalar,NullaryOp,false,true,false>
 
 template<typename Scalar,typename NullaryOp>
 struct nullary_wrapper<Scalar,NullaryOp,false,false,false> {
-#if defined(__HIP_DEVICE_COMPILE__)
+#if defined(__NVCC__) || defined(__HCC__)
   template <typename IndexType>
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE Scalar operator()(const NullaryOp& op, IndexType i, IndexType j) const { return op(); }
   template <typename IndexType>
