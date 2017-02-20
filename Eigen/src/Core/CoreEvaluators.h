@@ -13,10 +13,6 @@
 #ifndef EIGEN_COREEVALUATORS_H
 #define EIGEN_COREEVALUATORS_H
 
-#if defined(__NVCC__) || defined(__HCC__)
-#include <hip/hip_vector_types.h>
-#endif
-
 namespace Eigen {
   
 namespace internal {
@@ -394,28 +390,8 @@ struct nullary_wrapper<Scalar,NullaryOp,false,true,false>
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE T packetOp(const NullaryOp& op, IndexType i) const { return op.template packetOp<T>(i); }
 };
 
-//template<typename Scalar,typename NullaryOp>
-//struct nullary_wrapper<Scalar,NullaryOp,false,false,false> {};
-
 template<typename Scalar,typename NullaryOp>
-struct nullary_wrapper<Scalar,NullaryOp,false,false,false> {
-#if defined(__NVCC__) || defined(__HCC__)
-  template <typename IndexType>
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE Scalar operator()(const NullaryOp& op, IndexType i, IndexType j) const { return op(); }
-  template <typename IndexType>
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE Scalar operator()(const NullaryOp& op, IndexType i) const { return op(); }
-  template <typename IndexType>
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE Scalar operator()(const NullaryOp& op) const { return op(); }
-
-  template <typename T, typename IndexType> EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE T packetOp(const NullaryOp& op, IndexType i, IndexType j) const { return op.template packetOp<T>(); }
-  template <typename T, typename IndexType> EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE T packetOp(const NullaryOp& op, IndexType i) const {
-  //return op.template packetOp<T>();
-  float4 f = op.template packetOp<T>();
-  return _mm_setr_ps((float)f.x, (float)f.y, (float)f.z, (float)f.w);
-  }
-  template <typename T, typename IndexType> EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE T packetOp(const NullaryOp& op) const { return op.template packetOp<T>(); }
-#endif
-};
+struct nullary_wrapper<Scalar,NullaryOp,false,false,false> {};
 
 #if 0 && EIGEN_COMP_MSVC>0
 // Disable this ugly workaround. This is now handled in traits<Ref>::match,
