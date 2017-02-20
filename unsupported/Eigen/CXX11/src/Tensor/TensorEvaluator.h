@@ -247,11 +247,7 @@ struct TensorEvaluator<const TensorCwiseNullaryOp<NullaryOp, ArgType>, Device>
 
   EIGEN_DEVICE_FUNC CoeffReturnType coeff(Index index) const
   {
-    #ifdef __HCC__
-    return float(index);
-    #else
     return m_wrapper(m_functor, index);
-    #endif
   }
 
   template<int LoadMode>
