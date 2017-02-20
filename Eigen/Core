@@ -16,6 +16,8 @@
 
 // Handle HIPCC/HIP
 #if defined(__HCC__) || defined(__NVCC__) || defined(__HIPCC__)
+  #include <hip/hip_runtime.h>
+
   // Do not try asserts on HIP!
   #ifndef EIGEN_NO_DEBUG
   #define EIGEN_NO_DEBUG
