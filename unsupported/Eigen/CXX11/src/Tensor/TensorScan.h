@@ -11,6 +11,13 @@
 #ifndef EIGEN_CXX11_TENSOR_TENSOR_SCAN_H
 #define EIGEN_CXX11_TENSOR_TENSOR_SCAN_H
 
+#if defined(__HIPCC__) || defined(__HCC__) || defined(__NVCC__)
+#if defined(EIGEN_DEVICE_FUNC)
+#undef EIGEN_DEVICE_FUNC
+#endif
+#define EIGEN_DEVICE_FUNC __device__ __host__
+#endif
+
 namespace Eigen {
 
 namespace internal {
@@ -278,6 +285,7 @@ struct ScanLauncher<Self, Reducer, GpuDevice> {
      Index total_size = internal::array_prod(self.dimensions());
      Index num_blocks = (total_size / self.size() + 63) / 64;
      Index block_size = 64;
+
      hipLaunchKernel(HIP_KERNEL_NAME(ScanKernel<Self, Reducer>), dim3(num_blocks), dim3(block_size), 0, self.device().stream(), self, total_size, data);
   }
 };

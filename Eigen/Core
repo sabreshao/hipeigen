@@ -15,7 +15,7 @@
 #include "src/Core/util/DisableStupidWarnings.h"
 
 // Handle HIPCC/HIP
-#ifdef __HIPCC__
+#if defined(__HCC__) || defined(__NVCC__) || defined(__HIPCC__)
   // Do not try asserts on HIP!
   #ifndef EIGEN_NO_DEBUG
   #define EIGEN_NO_DEBUG
