@@ -13,6 +13,8 @@ if(NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/split_test_helper.h)
   endforeach()
 endif()
 
+# Set CMAKE MOUDLE PATH to check for the FindHIP.cmake file
+SET(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake ${CMAKE_MODULE_PATH} "${HIP_PATH}/cmake" "/opt/rocm/hip/cmake")
 set_property(GLOBAL PROPERTY EIGEN_CURRENT_SUBPROJECT "Unsupported")
 add_custom_target(BuildUnsupported)
 

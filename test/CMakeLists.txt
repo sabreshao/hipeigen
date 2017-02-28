@@ -13,6 +13,9 @@ if(NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/split_test_helper.h)
   endforeach()
 endif()
 
+# Set CMAKE MOUDLE PATH to check for the FindHIP.cmake file
+SET(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake ${CMAKE_MODULE_PATH} "${HIP_PATH}/cmake" "/opt/rocm/hip/cmake")
+
 # check if we have a Fortran compiler
 include("../cmake/language_support.cmake")
 
