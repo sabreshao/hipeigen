@@ -63,6 +63,7 @@ struct coeff_wise {
     
     res.array() += (in[0] * x1 + x2).array() * x3.array();
   }
+  uint8_t _dummyPad; // TODO - workaround to make functor non-empty.
 };
 
 template<typename T>
@@ -80,6 +81,7 @@ struct replicate {
     MapType(out+i*stride+1*step, x1.rows()*3, x1.cols()) = in[i] * x1.colwise().replicate(3);
     MapType(out+i*stride+2*step, x1.rows(), x1.cols()*3) = in[i] * x1.rowwise().replicate(3);
   }
+  uint8_t _dummyPad; // TODO - workaround to make functor non-empty.
 };
 
 template<typename T>
@@ -100,6 +102,7 @@ struct redux {
     out[i*N+7] = x1.rowwise().maxCoeff().sum();
     out[i*N+8] = x1.matrix().colwise().squaredNorm().sum();
   }
+  uint8_t _dummyPad; // TODO - workaround to make functor non-empty.
 };
 
 template<typename T1, typename T2>
@@ -114,6 +117,7 @@ struct prod_test {
     Map<T3> res(out+i*T3::MaxSizeAtCompileTime);
     res += in[i] * x1 * x2;
   }
+  uint8_t _dummyPad; // TODO - workaround to make functor non-empty.
 };
 
 template<typename T1, typename T2>
@@ -126,6 +130,7 @@ struct diagonal {
     Map<T2> res(out+i*T2::MaxSizeAtCompileTime);
     res += x1.diagonal();
   }
+  uint8_t _dummyPad; // TODO - workaround to make functor non-empty.
 };
 
 template<typename T>
@@ -142,6 +147,7 @@ struct eigenvalues {
     eig.computeDirect(M);
     res = eig.eigenvalues();
   }
+  uint8_t _dummyPad; // TODO - workaround to make functor non-empty.
 };
 
 void test_hip_basic()
