@@ -27,7 +27,9 @@ if(    NOT cmake_build_type_tolower STREQUAL "debug"
 endif()
 
 # Set default install path to /opt/rocm
-set(CMAKE_INSTALL_PREFIX "/opt/rocm/hipeigen")
+if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+    set(CMAKE_INSTALL_PREFIX "/opt/rocm/hipeigen")
+endif()
 
 #############################################################################
 # retrieve version infomation                                               #
