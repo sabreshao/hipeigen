@@ -269,6 +269,12 @@ struct GpuDevice {
     return firstLevelCacheSize();
   }
 
+// FIXME - this will move into HIP
+#if __HIP_DEVICE_COMPILE__ == 1
+#undef assert
+#define assert(COND)
+#endif
+
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void synchronize() const {
 #if (defined(__HCC__) || defined(__NVCC__)) && \
     (!defined(__HIP_DEVICE_COMPILE__) || (__HIP_DEVICE_COMPILE__ == 0))
