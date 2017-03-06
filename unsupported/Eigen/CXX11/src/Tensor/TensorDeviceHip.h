@@ -271,7 +271,7 @@ struct GpuDevice {
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void synchronize() const {
 #if (defined(__HCC__) || defined(__NVCC__)) && \
-    !defined(__HIP_DEVICE_COMPILE__) || (__HIP_DEVICE_COMPILE__ == 0)
+    (!defined(__HIP_DEVICE_COMPILE__) || (__HIP_DEVICE_COMPILE__ == 0))
     hipError_t err = hipStreamSynchronize(stream_->stream());
     if (err != hipSuccess) {
       std::cerr << "Error detected in HIP stream: "
