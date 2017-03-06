@@ -387,13 +387,13 @@ struct has_ReturnType
   enum { value = sizeof(testFunctor<T>(0)) == sizeof(meta_yes) };
 };
 
-template<typename T> const T& return_ref();
+template<typename T> EIGEN_DEVICE_FUNC const T& return_ref();
 
 template <typename T, typename IndexType=Index>
 struct has_nullary_operator
 {
-  template <typename C> static meta_yes testFunctor(C const *,typename enable_if<(sizeof(return_ref<C>().operator()())>0)>::type * = 0);
-  static meta_no testFunctor(...);
+  template <typename C> EIGEN_DEVICE_FUNC  static meta_yes testFunctor(C const *,typename enable_if<(sizeof(return_ref<C>().operator()())>0)>::type * = 0);
+  EIGEN_DEVICE_FUNC static meta_no testFunctor(...);
 
   enum { value = sizeof(testFunctor(static_cast<T*>(0))) == sizeof(meta_yes) };
 };
