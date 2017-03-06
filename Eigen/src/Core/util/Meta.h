@@ -315,10 +315,10 @@ struct unary_result_of_select<Func, ArgType, sizeof(has_tr1_result)> {typedef ty
 template<typename Func, typename ArgType>
 struct result_of<Func(ArgType)> {
     template<typename T>
-    static has_std_result_type    testFunctor(T const *, typename T::result_type const * = 0);
+    EIGEN_DEVICE_FUNC static has_std_result_type    testFunctor(T const *, typename T::result_type const * = 0);
     template<typename T>
-    static has_tr1_result         testFunctor(T const *, typename T::template result<T(ArgType)>::type const * = 0);
-    static has_none               testFunctor(...);
+    EIGEN_DEVICE_FUNC static has_tr1_result         testFunctor(T const *, typename T::template result<T(ArgType)>::type const * = 0);
+    EIGEN_DEVICE_FUNC static has_none               testFunctor(...);
 
     // note that the following indirection is needed for gcc-3.3
     enum {FunctorType = sizeof(testFunctor(static_cast<Func*>(0)))};
@@ -339,10 +339,10 @@ struct binary_result_of_select<Func, ArgType0, ArgType1, sizeof(has_tr1_result)>
 template<typename Func, typename ArgType0, typename ArgType1>
 struct result_of<Func(ArgType0,ArgType1)> {
     template<typename T>
-    static has_std_result_type    testFunctor(T const *, typename T::result_type const * = 0);
+    EIGEN_DEVICE_FUNC static has_std_result_type    testFunctor(T const *, typename T::result_type const * = 0);
     template<typename T>
-    static has_tr1_result         testFunctor(T const *, typename T::template result<T(ArgType0,ArgType1)>::type const * = 0);
-    static has_none               testFunctor(...);
+    EIGEN_DEVICE_FUNC static has_tr1_result         testFunctor(T const *, typename T::template result<T(ArgType0,ArgType1)>::type const * = 0);
+    EIGEN_DEVICE_FUNC static has_none               testFunctor(...);
 
     // note that the following indirection is needed for gcc-3.3
     enum {FunctorType = sizeof(testFunctor(static_cast<Func*>(0)))};
@@ -363,10 +363,10 @@ struct ternary_result_of_select<Func, ArgType0, ArgType1, ArgType2, sizeof(has_t
 template<typename Func, typename ArgType0, typename ArgType1, typename ArgType2>
 struct result_of<Func(ArgType0,ArgType1,ArgType2)> {
     template<typename T>
-    static has_std_result_type    testFunctor(T const *, typename T::result_type const * = 0);
+    EIGEN_DEVICE_FUNC static has_std_result_type    testFunctor(T const *, typename T::result_type const * = 0);
     template<typename T>
-    static has_tr1_result         testFunctor(T const *, typename T::template result<T(ArgType0,ArgType1,ArgType2)>::type const * = 0);
-    static has_none               testFunctor(...);
+    EIGEN_DEVICE_FUNC static has_tr1_result         testFunctor(T const *, typename T::template result<T(ArgType0,ArgType1,ArgType2)>::type const * = 0);
+    EIGEN_DEVICE_FUNC static has_none               testFunctor(...);
 
     // note that the following indirection is needed for gcc-3.3
     enum {FunctorType = sizeof(testFunctor(static_cast<Func*>(0)))};
@@ -381,8 +381,8 @@ struct meta_no  { char a[2]; };
 template <typename T>
 struct has_ReturnType
 {
-  template <typename C> static meta_yes testFunctor(typename C::ReturnType const *);
-  template <typename C> static meta_no testFunctor(...);
+  template <typename C> EIGEN_DEVICE_FUNC static meta_yes testFunctor(typename C::ReturnType const *);
+  template <typename C> EIGEN_DEVICE_FUNC static meta_no testFunctor(...);
 
   enum { value = sizeof(testFunctor<T>(0)) == sizeof(meta_yes) };
 };
@@ -401,8 +401,8 @@ struct has_nullary_operator
 template <typename T, typename IndexType=Index>
 struct has_unary_operator
 {
-  template <typename C> static meta_yes testFunctor(C const *,typename enable_if<(sizeof(return_ref<C>().operator()(IndexType(0)))>0)>::type * = 0);
-  static meta_no testFunctor(...);
+  template <typename C> EIGEN_DEVICE_FUNC static meta_yes testFunctor(C const *,typename enable_if<(sizeof(return_ref<C>().operator()(IndexType(0)))>0)>::type * = 0);
+  EIGEN_DEVICE_FUNC static meta_no testFunctor(...);
 
   enum { value = sizeof(testFunctor(static_cast<T*>(0))) == sizeof(meta_yes) };
 };
@@ -410,8 +410,8 @@ struct has_unary_operator
 template <typename T, typename IndexType=Index>
 struct has_binary_operator
 {
-  template <typename C> static meta_yes testFunctor(C const *,typename enable_if<(sizeof(return_ref<C>().operator()(IndexType(0),IndexType(0)))>0)>::type * = 0);
-  static meta_no testFunctor(...);
+  template <typename C> EIGEN_DEVICE_FUNC static meta_yes testFunctor(C const *,typename enable_if<(sizeof(return_ref<C>().operator()(IndexType(0),IndexType(0)))>0)>::type * = 0);
+  EIGEN_DEVICE_FUNC static meta_no testFunctor(...);
 
   enum { value = sizeof(testFunctor(static_cast<T*>(0))) == sizeof(meta_yes) };
 };
