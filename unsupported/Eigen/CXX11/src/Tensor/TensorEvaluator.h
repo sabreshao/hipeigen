@@ -199,7 +199,7 @@ struct TensorEvaluator<const Derived, Device>
     return loadConstant(m_data+index);
   }
 
-  template<int LoadMode> EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE
+  template<int LoadMode> EIGEN_STRONG_INLINE
   PacketReturnType packet(Index index) const
   {
     return internal::ploadt_ro<PacketReturnType, LoadMode>(m_data + index);

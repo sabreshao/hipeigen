@@ -252,9 +252,9 @@ if(EIGEN_TEST_HIP)
         #ei_add_test(cxx11_tensor_hip)
         #ei_add_test(cxx11_tensor_contract_hip)
         #ei_add_test(cxx11_tensor_reduction_hip)
-        #ei_add_test(cxx11_tensor_argmax_hip)
+        ei_add_test(cxx11_tensor_argmax_hip)
         #ei_add_test(cxx11_tensor_cast_float16_hip)
-        ei_add_test(cxx11_tensor_scan_hip)
+        #ei_add_test(cxx11_tensor_scan_hip)
 
         # The random number generation code requires arch 3.5 or greater.
         #if (${EIGEN_CUDA_COMPUTE_ARCH} GREATER 34)
