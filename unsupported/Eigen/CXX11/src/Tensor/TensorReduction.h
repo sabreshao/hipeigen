@@ -718,8 +718,6 @@ struct TensorEvaluator<const TensorReductionOp<Op, Dims, ArgType>, Device>
   // Indexed by reduced dimensions.
   array<Index, NumReducedDims> m_reducedDims;
 
-  // Evaluator for the input expression.
-  TensorEvaluator<ArgType, Device> m_impl;
 
   // Operation to apply for computing the reduction.
   Op m_reducer;
@@ -733,6 +731,10 @@ struct TensorEvaluator<const TensorReductionOp<Op, Dims, ArgType>, Device>
   CoeffReturnType* m_result;
 
   const Device& m_device;
+
+public:
+  // Evaluator for the input expression.
+  TensorEvaluator<ArgType, Device> m_impl;
 };
 
 } // end namespace Eigen
