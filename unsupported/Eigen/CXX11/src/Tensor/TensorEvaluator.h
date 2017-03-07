@@ -49,6 +49,14 @@ struct TensorEvaluator
       : m_data(const_cast<Scalar*>(m.data())), m_dims(m.dimensions()), m_device(device)
   { }
 
+  // Adding Copy Constructor work around to resolve WrapperGen Problem
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE TensorEvaluator(const TensorEvaluator& tensorEval) 
+  :m_data{tensorEval.m_data}, m_dims{tensorEval.m_dims}, m_device(tensorEval.m_device) {};
+
+  // Adding destructor work around to resolve WrapperGen problem
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE ~TensorEvaluator(){}
+  
+
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE const Dimensions& dimensions() const { return m_dims; }
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE bool evalSubExprsIfNeeded(CoeffReturnType* dest) {
@@ -167,6 +175,13 @@ struct TensorEvaluator<const Derived, Device>
       : m_data(m.data()), m_dims(m.dimensions()), m_device(device)
   { }
 
+  // Adding Copy Constructor work around to resolve WrapperGen Problem
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE TensorEvaluator(const TensorEvaluator& tensorEval) 
+  :m_data{tensorEval.m_data}, m_dims{tensorEval.m_dims}, m_device(tensorEval.m_device) {}
+
+  // Adding destructor work around to resolve WrapperGen problem
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE ~TensorEvaluator(){}
+  
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE const Dimensions& dimensions() const { return m_dims; }
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE bool evalSubExprsIfNeeded(CoeffReturnType* data) {
