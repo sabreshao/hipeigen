@@ -506,7 +506,7 @@ template<typename T> struct smart_copy_helper<T,true> {
     IntPtr size = IntPtr(end)-IntPtr(start);
     if(size==0) return;
     eigen_internal_assert(start!=0 && end!=0 && target!=0);
-    ::memcpy(target, start, size);
+    //::memcpy(target, start, size);
   }
 };
 
