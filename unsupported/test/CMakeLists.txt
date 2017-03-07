@@ -43,6 +43,7 @@ endif(ADOLC_FOUND)
 
 # this test seems to never have been successful on x87, so is considered to contain a FP-related bug.
 # see thread: "non-linear optimization test summary"
+IF (FALSE)
 ei_add_test(NonLinearOptimization)
 
 ei_add_test(NumericalDiff)
@@ -114,6 +115,7 @@ ei_add_test(minres)
 ei_add_test(levenberg_marquardt)
 ei_add_test(kronecker_product)
 ei_add_test(special_functions)
+ENDIF()
 
 # TODO: The following test names are prefixed with the cxx11 string, since historically
 # the tests depended on c++11. This isn't the case anymore so we ought to rename them.
@@ -121,6 +123,7 @@ ei_add_test(special_functions)
 # when using visual studio. We should make the check more strict to enable the tests for
 # newer versions of MSVC.
 if (NOT CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+IF(FALSE) # Disable unit tests
 ei_add_test(cxx11_tensor_dimension)
 ei_add_test(cxx11_tensor_map)
 ei_add_test(cxx11_tensor_assign)
@@ -188,7 +191,7 @@ if(EIGEN_TEST_CXX11)
   ei_add_test(cxx11_tensor_scan)
 
 endif()
-
+ENDIF() # Disbling Unit Test
 # These tests needs hipcc
 if(EIGEN_TEST_HIP)
   find_package(HIP REQUIRED)
