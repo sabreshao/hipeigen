@@ -15,6 +15,11 @@
   #ifdef __NVCC__
     #include <cfloat>
     #include <math_constants.h>
+    #define HIPRT_MAX_NORMAL_F CUDART_MAX_NORMAL_F
+    #define HIPRT_INF_F CUDART_INF_F
+    #define HIPRT_NAN_F CUDART_NAN_F
+    #define HIPRT_INF CUDART_INF
+    #define HIPRT_NAN CUDART_NAN
   #elif __HCC__
     #include <cfloat>
     #include "Eigen/src/Core/arch/HIP/hcc/intrinsics.h"
