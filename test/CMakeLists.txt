@@ -386,7 +386,6 @@ if(EIGEN_TEST_HIP)
         set(CMAKE_SHARED_LIBRARY_LINK_C_FLAGS)
 
         set(HIPCC ${HIP_PATH}/bin/hipcc)
-        set(CMAKE_CXX_COMPILER ${HIPCC} CACHE FILEPATH "CXX Compiler" FORCE)
 
         set(HIP_PROPAGATE_HOST_FLAGS OFF)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -gencode arch=compute_35,code=sm_35")
