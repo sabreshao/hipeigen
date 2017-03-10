@@ -198,7 +198,8 @@ template<>
 EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE float4 ploadt_ro<float4, Aligned>(const float* from) {
 #if (defined(__HIP_DEVICE_COMPILE__) && (__HIP_DEVICE_COMPILE__ == 1)) && \
     (defined(__HIP_ARCH_HAS_WARP_FUNNEL_SHIFT__) && defined(__HIP_ARCH_HAS_DYNAMIC_PARALLEL__))
-  return __ldg((const float4*)from);
+  //return __ldg((const float4*)from); //TODO:Enable once float-half conversion issue fixed
+  return make_float4(from[0], from[1], from[2], from[3]);
 #else
   return make_float4(from[0], from[1], from[2], from[3]);
 #endif
@@ -207,7 +208,8 @@ template<>
 EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE double2 ploadt_ro<double2, Aligned>(const double* from) {
 #if (defined(__HIP_DEVICE_COMPILE__) && (__HIP_DEVICE_COMPILE__ == 1)) && \
     (defined(__HIP_ARCH_HAS_WARP_FUNNEL_SHIFT__) && defined(__HIP_ARCH_HAS_DYNAMIC_PARALLEL__))
-  return __ldg((const double2*)from);
+  //return __ldg((const double2*)from); //TODO:Enable once float-half conversion issue fixed
+  return make_double2(from[0], from[1]);
 #else
   return make_double2(from[0], from[1]);
 #endif
@@ -217,7 +219,8 @@ template<>
 EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE float4 ploadt_ro<float4, Unaligned>(const float* from) {
 #if (defined(__HIP_DEVICE_COMPILE__) && (__HIP_DEVICE_COMPILE__ == 1)) && \
     (defined(__HIP_ARCH_HAS_WARP_FUNNEL_SHIFT__) && defined(__HIP_ARCH_HAS_DYNAMIC_PARALLEL__))
-  return make_float4(__ldg(from+0), __ldg(from+1), __ldg(from+2), __ldg(from+3));
+  //return make_float4(__ldg(from+0), __ldg(from+1), __ldg(from+2), __ldg(from+3)); //TODO:Enable once float-half conversion issue fixed
+  return make_float4(from[0], from[1], from[2], from[3]);
 #else
   return make_float4(from[0], from[1], from[2], from[3]);
 #endif
@@ -226,7 +229,8 @@ template<>
 EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE double2 ploadt_ro<double2, Unaligned>(const double* from) {
 #if (defined(__HIP_DEVICE_COMPILE__) && (__HIP_DEVICE_COMPILE__ == 1)) && \
     (defined(__HIP_ARCH_HAS_WARP_FUNNEL_SHIFT__) && defined(__HIP_ARCH_HAS_DYNAMIC_PARALLEL__))
-  return make_double2(__ldg(from+0), __ldg(from+1));
+  //return make_double2(__ldg(from+0), __ldg(from+1)); //TODO:Enable once float-half conversion issue fixed
+  return make_double2(from[0], from[1]);
 #else
   return make_double2(from[0], from[1]);
 #endif
