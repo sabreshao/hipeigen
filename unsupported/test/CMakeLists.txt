@@ -106,6 +106,7 @@ else()
     ei_add_property(EIGEN_MISSING_BACKENDS "OpenGL, ")
 endif()
 
+IF(FALSE)
 ei_add_test(polynomialsolver)
 ei_add_test(polynomialutils)
 ei_add_test(splines)
@@ -188,6 +189,7 @@ if(EIGEN_TEST_CXX11)
   ei_add_test(cxx11_tensor_scan)
 
 endif()
+ENDIF(FALSE)
 
 # These tests needs hipcc
 if(EIGEN_TEST_HIP)
@@ -270,7 +272,7 @@ if(EIGEN_TEST_HIP)
         set(HIPCC ${HIP_PATH}/bin/hipcc)
 
         set(HIP_PROPAGATE_HOST_FLAGS OFF)
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -gencode arch=compute_35,code=sm_35")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -gencode arch=compute_52,code=sm_52")
 
         include_directories(${CMAKE_CURRENT_BINARY_DIR})
         include_directories(${HIP_PATH}/include)
@@ -283,7 +285,7 @@ if(EIGEN_TEST_HIP)
         #ei_add_test(cxx11_tensor_device)
         #ei_add_test(cxx11_tensor_hip)
         #ei_add_test(cxx11_tensor_contract_hip)
-        #ei_add_test(cxx11_tensor_reduction_hip)
+        ei_add_test(cxx11_tensor_reduction_hip)
         ei_add_test(cxx11_tensor_argmax_hip)
         ei_add_test(cxx11_tensor_cast_float16_hip)
         ei_add_test(cxx11_tensor_scan_hip)
