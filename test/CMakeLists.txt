@@ -142,10 +142,6 @@ endif(TEST_LIB)
 set_property(GLOBAL PROPERTY EIGEN_CURRENT_SUBPROJECT "Official")
 add_custom_target(BuildOfficial)
 
-# Temporarily comment all CPU tests to reduce build time
-#TODO: Remove the IF(FALSE) construct
-if(FALSE)
-
 ei_add_test(rand)
 ei_add_test(meta)
 ei_add_test(sizeof)
@@ -346,8 +342,6 @@ if(Boost_FOUND)
 else()
   ei_add_property(EIGEN_MISSING_BACKENDS "Boost.Multiprecision, ")
 endif()
-
-endif(FALSE)
 
 # HIP unit tests
 option(EIGEN_TEST_HIP "Enable HIP support in unit tests" ON)
