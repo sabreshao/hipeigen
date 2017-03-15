@@ -10,9 +10,9 @@
 #ifndef EIGEN_MATHFUNCTIONS_H
 #define EIGEN_MATHFUNCTIONS_H
 
-#if defined (__HIP_DEVICE_COMPILE__) && (__HIP_DEVICE_COMPILE__ == 1) && defined(__HCC__)
-#include <hip/math_functions.h>
-#endif
+//#if defined (__HIP_DEVICE_COMPILE__) && (__HIP_DEVICE_COMPILE__ == 1) && defined(__HCC__)
+//#include <hip/math_functions.h>
+//#endif
 
 // source: http://www.geom.uiuc.edu/~huberty/math5337/groupe/digits.html
 // TODO this should better be moved to NumTraits
