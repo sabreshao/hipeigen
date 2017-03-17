@@ -72,7 +72,7 @@ static void test_first_dim_reductions() {
   Tensor<Type, 2, DataLayout> redux = in.sum(red_axis);
 
   // Create device
-  Eigen::CudaStreamDevice stream;
+  Eigen::HipStreamDevice stream;
   Eigen::GpuDevice dev(&stream);
   
   // Create data(T)
@@ -112,7 +112,7 @@ static void test_last_dim_reductions() {
   Tensor<Type, 2, DataLayout> redux = in.sum(red_axis);
 
   // Create device
-  Eigen::CudaStreamDevice stream;
+  Eigen::HipStreamDevice stream;
   Eigen::GpuDevice dev(&stream);
   
   // Create data
