@@ -31,7 +31,7 @@ namespace Eigen {
   *
   * \sa Tensor
   */
-template<typename T, typename Dimensions, int Options_> class TensorStorage;
+template<typename T, typename Dimensions, int Options_, void* = nullptr> class TensorStorage;
 
 
 // Pure fixed-size storage
