@@ -557,7 +557,7 @@ __global__ void InnerReductionKernelHalfFloat(hipLaunchParm lp, Reducer reducer,
 
 template <typename Self, typename Op, typename OutputType, bool PacketAccess, typename Enabled = void>
 struct InnerReductionLauncher {
-  static EIGEN_DEVICE_FUNC bool run(const Self&, Op&, const GpuDevice&, OutputType*, typename Self::Index, typename Self::Index) {
+  static bool run(const Self&, Op&, const GpuDevice&, OutputType*, typename Self::Index, typename Self::Index) {
     assert(false && "Should only be called to reduce doubles, floats and half floats on a gpu device");
     return true;
   }
@@ -721,7 +721,7 @@ struct OuterReducer<Self, Op, GpuDevice> {
                                                  (internal::is_same<typename Self::CoeffReturnType, float>::value ||
                                                   internal::is_same<typename Self::CoeffReturnType, double>::value);
   template <typename Device, typename OutputType>
-  static EIGEN_DEVICE_FUNC bool run(const Self&, Op&, const Device&, OutputType*, typename Self::Index, typename Self::Index) {
+  static bool run(const Self&, Op&, const Device&, OutputType*, typename Self::Index, typename Self::Index) {
     assert(false && "Should only be called to reduce doubles or floats on a gpu device");
     return true;
   }

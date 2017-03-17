@@ -20,7 +20,7 @@ class gebp_traits;
 
 
 /** \internal \returns b if a<=0, and returns a otherwise. */
-inline std::ptrdiff_t manage_caching_sizes_helper(std::ptrdiff_t a, std::ptrdiff_t b)
+EIGEN_DEVICE_FUNC inline std::ptrdiff_t manage_caching_sizes_helper(std::ptrdiff_t a, std::ptrdiff_t b)
 {
   return a<=0 ? b : a;
 }
@@ -52,7 +52,7 @@ struct CacheSizes {
 
 
 /** \internal */
-inline void manage_caching_sizes(Action action, std::ptrdiff_t* l1, std::ptrdiff_t* l2, std::ptrdiff_t* l3)
+EIGEN_DEVICE_FUNC inline void manage_caching_sizes(Action action, std::ptrdiff_t* l1, std::ptrdiff_t* l2, std::ptrdiff_t* l3)
 {
   static CacheSizes m_cacheSizes;
 
@@ -90,7 +90,7 @@ inline void manage_caching_sizes(Action action, std::ptrdiff_t* l1, std::ptrdiff
  * \sa setCpuCacheSizes */
 
 template<typename LhsScalar, typename RhsScalar, int KcFactor, typename Index>
-void evaluateProductBlockingSizesHeuristic(Index& k, Index& m, Index& n, Index num_threads = 1)
+EIGEN_DEVICE_FUNC void evaluateProductBlockingSizesHeuristic(Index& k, Index& m, Index& n, Index num_threads = 1)
 {
   typedef gebp_traits<LhsScalar,RhsScalar> Traits;
 
@@ -260,7 +260,7 @@ void evaluateProductBlockingSizesHeuristic(Index& k, Index& m, Index& n, Index n
 }
 
 template <typename Index>
-inline bool useSpecificBlockingSizes(Index& k, Index& m, Index& n)
+EIGEN_DEVICE_FUNC inline bool useSpecificBlockingSizes(Index& k, Index& m, Index& n)
 {
 #ifdef EIGEN_TEST_SPECIFIC_BLOCKING_SIZES
   if (EIGEN_TEST_SPECIFIC_BLOCKING_SIZES) {
@@ -294,7 +294,7 @@ inline bool useSpecificBlockingSizes(Index& k, Index& m, Index& n)
   * \sa setCpuCacheSizes */
 
 template<typename LhsScalar, typename RhsScalar, int KcFactor, typename Index>
-void computeProductBlockingSizes(Index& k, Index& m, Index& n, Index num_threads = 1)
+EIGEN_DEVICE_FUNC void computeProductBlockingSizes(Index& k, Index& m, Index& n, Index num_threads = 1)
 {
   if (!useSpecificBlockingSizes(k, m, n)) {
     evaluateProductBlockingSizesHeuristic<LhsScalar, RhsScalar, KcFactor, Index>(k, m, n, num_threads);
@@ -302,7 +302,7 @@ void computeProductBlockingSizes(Index& k, Index& m, Index& n, Index num_threads
 }
 
 template<typename LhsScalar, typename RhsScalar, typename Index>
-inline void computeProductBlockingSizes(Index& k, Index& m, Index& n, Index num_threads = 1)
+EIGEN_DEVICE_FUNC inline void computeProductBlockingSizes(Index& k, Index& m, Index& n, Index num_threads = 1)
 {
   computeProductBlockingSizes<LhsScalar,RhsScalar,1,Index>(k, m, n, num_threads);
 }

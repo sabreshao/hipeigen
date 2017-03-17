@@ -149,7 +149,7 @@ struct TensorContractionEvaluatorBase
 
   typedef DSizes<Index, NumDims> Dimensions;
 
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE
+  EIGEN_STRONG_INLINE
   TensorContractionEvaluatorBase(const XprType& op, const Device& device)
     : m_leftImpl(choose(Cond<static_cast<int>(Layout) == static_cast<int>(ColMajor)>(),
                           op.lhsExpression(), op.rhsExpression()), device),
@@ -327,7 +327,7 @@ struct TensorContractionEvaluatorBase
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE const Dimensions& dimensions() const { return m_dimensions; }
 
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE bool evalSubExprsIfNeeded(Scalar* data) {
+  EIGEN_STRONG_INLINE bool evalSubExprsIfNeeded(Scalar* data) {
     m_leftImpl.evalSubExprsIfNeeded(NULL);
     m_rightImpl.evalSubExprsIfNeeded(NULL);
     if (data) {
@@ -340,7 +340,7 @@ struct TensorContractionEvaluatorBase
     }
   }
 
-  EIGEN_DEVICE_FUNC void evalTo(Scalar* buffer) const {
+  void evalTo(Scalar* buffer) const {
     if (this->m_lhs_inner_dim_contiguous) {
       if (this->m_rhs_inner_dim_contiguous) {
         if (this->m_rhs_inner_dim_reordered) {
@@ -380,7 +380,7 @@ struct TensorContractionEvaluatorBase
   }
 
   template <bool lhs_inner_dim_contiguous, bool rhs_inner_dim_contiguous, bool rhs_inner_dim_reordered, int Alignment>
-  EIGEN_DEVICE_FUNC void evalGemv(Scalar* buffer) const {
+  void evalGemv(Scalar* buffer) const {
     const Index rows = m_i_size;
     const Index cols = m_k_size;
 
@@ -421,7 +421,7 @@ struct TensorContractionEvaluatorBase
   }
 
   template <bool lhs_inner_dim_contiguous, bool rhs_inner_dim_contiguous, bool rhs_inner_dim_reordered, int Alignment>
-  EIGEN_DEVICE_FUNC void evalGemm(Scalar* buffer) const {
+  void evalGemm(Scalar* buffer) const {
     // columns in left side, rows in right side
     const Index k = this->m_k_size;
 
@@ -513,7 +513,7 @@ struct TensorContractionEvaluatorBase
     this->m_device.deallocate(blockB);
   }
 
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void cleanup() {
+  EIGEN_STRONG_INLINE void cleanup() {
     m_leftImpl.cleanup();
     m_rightImpl.cleanup();
 
@@ -613,7 +613,7 @@ struct TensorEvaluator<const TensorContractionOp<Indices, LeftArgType, RightArgT
       Base(op, device) { }
 
   template <bool lhs_inner_dim_contiguous, bool rhs_inner_dim_contiguous, bool rhs_inner_dim_reordered, int Alignment>
-  EIGEN_DEVICE_FUNC void evalProduct(Scalar* buffer) const {
+  void evalProduct(Scalar* buffer) const {
     if (this->m_j_size == 1) {
       this->template evalGemv<lhs_inner_dim_contiguous, rhs_inner_dim_contiguous, rhs_inner_dim_reordered, Alignment>(buffer);
       return;
