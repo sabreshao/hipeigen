@@ -22,7 +22,9 @@ namespace internal {
 EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE
 float4 plgamma(const float4& a)
 {
-  return make_float4(lgammaf(a.x), lgammaf(a.y), lgammaf(a.z), lgammaf(a.w));
+  // XXX FIXME need to correctly locate HIP lgammf()
+  //return make_float4(lgammaf(a.x), lgammaf(a.y), lgammaf(a.z), lgammaf(a.w));
+  return make_float4(a.x, a.y, a.z, a.w);
 }
 
 EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE
