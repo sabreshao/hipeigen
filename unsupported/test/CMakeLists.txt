@@ -278,13 +278,13 @@ if(EIGEN_TEST_HIP)
         include_directories(${HIP_PATH}/include)
         include_directories(/usr/local/cuda/targets/x86_64-linux/include)
 
-        #set(HIP_HIPCC_FLAGS  "${EIGEN_CUDA_CXX11_FLAG} ${EIGEN_CUDA_RELAXED_CONSTEXPR} -arch compute_${EIGEN_CUDA_COMPUTE_ARCH} -Xcudafe \"--display_error_number\" ${CUDA_NVCC_FLAGS}")
+        set(HIP_NVCC_FLAGS  "${EIGEN_CUDA_CXX11_FLAG} ${EIGEN_CUDA_RELAXED_CONSTEXPR} -arch compute_${EIGEN_CUDA_COMPUTE_ARCH} -Xcudafe \"--display_error_number\" ${CUDA_NVCC_FLAGS}")
         #include_directories("${CMAKE_CURRENT_BINARY_DIR}" "${CUDA_TOOLKIT_ROOT_DIR}/include")
         set(EIGEN_ADD_TEST_FILENAME_EXTENSION "cu")
 
-        #ei_add_test(cxx11_tensor_device)
+        ei_add_test(cxx11_tensor_device)
         #ei_add_test(cxx11_tensor_hip)
-        #ei_add_test(cxx11_tensor_contract_hip)
+        ei_add_test(cxx11_tensor_contract_hip)
         ei_add_test(cxx11_tensor_reduction_hip)
         ei_add_test(cxx11_tensor_argmax_hip)
         ei_add_test(cxx11_tensor_cast_float16_hip)
@@ -295,7 +295,7 @@ if(EIGEN_TEST_HIP)
           #ei_add_test(cxx11_tensor_random_hip)
         endif()
 
-        #ei_add_test(cxx11_tensor_of_float16_hip)
+        ei_add_test(cxx11_tensor_of_float16_hip)
 
         unset(EIGEN_ADD_TEST_FILENAME_EXTENSION)
 

@@ -23,7 +23,7 @@ namespace internal {
 
 // Most of the following operations require arch >= 3.0
 #if defined(EIGEN_HAS_HIP_FP16) && \
-    (defined(__HIP_DEVICE__COMPILE__) && (__HIP_DEVICE_COMPILE__ == 1)) && \
+    (defined(__HIP_DEVICE_COMPILE__) && (__HIP_DEVICE_COMPILE__ == 1)) && \
     defined(__HIP_ARCH_HAS_WARP_SHUFFLE__)
 
 template<> struct is_arithmetic<half2> { enum { value = true }; };
@@ -77,9 +77,10 @@ template<> EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void pstoreu<Eigen::half>(Eigen
 
 template<>
  EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE half2 ploadt_ro<half2, Aligned>(const Eigen::half* from) {
-#if defined(__HIP_DEVICE_COMPILE__) && (HIP_DEVICE_COMPILE__ == 1) && \
+#if defined(__HIP_DEVICE_COMPILE__) && (__HIP_DEVICE_COMPILE__ == 1) && \
     defined(__HIP_ARCH_HAS_WARP_FUNNEL_SHIFT__) && defined(__HIP_ARCH_HAS_DYNAMIC_PARALLEL__)
-   return __ldg((const half2*)from);
+  //return __ldg((const half2*)from);
+  return __halves2half2(__ldg(from+0), __ldg(from+1));
 #else
   return __halves2half2(*(from+0), *(from+1));
 #endif
@@ -87,7 +88,7 @@ template<>
 
 template<>
 EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE half2 ploadt_ro<half2, Unaligned>(const Eigen::half* from) {
-#if defined(__HIP_DEVICE_COMPILE__) && (HIP_DEVICE_COMPILE__ == 1) && \
+#if defined(__HIP_DEVICE_COMPILE__) && (__HIP_DEVICE_COMPILE__ == 1) && \
     defined(__HIP_ARCH_HAS_WARP_FUNNEL_SHIFT__) && defined(__HIP_ARCH_HAS_DYNAMIC_PARALLEL__)
    return __halves2half2(__ldg(from+0), __ldg(from+1));
 #else

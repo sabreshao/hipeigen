@@ -644,7 +644,7 @@ struct InnerReductionLauncher<Self, Op, Eigen::half, true> {
                          dim3(1), dim3(1), 0, device.stream(), reducer, self, num_preserved_vals, output);
     }
 
-    HipLaunchKernel(HIP_KERNEL_NAME(InnerReductionKernelHalfFloat<num_per_thread, Self, Op, Index>),
+    hipLaunchKernel(HIP_KERNEL_NAME(InnerReductionKernelHalfFloat<num_per_thread, Self, Op, Index>),
                        dim3(num_blocks), dim3(block_size), 0, device.stream(), reducer, self, num_coeffs_to_reduce, num_preserved_vals, output);
 
     return false;

@@ -139,7 +139,7 @@ void test_contraction(Context* context)
   dims[0] = std::make_pair(1, 1);
   dims[1] = std::make_pair(2, 2);
 
-  Eigen::array<int, 2> shape{40, 50*70};
+  Eigen::array<int, 2> shape(40, 50*70);
 
   Eigen::DSizes<int, 2> indices(0,0);
   Eigen::DSizes<int, 2> sizes(40,40);
@@ -154,7 +154,7 @@ void test_1d_convolution(Context* context)
   Eigen::DSizes<int, 3> indices(0,0,0);
   Eigen::DSizes<int, 3> sizes(40,49,70);
 
-  Eigen::array<int, 1> dims{1};
+  Eigen::array<int, 1> dims(1);
   context->out().slice(indices, sizes).device(context->device()) = context->in1().convolve(context->kernel1d(), dims);
 }
 
@@ -164,7 +164,7 @@ void test_2d_convolution(Context* context)
   Eigen::DSizes<int, 3> indices(0,0,0);
   Eigen::DSizes<int, 3> sizes(40,49,69);
 
-  Eigen::array<int, 2> dims{1,2};
+  Eigen::array<int, 2> dims(1,2);
   context->out().slice(indices, sizes).device(context->device()) = context->in1().convolve(context->kernel2d(), dims);
 }
 
@@ -174,7 +174,7 @@ void test_3d_convolution(Context* context)
   Eigen::DSizes<int, 3> indices(0,0,0);
   Eigen::DSizes<int, 3> sizes(39,49,69);
 
-  Eigen::array<int, 3> dims{0,1,2};
+  Eigen::array<int, 3> dims(0,1,2);
   context->out().slice(indices, sizes).device(context->device()) = context->in1().convolve(context->kernel3d(), dims);
 }
 
