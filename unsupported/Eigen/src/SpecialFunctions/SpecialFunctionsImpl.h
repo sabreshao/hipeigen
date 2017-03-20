@@ -120,29 +120,13 @@ struct lgamma_retval {
 template <>
 struct lgamma_impl<float> {
   EIGEN_DEVICE_FUNC
-  static EIGEN_STRONG_INLINE float run(float x) {
-#if __HCC_CPU__
-    return ::lgammaf(x);
-#endif
-#if __HCC_ACCELERATOR__
-    // XXX FIXME needs to correctly locate HIP lgammaf()
-    return 0.0f; //return lgammaf(x);
-#endif
-  } 
+  static EIGEN_STRONG_INLINE float run(float x) { return ::lgammaf(x); }
 };
 
 template <>
 struct lgamma_impl<double> {
   EIGEN_DEVICE_FUNC
-  static EIGEN_STRONG_INLINE double run(double x) {
-#if __HCC_CPU__
-    return ::lgamma(x);
-#endif
-#if __HCC_ACCELERATOR__
-    // XXX FIXME needs to correctly locate HIP lgamma()
-    return 0.0; //return lgamma(x);
-#endif
-  }
+  static EIGEN_STRONG_INLINE double run(double x) { return ::lgamma(x); }
 };
 #endif
 
