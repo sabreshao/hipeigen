@@ -247,10 +247,28 @@ if(EIGEN_TEST_HIP)
         include_directories(${HIP_PATH}/include)
 
         set(EIGEN_ADD_TEST_FILENAME_EXTENSION  "cu")
+
+        # issues:
+        # - ??? : seems to be a C++ language issue. Alex is looking at it
         #ei_add_test(cxx11_tensor_device)
-        ei_add_test(cxx11_tensor_hip)
+
+        # issues:
+        # - HCC: capture ArrayType
+        # - APP: RNG
+        #ei_add_test(cxx11_tensor_hip)
+
+        # issues:
+        # - HCC: capture ArrayType
+        # - HCC: 'args': variable captured by lambda has unsupported type in amp restricted code
         #ei_add_test(cxx11_tensor_contract_hip)
+
+        # issues:
+        # - HCC: capture ArrayType
+        # - APP: private m_impl
         #ei_add_test(cxx11_tensor_reduction_hip)
+
+        # issues:
+        # - HCC: capture ArrayType
         #ei_add_test(cxx11_tensor_argmax_hip)
         #ei_add_test(cxx11_tensor_cast_float16_hip)
         #ei_add_test(cxx11_tensor_scan_hip)
@@ -260,6 +278,9 @@ if(EIGEN_TEST_HIP)
           #ei_add_test(cxx11_tensor_random_hip)
         #endif()
 
+        # issues:
+        # - HCC: capture ArrayType
+        # - APP: RNG
         #ei_add_test(cxx11_tensor_of_float16_hip)
 
         unset(EIGEN_ADD_TEST_FILENAME_EXTENSION)
