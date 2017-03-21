@@ -31,7 +31,11 @@ namespace Eigen {
   *
   * \sa Tensor
   */
+#ifdef __HCC__
+template<typename T, typename Dimensions, int Options_, void* = nullptr> class TensorStorage;
+#else
 template<typename T, typename Dimensions, int Options_> class TensorStorage;
+#endif
 
 
 // Pure fixed-size storage
