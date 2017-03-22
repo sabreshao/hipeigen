@@ -186,7 +186,12 @@ __global__ void FullReductionKernel(hipLaunchParm lp, Reducer reducer, const Sel
 
 #pragma unroll
   for (int offset = HIP_WARP_SIZE/2; offset > 0; offset /= 2) {
-    reducer.reduce(__shfl_down(accum, offset, HIP_WARP_SIZE), &accum);
+    // XXX use std::is_floating_point to determine the type of accum
+    if (std::is_floating_point<typename Self::CoeffReturnType>::value) {
+      reducer.reduce(__shfl_down(static_cast<float>(accum), offset, HIP_WARP_SIZE), &accum);
+    } else {
+      reducer.reduce(__shfl_down(static_cast<int>(accum), offset, HIP_WARP_SIZE), &accum);
+    }
   }
 
   if ((hipThreadIdx_x & (HIP_WARP_SIZE - 1)) == 0) {
@@ -445,7 +450,12 @@ __global__ void InnerReductionKernel(hipLaunchParm lp, Reducer reducer, const Se
 
 #pragma unroll
       for (int offset = HIP_WARP_SIZE/2; offset > 0; offset /= 2) {
-        reducer.reduce(__shfl_down(reduced_val, offset), &reduced_val);
+        // XXX use std::is_floating_point to determine the type of reduced_val
+        if (std::is_floating_point<Type>::value) {
+          reducer.reduce(__shfl_down(static_cast<float>(reduced_val), offset), &reduced_val);
+        } else {
+          reducer.reduce(__shfl_down(static_cast<int>(reduced_val), offset), &reduced_val);
+        }
       }
 
       if ((hipThreadIdx_x & (HIP_WARP_SIZE - 1)) == 0) {

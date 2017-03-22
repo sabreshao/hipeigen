@@ -780,6 +780,8 @@ namespace Eigen {
 //----------------------------------------------------------------------
 
 
+// XXX don't use __restrit for HCC for now
+#define EIGEN_DONT_USE_RESTRICT_KEYWORD
 #ifdef EIGEN_DONT_USE_RESTRICT_KEYWORD
   #define EIGEN_RESTRICT
 #endif

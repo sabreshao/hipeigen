@@ -255,6 +255,7 @@ if(EIGEN_TEST_HIP)
         # issues:
         # - HCC: capture ArrayType
         # - APP: RNG
+        # - APP: private m_impl
         #ei_add_test(cxx11_tensor_hip)
 
         # issues:
