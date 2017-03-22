@@ -718,8 +718,12 @@ struct TensorEvaluator<const TensorReductionOp<Op, Dims, ArgType>, Device>
   // Indexed by reduced dimensions.
   array<Index, NumReducedDims> m_reducedDims;
 
+  // XXX make m_impl public so ReuductionKernel functions have visibility to it
+public:
   // Evaluator for the input expression.
   TensorEvaluator<ArgType, Device> m_impl;
+
+private:
 
   // Operation to apply for computing the reduction.
   Op m_reducer;
