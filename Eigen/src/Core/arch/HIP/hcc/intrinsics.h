@@ -4,6 +4,8 @@
 #ifndef INTRINSICS_H
 #define INTRINSICS_H
 
+#include "hip/hip_runtime.h"
+
 #ifdef __HCC__        // For HC backend
     #define WARP_SIZE 64
 #else                  // For NVCC backend

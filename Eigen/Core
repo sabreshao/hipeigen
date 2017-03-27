@@ -14,9 +14,9 @@
 // first thing Eigen does: stop the compiler from committing suicide
 #include "src/Core/util/DisableStupidWarnings.h"
 
+
 // Handle HIPCC/HIP
-#if defined(__HCC__) || defined(__NVCC__) || defined(__HIPCC__)
-  #include <hip/hip_runtime.h>
+#if defined(__HIPCC__)
 
   // Do not try asserts on HIP!
   #ifndef EIGEN_NO_DEBUG

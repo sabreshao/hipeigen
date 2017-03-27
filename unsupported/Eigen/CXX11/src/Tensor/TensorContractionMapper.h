@@ -60,10 +60,10 @@ template <typename Tensor> struct CoeffLoader<Tensor, true> {
 
   EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE typename Tensor::Scalar coeff(typename Tensor::Index index) const { return loadConstant(m_data+index); }
 
- template<int LoadMode> EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE
+ template<int LoadMode> EIGEN_STRONG_INLINE
  typename Tensor::PacketReturnType packet(typename Tensor::Index index) const
   {
-    return internal::ploadt_ro<typename Tensor::PacketReturnType, LoadMode>(m_data + index);
+    return Eigen::internal::ploadt_ro<typename Tensor::PacketReturnType, LoadMode>(m_data + index);
   }
  private:
   typedef typename Tensor::Scalar Scalar;
@@ -359,6 +359,15 @@ class TensorContractionSubMapper {
     }
   }
 
+  // Adding compatible copy constructor as a work around to avoid wrapper gen issues
+  // Copy constructor
+  EIGEN_DEVICE_FUNC TensorContractionSubMapper(const TensorContractionSubMapper& tensorContractSubMap): 
+  m_base_mapper(tensorContractSubMap.m_base_mapper), m_vert_offset(tensorContractSubMap.m_vert_offset), m_horiz_offset(tensorContractSubMap.m_horiz_offset) {}
+
+
+  //Adding compatible destructor
+  EIGEN_DEVICE_FUNC ~TensorContractionSubMapper(){}
+
   EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE Scalar operator()(Index i) const {
     if (UseDirectOffsets) {
       return m_base_mapper(i, 0);
@@ -448,6 +457,16 @@ class TensorContractionInputMapper
                                const contract_t& contract_strides,
                                const contract_t& k_strides)
       : Base(tensor, nocontract_strides, ij_strides, contract_strides, k_strides) { }
+
+   // Adding compatible copy constructor as a work around to avoid wrapper gen issues
+  // Copy constructor
+  EIGEN_DEVICE_FUNC TensorContractionInputMapper(const TensorContractionInputMapper& tensorContractInputMap): Base(tensorContractInputMap) {} 
+
+
+  //Adding compatible destructor
+  EIGEN_DEVICE_FUNC ~TensorContractionInputMapper(){}
+
+ 
 
   EIGEN_DEVICE_FUNC
   EIGEN_STRONG_INLINE SubMapper getSubMapper(Index i, Index j) const {

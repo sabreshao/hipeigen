@@ -199,6 +199,12 @@ class blas_data_mapper {
 
   EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE blas_data_mapper(Scalar* data, Index stride) : m_data(data), m_stride(stride) {}
 
+  // Add an explicit copy constructor with compatible restriction specifier to overcome the wrapper gen issues with this class
+  EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE blas_data_mapper(const blas_data_mapper& blasMap): m_data(blasMap.m_data), m_stride(blasMap.m_stride) {}
+
+  // Add an explicity default destructor with compatible restriction specifier to overcome the wrapper gen issues with this class} 
+  EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE ~blas_data_mapper() {}
+
   EIGEN_DEVICE_FUNC  EIGEN_ALWAYS_INLINE blas_data_mapper<Scalar, Index, StorageOrder, AlignmentType>
   getSubMapper(Index i, Index j) const {
     return blas_data_mapper<Scalar, Index, StorageOrder, AlignmentType>(&operator()(i, j), m_stride);

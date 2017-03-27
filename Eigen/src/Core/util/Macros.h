@@ -638,7 +638,7 @@ namespace Eigen {
  * If we made alignment depend on whether or not EIGEN_VECTORIZE is defined, it would be impossible to link
  * vectorized and non-vectorized code.
  */
-#if (defined __HCC__)
+#if (defined __HIPCC__)
   #define EIGEN_ALIGN_TO_BOUNDARY(n) __attribute__((aligned(n))) 
 #elif (defined __NVCC__)
   #define EIGEN_ALIGN_TO_BOUNDARY(n) __align__(n)

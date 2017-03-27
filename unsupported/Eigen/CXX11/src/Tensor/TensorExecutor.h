@@ -232,7 +232,7 @@ struct EigenMetaKernelEval<Evaluator, Index, true> {
 };
 
 template <typename Evaluator, typename Index>
-__global__ void
+__global__ __attribute__((used)) void
 __launch_bounds__(1024, 1)
 EigenMetaKernel(hipLaunchParm lp, Evaluator memcopied_eval, Index size) {
 
