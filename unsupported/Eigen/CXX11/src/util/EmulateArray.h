@@ -126,6 +126,250 @@ template <typename T, size_t n> class array {
 #endif
 };
 
+// Specialize array for size 1
+template <typename T> class array<T, 1> {
+ public:
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE T& operator[] (size_t index) { return values[index]; }
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE const T& operator[] (size_t index) const { return values[index]; }
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE T& front() { return values[0]; }
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE const T& front() const { return values[0]; }
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE T& back() { return values[0]; }
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE const T& back() const { return values[0]; }
+
+  EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE
+  static std::size_t size() { return 1; }
+
+  T values[1];
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE array() { }
+
+#if EIGEN_HAS_VARIADIC_TEMPLATES
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE array(std::initializer_list<T> l) {
+    eigen_assert(l.size() == 1);
+    internal::smart_copy(l.begin(), l.end(), values);
+  }
+#endif
+
+  __attribute__((annotate("user_deserialize")))
+  array(T v0) [[cpu]][[hc]] {
+    values[0] = v0;
+  }
+
+  __attribute__((annotate("serialize")))
+  void __cxxamp_serialize(Kalmar::Serialize &s) const {
+    s.Append(sizeof(T), &values[0]);
+  }
+};
+
+// Specialize array for size 2
+template <typename T> class array<T, 2> {
+ public:
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE T& operator[] (size_t index) { return values[index]; }
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE const T& operator[] (size_t index) const { return values[index]; }
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE T& front() { return values[0]; }
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE const T& front() const { return values[0]; }
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE T& back() { return values[1]; }
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE const T& back() const { return values[1]; }
+
+  EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE
+  static std::size_t size() { return 2; }
+
+  T values[2];
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE array() { }
+
+#if EIGEN_HAS_VARIADIC_TEMPLATES
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE array(std::initializer_list<T> l) {
+    eigen_assert(l.size() == 2);
+    internal::smart_copy(l.begin(), l.end(), values);
+  }
+#endif
+
+  __attribute__((annotate("user_deserialize")))
+  array(T v0, T v1) [[cpu]][[hc]] {
+    values[0] = v0;
+    values[1] = v1;
+  }
+
+  __attribute__((annotate("serialize")))
+  void __cxxamp_serialize(Kalmar::Serialize &s) const {
+    s.Append(sizeof(T), &values[0]);
+    s.Append(sizeof(T), &values[1]);
+  }
+};
+
+// Specialize array for size 3
+template <typename T> class array<T, 3> {
+ public:
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE T& operator[] (size_t index) { return values[index]; }
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE const T& operator[] (size_t index) const { return values[index]; }
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE T& front() { return values[0]; }
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE const T& front() const { return values[0]; }
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE T& back() { return values[2]; }
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE const T& back() const { return values[2]; }
+
+  EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE
+  static std::size_t size() { return 3; }
+
+  T values[3];
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE array() { }
+
+#if EIGEN_HAS_VARIADIC_TEMPLATES
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE array(std::initializer_list<T> l) {
+    eigen_assert(l.size() == 3);
+    internal::smart_copy(l.begin(), l.end(), values);
+  }
+#endif
+
+  __attribute__((annotate("user_deserialize")))
+  array(T v0, T v1, T v2) [[cpu]][[hc]] {
+    values[0] = v0;
+    values[1] = v1;
+    values[2] = v2;
+  }
+
+  __attribute__((annotate("serialize")))
+  void __cxxamp_serialize(Kalmar::Serialize &s) const {
+    s.Append(sizeof(T), &values[0]);
+    s.Append(sizeof(T), &values[1]);
+    s.Append(sizeof(T), &values[2]);
+  }
+};
+
+// Specialize array for size 4
+template <typename T> class array<T, 4> {
+ public:
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE T& operator[] (size_t index) { return values[index]; }
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE const T& operator[] (size_t index) const { return values[index]; }
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE T& front() { return values[0]; }
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE const T& front() const { return values[0]; }
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE T& back() { return values[3]; }
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE const T& back() const { return values[3]; }
+
+  EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE
+  static std::size_t size() { return 4; }
+
+  T values[4];
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE array() { }
+
+#if EIGEN_HAS_VARIADIC_TEMPLATES
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE array(std::initializer_list<T> l) {
+    eigen_assert(l.size() == 4);
+    internal::smart_copy(l.begin(), l.end(), values);
+  }
+#endif
+
+  __attribute__((annotate("user_deserialize")))
+  array(T v0, T v1, T v2, T v3) [[cpu]][[hc]] {
+    values[0] = v0;
+    values[1] = v1;
+    values[2] = v2;
+    values[3] = v3;
+  }
+
+  __attribute__((annotate("serialize")))
+  void __cxxamp_serialize(Kalmar::Serialize &s) const {
+    s.Append(sizeof(T), &values[0]);
+    s.Append(sizeof(T), &values[1]);
+    s.Append(sizeof(T), &values[2]);
+    s.Append(sizeof(T), &values[3]);
+  }
+};
+
+// Specialize array for size 5
+template <typename T> class array<T, 5> {
+ public:
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE T& operator[] (size_t index) { return values[index]; }
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE const T& operator[] (size_t index) const { return values[index]; }
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE T& front() { return values[0]; }
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE const T& front() const { return values[0]; }
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE T& back() { return values[4]; }
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE const T& back() const { return values[4]; }
+
+  EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE
+  static std::size_t size() { return 5; }
+
+  T values[5];
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE array() { }
+
+#if EIGEN_HAS_VARIADIC_TEMPLATES
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE array(std::initializer_list<T> l) {
+    eigen_assert(l.size() == 5);
+    internal::smart_copy(l.begin(), l.end(), values);
+  }
+#endif
+
+  __attribute__((annotate("user_deserialize")))
+  array(T v0, T v1, T v2, T v3, T v4) [[cpu]][[hc]] {
+    values[0] = v0;
+    values[1] = v1;
+    values[2] = v2;
+    values[3] = v3;
+    values[4] = v4;
+  }
+
+  __attribute__((annotate("serialize")))
+  void __cxxamp_serialize(Kalmar::Serialize &s) const {
+    s.Append(sizeof(T), &values[0]);
+    s.Append(sizeof(T), &values[1]);
+    s.Append(sizeof(T), &values[2]);
+    s.Append(sizeof(T), &values[3]);
+    s.Append(sizeof(T), &values[4]);
+  }
+};
 
 // Specialize array for zero size
 template <typename T> class array<T, 0> {
