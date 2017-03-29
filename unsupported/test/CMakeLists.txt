@@ -248,41 +248,20 @@ if(EIGEN_TEST_HIP)
 
         set(EIGEN_ADD_TEST_FILENAME_EXTENSION  "cu")
 
-        # issues:
-        # - ??? : seems to be a C++ language issue. Alex is looking at it
-        #ei_add_test(cxx11_tensor_device)
-
-        # issues:
-        # - HCC: capture ArrayType
-        # - APP: RNG
-        # - APP: private m_impl
-        #ei_add_test(cxx11_tensor_hip)
-
-        # issues:
-        # - HCC: capture ArrayType
-        # - HCC: 'args': variable captured by lambda has unsupported type in amp restricted code
-        #ei_add_test(cxx11_tensor_contract_hip)
-
-        # issues:
-        # - HCC: capture ArrayType
-        # - APP: private m_impl
-        #ei_add_test(cxx11_tensor_reduction_hip)
-
-        # issues:
-        # - HCC: capture ArrayType
-        #ei_add_test(cxx11_tensor_argmax_hip)
-        #ei_add_test(cxx11_tensor_cast_float16_hip)
-        #ei_add_test(cxx11_tensor_scan_hip)
+        ei_add_test(cxx11_tensor_device)
+        ei_add_test(cxx11_tensor_hip)
+        ei_add_test(cxx11_tensor_contract_hip)
+        ei_add_test(cxx11_tensor_reduction_hip)
+        ei_add_test(cxx11_tensor_argmax_hip)
+        ei_add_test(cxx11_tensor_cast_float16_hip)
+        ei_add_test(cxx11_tensor_scan_hip)
 
         # The random number generation code requires arch 3.5 or greater.
         #if (${EIGEN_CUDA_COMPUTE_ARCH} GREATER 34)
           #ei_add_test(cxx11_tensor_random_hip)
         #endif()
 
-        # issues:
-        # - HCC: capture ArrayType
-        # - APP: RNG
-        #ei_add_test(cxx11_tensor_of_float16_hip)
+        ei_add_test(cxx11_tensor_of_float16_hip)
 
         unset(EIGEN_ADD_TEST_FILENAME_EXTENSION)
       elseif(${HIP_PLATFORM} STREQUAL "nvcc")
