@@ -164,11 +164,12 @@ template <typename T> class array<T, 1> {
   array(T v0) [[cpu]][[hc]] {
     values[0] = v0;
   }
-
+#ifdef __HCC__
   __attribute__((annotate("serialize")))
   void __cxxamp_serialize(Kalmar::Serialize &s) const {
     s.Append(sizeof(T), &values[0]);
   }
+#endif
 };
 
 // Specialize array for size 2
@@ -211,11 +212,13 @@ template <typename T> class array<T, 2> {
     values[1] = v1;
   }
 
+#ifdef __HCC__
   __attribute__((annotate("serialize")))
   void __cxxamp_serialize(Kalmar::Serialize &s) const {
     s.Append(sizeof(T), &values[0]);
     s.Append(sizeof(T), &values[1]);
   }
+#endif
 };
 
 // Specialize array for size 3
@@ -259,12 +262,14 @@ template <typename T> class array<T, 3> {
     values[2] = v2;
   }
 
+#ifdef __HCC__
   __attribute__((annotate("serialize")))
   void __cxxamp_serialize(Kalmar::Serialize &s) const {
     s.Append(sizeof(T), &values[0]);
     s.Append(sizeof(T), &values[1]);
     s.Append(sizeof(T), &values[2]);
   }
+#endif
 };
 
 // Specialize array for size 4
@@ -309,6 +314,7 @@ template <typename T> class array<T, 4> {
     values[3] = v3;
   }
 
+#ifdef __HCC__
   __attribute__((annotate("serialize")))
   void __cxxamp_serialize(Kalmar::Serialize &s) const {
     s.Append(sizeof(T), &values[0]);
@@ -316,6 +322,7 @@ template <typename T> class array<T, 4> {
     s.Append(sizeof(T), &values[2]);
     s.Append(sizeof(T), &values[3]);
   }
+#endif
 };
 
 // Specialize array for size 5
@@ -361,6 +368,7 @@ template <typename T> class array<T, 5> {
     values[4] = v4;
   }
 
+#ifdef __HCC__
   __attribute__((annotate("serialize")))
   void __cxxamp_serialize(Kalmar::Serialize &s) const {
     s.Append(sizeof(T), &values[0]);
@@ -369,6 +377,7 @@ template <typename T> class array<T, 5> {
     s.Append(sizeof(T), &values[3]);
     s.Append(sizeof(T), &values[4]);
   }
+#endif
 };
 
 // Specialize array for zero size
