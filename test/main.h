@@ -60,10 +60,14 @@
 #define isinf(X) please_protect_your_isinf_with_parentheses
 #define isfinite(X) please_protect_your_isfinite_with_parentheses
 #endif
+
+// XXX really have no idea what this is about...
+#ifndef __HCC__
 #ifdef M_PI
 #undef M_PI
 #endif
 #define M_PI please_use_EIGEN_PI_instead_of_M_PI
+#endif
 
 #define FORBIDDEN_IDENTIFIER (this_identifier_is_forbidden_to_avoid_clashes) this_identifier_is_forbidden_to_avoid_clashes
 // B0 is defined in POSIX header termios.h

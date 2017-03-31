@@ -101,7 +101,9 @@ struct TensorEvaluator<const TensorForcedEvalOp<ArgType>, Device>
 
   EIGEN_DEVICE_FUNC const Dimensions& dimensions() const { return m_impl.dimensions(); }
 
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE bool evalSubExprsIfNeeded(CoeffReturnType*) {
+  //EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE
+  bool evalSubExprsIfNeeded(CoeffReturnType*) {
     const Index numValues =  internal::array_prod(m_impl.dimensions());
     m_buffer = (CoeffReturnType*)m_device.allocate(numValues * sizeof(CoeffReturnType));
     // Should initialize the memory in case we're dealing with non POD types.

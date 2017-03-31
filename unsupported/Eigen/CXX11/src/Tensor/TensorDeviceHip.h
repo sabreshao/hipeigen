@@ -23,7 +23,12 @@ static const int kHipScratchSize = 1024;
 // HIP streams underneath.
 template<typename T> class StreamInterface {
  public:
-  ~StreamInterface() { static_cast<T const *>(this)->~HipStreamDevice(); }
+  ~StreamInterface() {
+    // FIXME: this lines seems to be quite dangerous
+#if 0
+    static_cast<T const *>(this)->~HipStreamDevice();
+#endif
+  }
 
   const hipStream_t& stream() const { return static_cast<T const *>(this)->stream(); }
   const hipDeviceProp_t& deviceProperties() const { return static_cast<T const *>(this)->deviceProperties(); }

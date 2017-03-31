@@ -497,6 +497,38 @@ template <typename T> class UniformRandomGenerator {
   bool m_deterministic;
 };
 
+// XXX an empty host-side UniformRandomGenerator<float> specialzation
+#if 1
+template <> class UniformRandomGenerator<float> {
+
+ public:
+  static const bool PacketAccess = true;
+
+  UniformRandomGenerator() : m_deterministic(true) {
+  }
+  UniformRandomGenerator(const UniformRandomGenerator& other) {
+    m_deterministic = other.m_deterministic;
+  }
+
+  float operator()() const {
+    return random<float>();
+  }
+  template<typename PacketType>
+  PacketType packetOp() const {
+    const int packetSize = internal::unpacket_traits<PacketType>::size;
+    EIGEN_ALIGN_MAX float values[packetSize];
+    for (int i = 0; i < packetSize; ++i) {
+      values[i] = random<float>();
+    }
+    return internal::pload<PacketType>(values);
+  }
+
+ private:
+  bool m_deterministic;
+};
+
+#else
+
 #if __cplusplus > 199711 || EIGEN_COMP_MSVC >= 1900
 template <> class UniformRandomGenerator<float> {
  public:
@@ -578,6 +610,8 @@ template <> class UniformRandomGenerator<double> {
   mutable std::uniform_real_distribution<double> m_distribution;
 };
 #endif
+
+#endif // XXX an empty host-side UniformRandomGenerator<float> specialzation
 
 #else
 

@@ -241,7 +241,7 @@ struct FullReducer<Self, Op, ThreadPoolDevice, Vectorizable> {
       unpacket_traits<typename Self::PacketReturnType>::size;
 
   // launch one reducer per thread and accumulate the result.
-  static void run(const Self& self, Op& reducer, const ThreadPoolDevice& device,
+  static EIGEN_DEVICE_FUNC void run(const Self& self, Op& reducer, const ThreadPoolDevice& device,
                   typename Self::CoeffReturnType* output) {
     typedef typename Self::Index Index;
     const Index num_coeffs = array_prod(self.m_impl.dimensions());
@@ -472,7 +472,7 @@ struct TensorEvaluator<const TensorReductionOp<Op, Dims, ArgType>, Device>
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE const Dimensions& dimensions() const { return m_dimensions; }
 
-  EIGEN_STRONG_INLINE EIGEN_DEVICE_FUNC bool evalSubExprsIfNeeded(CoeffReturnType* data) {
+  EIGEN_STRONG_INLINE bool evalSubExprsIfNeeded(CoeffReturnType* data) {
     m_impl.evalSubExprsIfNeeded(NULL);
 
     // Use the FullReducer if possible.
@@ -718,8 +718,12 @@ struct TensorEvaluator<const TensorReductionOp<Op, Dims, ArgType>, Device>
   // Indexed by reduced dimensions.
   array<Index, NumReducedDims> m_reducedDims;
 
+  // XXX make m_impl public so ReuductionKernel functions have visibility to it
+public:
   // Evaluator for the input expression.
   TensorEvaluator<ArgType, Device> m_impl;
+
+private:
 
   // Operation to apply for computing the reduction.
   Op m_reducer;

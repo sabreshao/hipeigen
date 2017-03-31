@@ -484,7 +484,7 @@ EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE void pstoret(Scalar* to, const Packet& fro
   * by the current computation.
   */
 template<typename Packet, int LoadMode>
-inline Packet ploadt_ro(const typename unpacket_traits<Packet>::type* from)
+EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE Packet ploadt_ro(const typename unpacket_traits<Packet>::type* from)
 {
   return ploadt<Packet, LoadMode>(from);
 }
