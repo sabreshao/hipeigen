@@ -186,7 +186,7 @@ __global__ void FullReductionKernel(hipLaunchParm lp, Reducer reducer, const Sel
 
 #pragma unroll
   for (int offset = HIP_WARP_SIZE/2; offset > 0; offset /= 2) {
-    reducer.reduce(__shfl_down((float)accum, offset, HIP_WARP_SIZE), &accum);
+    reducer.reduce(__shfl_down(accum, offset, HIP_WARP_SIZE), &accum);
   }
 
   if ((hipThreadIdx_x & (HIP_WARP_SIZE - 1)) == 0) {
@@ -445,7 +445,7 @@ __global__ void InnerReductionKernel(hipLaunchParm lp, Reducer reducer, const Se
 
 #pragma unroll
       for (int offset = HIP_WARP_SIZE/2; offset > 0; offset /= 2) {
-        reducer.reduce(__shfl_down((float)reduced_val, offset), &reduced_val);
+        reducer.reduce(__shfl_down(reduced_val, offset), &reduced_val);
       }
 
       if ((hipThreadIdx_x & (HIP_WARP_SIZE - 1)) == 0) {

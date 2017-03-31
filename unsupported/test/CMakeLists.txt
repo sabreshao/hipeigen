@@ -106,6 +106,7 @@ else()
     ei_add_property(EIGEN_MISSING_BACKENDS "OpenGL, ")
 endif()
 
+IF(FALSE)
 ei_add_test(polynomialsolver)
 ei_add_test(polynomialutils)
 ei_add_test(splines)
@@ -188,6 +189,7 @@ if(EIGEN_TEST_CXX11)
   ei_add_test(cxx11_tensor_scan)
 
 endif()
+ENDIF(FALSE)
 
 # These tests needs hipcc
 if(EIGEN_TEST_HIP)
@@ -249,16 +251,16 @@ if(EIGEN_TEST_HIP)
         #ei_add_test(cxx11_tensor_hip)
         #ei_add_test(cxx11_tensor_contract_hip)
         #ei_add_test(cxx11_tensor_reduction_hip)
-        ei_add_test(cxx11_tensor_argmax_hip)
-        ei_add_test(cxx11_tensor_cast_float16_hip)
-        ei_add_test(cxx11_tensor_scan_hip)
+        #ei_add_test(cxx11_tensor_argmax_hip)
+        #ei_add_test(cxx11_tensor_cast_float16_hip)
+        #ei_add_test(cxx11_tensor_scan_hip)
 
         # The random number generation code requires arch 3.5 or greater.
         #if (${EIGEN_CUDA_COMPUTE_ARCH} GREATER 34)
           #ei_add_test(cxx11_tensor_random_hip)
         #endif()
 
-        ei_add_test(cxx11_tensor_of_float16_hip)
+        #ei_add_test(cxx11_tensor_of_float16_hip)
 
         unset(EIGEN_ADD_TEST_FILENAME_EXTENSION)
       elseif(${HIP_PLATFORM} STREQUAL "nvcc")

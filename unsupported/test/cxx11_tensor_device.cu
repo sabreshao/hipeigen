@@ -115,25 +115,20 @@ struct GPUContext {
 template <typename Context>
 void test_contextual_eval(Context* context)
 {
-  const Eigen::Tensor<float, 1> pi(1);
-  context->out().device(context->device()) = context->in1() + context->in2() * pi.constant(3.14f) + context->in1().constant(2.718f);
+  context->out().device(context->device()) = context->in1() + context->in2() * 3.14f + context->in1().constant(2.718f);
 }
 
 template <typename Context>
 void test_forced_contextual_eval(Context* context)
 {
-  const Eigen::Tensor<float, 1> pi(1);
-  //TODO: Enable TensorEvaluate (aka .eval()) once the constructor is supported
-  //context->out().device(context->device()) = (context->in1() + context->in2()).eval() * pi.constant(3.14f) + context->in1().constant(2.718f);
-  context->out().device(context->device()) = (context->in1() + context->in2()) * pi.constant(3.14f) + context->in1().constant(2.718f);
+  context->out().device(context->device()) = (context->in1() + context->in2()).eval() * 3.14f + context->in1().constant(2.718f);
 }
 
 template <typename Context>
 void test_compound_assignment(Context* context)
 {
-  const Eigen::Tensor<float, 1> pi(1);
   context->out().device(context->device()) = context->in1().constant(2.718f);
-  context->out().device(context->device()) += context->in1() + context->in2() * pi.constant(3.14f);
+  context->out().device(context->device()) += context->in1() + context->in2() * 3.14f;
 }
 
 
