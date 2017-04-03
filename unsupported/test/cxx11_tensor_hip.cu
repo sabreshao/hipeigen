@@ -347,7 +347,7 @@ void test_hip_convolution_1d()
   Eigen::TensorMap<Eigen::Tensor<float, 1, DataLayout> > gpu_kernel(d_kernel, 4);
   Eigen::TensorMap<Eigen::Tensor<float, 4, DataLayout> > gpu_out(d_out, 74,34,11,137);
 
-  Eigen::array<Eigen::DenseIndex, 1> dims{1};
+  Eigen::array<Eigen::DenseIndex, 1> dims(1);
   gpu_out.device(gpu_device) = gpu_input.convolve(gpu_kernel, dims);
 
   assert(hipMemcpyAsync(out.data(), d_out, out_bytes, hipMemcpyDeviceToHost, gpu_device.stream()) == hipSuccess);
@@ -507,7 +507,7 @@ void test_hip_convolution_2d()
   Eigen::TensorMap<Eigen::Tensor<float, 2, DataLayout> > gpu_kernel(d_kernel,3,4);
   Eigen::TensorMap<Eigen::Tensor<float, 4, DataLayout> > gpu_out(d_out,74,35,8,137);
 
-  Eigen::array<Eigen::DenseIndex, 2> dims{1,2};
+  Eigen::array<Eigen::DenseIndex, 2> dims(1,2);
   gpu_out.device(gpu_device) = gpu_input.convolve(gpu_kernel, dims);
 
   assert(hipMemcpyAsync(out.data(), d_out, out_bytes, hipMemcpyDeviceToHost, gpu_device.stream()) == hipSuccess);
@@ -571,7 +571,7 @@ void test_hip_convolution_3d()
   Eigen::TensorMap<Eigen::Tensor<float, 3, DataLayout> > gpu_kernel(d_kernel,3,4,2);
   Eigen::TensorMap<Eigen::Tensor<float, 5, DataLayout> > gpu_out(d_out,74,35,8,136,17);
 
-  Eigen::array<Eigen::DenseIndex, 3> dims{1,2,3};
+  Eigen::array<Eigen::DenseIndex, 3> dims(1,2,3);
   gpu_out.device(gpu_device) = gpu_input.convolve(gpu_kernel, dims);
 
   assert(hipMemcpyAsync(out.data(), d_out, out_bytes, hipMemcpyDeviceToHost, gpu_device.stream()) == hipSuccess);
