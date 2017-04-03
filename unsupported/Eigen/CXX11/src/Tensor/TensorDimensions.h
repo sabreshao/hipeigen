@@ -282,6 +282,9 @@ struct DSizes : array<DenseIndex, NumDims> {
     (*this)[0] = i0;
   }
 
+//provide custom constructor for Eigen::DSizes which in turn gets the deserializer in Eigen::array invoked
+//Enable this only for hcc backend as nvcc takes care of this internally
+#ifdef __HCC__
   EIGEN_DEVICE_FUNC explicit DSizes(DenseIndex i0, DenseIndex i1) : Base(i0, i1) {}
 
   EIGEN_DEVICE_FUNC explicit DSizes(DenseIndex i0, DenseIndex i1, DenseIndex i2) : Base(i0, i1, i2) {}
@@ -289,6 +292,7 @@ struct DSizes : array<DenseIndex, NumDims> {
   EIGEN_DEVICE_FUNC explicit DSizes(DenseIndex i0, DenseIndex i1, DenseIndex i2, DenseIndex i3) : Base(i0, i1, i2, i3) {}
 
   EIGEN_DEVICE_FUNC explicit DSizes(DenseIndex i0, DenseIndex i1, DenseIndex i2, DenseIndex i3, DenseIndex i4) : Base(i0, i1, i2, i4) {}
+#endif
 
 #if EIGEN_HAS_VARIADIC_TEMPLATES
   template<typename... IndexTypes> EIGEN_DEVICE_FUNC
