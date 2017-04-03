@@ -54,7 +54,12 @@ struct CacheSizes {
 /** \internal */
 EIGEN_DEVICE_FUNC inline void manage_caching_sizes(Action action, std::ptrdiff_t* l1, std::ptrdiff_t* l2, std::ptrdiff_t* l3)
 {
+//No static variables in device/kernel functions when nvcc is used
+#ifdef __NVCC__
+  CacheSizes m_cacheSizes;
+#else
   static CacheSizes m_cacheSizes;
+#endif
 
   if(action==SetAction)
   {
