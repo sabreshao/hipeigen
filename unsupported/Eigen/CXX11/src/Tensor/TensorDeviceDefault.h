@@ -31,7 +31,7 @@ struct DefaultDevice {
     memcpy(dst, src, n);
   }
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void memset(void* buffer, int c, size_t n) const {
-    memset(buffer, c, n);
+    //memset(buffer, c, n);
   }
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE size_t numThreads() const {

@@ -387,6 +387,6 @@ void test_gpu() {
 
 void test_cxx11_tensor_device()
 {
-  CALL_SUBTEST_1(test_cpu());
-  CALL_SUBTEST_2(test_gpu());
+  CALL_SUBTEST(test_cpu());
+  CALL_SUBTEST(test_gpu());
 }
