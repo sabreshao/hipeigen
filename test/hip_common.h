@@ -49,10 +49,14 @@ void run_on_hip(const Kernel& ker, int n, const Input& in, Output& out)
   dim3 Grids( (n+int(Blocks.x)-1)/int(Blocks.x) );
 
   hipDeviceSynchronize();
+#ifdef __NVCC__
+  hipLaunchKernel(HIP_KERNEL_NAME(run_on_hip_meta_kernel), dim3(Grids), dim3(Blocks), 0, 0, ker, n, d_in, d_out);
+#else
   hipLaunchKernel(HIP_KERNEL_NAME(run_on_hip_meta_kernel<Kernel,
                                                          typename std::decay<decltype(*d_in)>::type,
                                                          typename std::decay<decltype(*d_out)>::type>), 
                   dim3(Grids), dim3(Blocks), 0, 0, ker, n, d_in, d_out);
+#endif
   hipDeviceSynchronize();
   
   // check inputs have not been modified
