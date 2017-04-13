@@ -205,15 +205,15 @@ void test_cxx11_tensor_hip()
   CALL_SUBTEST(test_scalar<ColMajor>(128, 128, 128));
   CALL_SUBTEST(test_scalar<RowMajor>(128, 128, 128));
 
-  //CALL_SUBTEST(test_hip_contraction_m<ColMajor>());
-  //CALL_SUBTEST(test_hip_contraction_m<RowMajor>());
+  CALL_SUBTEST(test_hip_contraction_m<ColMajor>());
+  CALL_SUBTEST(test_hip_contraction_m<RowMajor>());
 
-  //CALL_SUBTEST(test_hip_contraction_k<ColMajor>());
-  //CALL_SUBTEST(test_hip_contraction_k<RowMajor>());
+  CALL_SUBTEST(test_hip_contraction_k<ColMajor>());
+  CALL_SUBTEST(test_hip_contraction_k<RowMajor>());
 
-  //CALL_SUBTEST(test_hip_contraction_n<ColMajor>());
-  //CALL_SUBTEST(test_hip_contraction_n<RowMajor>());
+  CALL_SUBTEST(test_hip_contraction_n<ColMajor>());
+  CALL_SUBTEST(test_hip_contraction_n<RowMajor>());
 
-  //CALL_SUBTEST(test_hip_contraction_sizes<ColMajor>());
-  //CALL_SUBTEST(test_hip_contraction_sizes<RowMajor>());
+  CALL_SUBTEST(test_hip_contraction_sizes<ColMajor>());
+  CALL_SUBTEST(test_hip_contraction_sizes<RowMajor>());
 }

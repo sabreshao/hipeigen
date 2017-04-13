@@ -284,9 +284,9 @@ if(EIGEN_TEST_HIP)
         set(EIGEN_ADD_TEST_FILENAME_EXTENSION "cu")
 
         ei_add_test(cxx11_tensor_device)
-        #ei_add_test(cxx11_tensor_hip)
+        ei_add_test(cxx11_tensor_hip)
         ei_add_test(cxx11_tensor_contract_hip)
-        #ei_add_test(cxx11_tensor_reduction_hip)
+        ei_add_test(cxx11_tensor_reduction_hip)
         ei_add_test(cxx11_tensor_argmax_hip)
         ei_add_test(cxx11_tensor_cast_float16_hip)
         ei_add_test(cxx11_tensor_scan_hip)
@@ -296,7 +296,7 @@ if(EIGEN_TEST_HIP)
           #ei_add_test(cxx11_tensor_random_hip)
         endif()
 
-        #ei_add_test(cxx11_tensor_of_float16_hip)
+        ei_add_test(cxx11_tensor_of_float16_hip)
 
         unset(EIGEN_ADD_TEST_FILENAME_EXTENSION)
 

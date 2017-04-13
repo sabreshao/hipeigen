@@ -651,7 +651,7 @@ void test_hip_lgamma(const Scalar stddev)
 
   for (int i = 0; i < 72; ++i) {
     for (int j = 0; j < 97; ++j) {
-      VERIFY_IS_APPROX(out(i,j), (::lgamma)(in(i,j)));
+      VERIFY_IS_APPROX(out(i,j), (std::lgamma)(in(i,j)));
     }
   }
 
@@ -1020,7 +1020,7 @@ void test_hip_erf(const Scalar stddev)
 
   for (int i = 0; i < 72; ++i) {
     for (int j = 0; j < 97; ++j) {
-      VERIFY_IS_APPROX(out(i,j), (::erf)(in(i,j)));
+      VERIFY_IS_APPROX(out(i,j), (std::erf)(in(i,j)));
     }
   }
 
@@ -1059,7 +1059,7 @@ void test_hip_erfc(const Scalar stddev)
 
   for (int i = 0; i < 72; ++i) {
     for (int j = 0; j < 97; ++j) {
-      VERIFY_IS_APPROX(out(i,j), (::erfc)(in(i,j)));
+      VERIFY_IS_APPROX(out(i,j), (std::erfc)(in(i,j)));
     }
   }
 
@@ -1242,66 +1242,66 @@ void test_cxx11_tensor_hip()
   // std::erf, std::erfc, and so on where only added in c++11. We use them
   // as a golden reference to validate the results produced by Eigen. Therefore
   // we can only run these tests if we use a c++11 compiler.
-  //CALL_SUBTEST(test_hip_lgamma<float>(1.0f));
-  //CALL_SUBTEST(test_hip_lgamma<float>(100.0f));
-  //CALL_SUBTEST(test_hip_lgamma<float>(0.01f));
-  //CALL_SUBTEST(test_hip_lgamma<float>(0.001f));
-  //printf("test_hip_lgamma<float> : PASS\n");
+  CALL_SUBTEST(test_hip_lgamma<float>(1.0f));
+  CALL_SUBTEST(test_hip_lgamma<float>(100.0f));
+  CALL_SUBTEST(test_hip_lgamma<float>(0.01f));
+  CALL_SUBTEST(test_hip_lgamma<float>(0.001f));
+  printf("test_hip_lgamma<float> : PASS\n");
 
-  //CALL_SUBTEST(test_hip_lgamma<double>(1.0));
-  //CALL_SUBTEST(test_hip_lgamma<double>(100.0));
-  //CALL_SUBTEST(test_hip_lgamma<double>(0.01));
-  //CALL_SUBTEST(test_hip_lgamma<double>(0.001));
-  //printf("test_hip_lgamma<double> : PASS\n");
+  CALL_SUBTEST(test_hip_lgamma<double>(1.0));
+  CALL_SUBTEST(test_hip_lgamma<double>(100.0));
+  CALL_SUBTEST(test_hip_lgamma<double>(0.01));
+  CALL_SUBTEST(test_hip_lgamma<double>(0.001));
+  printf("test_hip_lgamma<double> : PASS\n");
 
-  //CALL_SUBTEST(test_hip_erf<float>(1.0f));
-  //CALL_SUBTEST(test_hip_erf<float>(100.0f));
-  //CALL_SUBTEST(test_hip_erf<float>(0.01f));
-  //CALL_SUBTEST(test_hip_erf<float>(0.001f));
-  //printf("test_hip_erf<float> : PASS\n");
+  CALL_SUBTEST(test_hip_erf<float>(1.0f));
+  CALL_SUBTEST(test_hip_erf<float>(100.0f));
+  CALL_SUBTEST(test_hip_erf<float>(0.01f));
+  CALL_SUBTEST(test_hip_erf<float>(0.001f));
+  printf("test_hip_erf<float> : PASS\n");
 
-  //CALL_SUBTEST(test_hip_erfc<float>(1.0f));
-  // CALL_SUBTEST(test_hip_erfc<float>(100.0f));
+  CALL_SUBTEST(test_hip_erfc<float>(1.0f));
+  CALL_SUBTEST(test_hip_erfc<float>(100.0f));
   //CALL_SUBTEST(test_hip_erfc<float>(5.0f)); // HIP erfc lacks precision for large inputs
-  //CALL_SUBTEST(test_hip_erfc<float>(0.01f));
-  //CALL_SUBTEST(test_hip_erfc<float>(0.001f));
-  //printf("test_hip_erfc<float> : PASS\n");
+  CALL_SUBTEST(test_hip_erfc<float>(0.01f));
+  CALL_SUBTEST(test_hip_erfc<float>(0.001f));
+  printf("test_hip_erfc<float> : PASS\n");
 
-  //CALL_SUBTEST(test_hip_erf<double>(1.0));
-  //CALL_SUBTEST(test_hip_erf<double>(100.0));
-  //CALL_SUBTEST(test_hip_erf<double>(0.01));
-  //CALL_SUBTEST(test_hip_erf<double>(0.001));
-  //printf("test_hip_erf<double> : PASS\n");
+  CALL_SUBTEST(test_hip_erf<double>(1.0));
+  CALL_SUBTEST(test_hip_erf<double>(100.0));
+  CALL_SUBTEST(test_hip_erf<double>(0.01));
+  CALL_SUBTEST(test_hip_erf<double>(0.001));
+  printf("test_hip_erf<double> : PASS\n");
 
-  //CALL_SUBTEST(test_hip_erfc<double>(1.0));
-  // CALL_SUBTEST(test_hip_erfc<double>(100.0));
+  CALL_SUBTEST(test_hip_erfc<double>(1.0));
+   CALL_SUBTEST(test_hip_erfc<double>(100.0));
   //CALL_SUBTEST(test_hip_erfc<double>(5.0)); // HIP erfc lacks precision for large inputs
-  //CALL_SUBTEST(test_hip_erfc<double>(0.01));
-  //CALL_SUBTEST(test_hip_erfc<double>(0.001));
-  //printf("test_hip_erfc<double> : PASS\n");
+  CALL_SUBTEST(test_hip_erfc<double>(0.01));
+  CALL_SUBTEST(test_hip_erfc<double>(0.001));
+  printf("test_hip_erfc<double> : PASS\n");
 
-  //CALL_SUBTEST(test_hip_digamma<float>());
-  //CALL_SUBTEST(test_hip_digamma<double>());
-  //printf("test_hip_digamma : PASS\n");
+  CALL_SUBTEST(test_hip_digamma<float>());
+  CALL_SUBTEST(test_hip_digamma<double>());
+  printf("test_hip_digamma : PASS\n");
 
-  //CALL_SUBTEST(test_hip_polygamma<float>());
-  //CALL_SUBTEST(test_hip_polygamma<double>());
-  //printf("test_hip_polygamma : PASS\n");
+  CALL_SUBTEST(test_hip_polygamma<float>());
+  CALL_SUBTEST(test_hip_polygamma<double>());
+  printf("test_hip_polygamma : PASS\n");
 
-  //CALL_SUBTEST(test_hip_zeta<float>());
-  //CALL_SUBTEST(test_hip_zeta<double>());
-  //printf("test_hip_zeta : PASS\n");
+  CALL_SUBTEST(test_hip_zeta<float>());
+  CALL_SUBTEST(test_hip_zeta<double>());
+  printf("test_hip_zeta : PASS\n");
 
-  //CALL_SUBTEST(test_hip_igamma<float>());
-  //CALL_SUBTEST(test_hip_igamma<double>());
-  //printf("test_hip_igamma : PASS\n");
+  CALL_SUBTEST(test_hip_igamma<float>());
+  CALL_SUBTEST(test_hip_igamma<double>());
+  printf("test_hip_igamma : PASS\n");
 
-  //CALL_SUBTEST(test_hip_igammac<float>());
-  //CALL_SUBTEST(test_hip_igammac<double>());
-  //printf("test_hip_igammac : PASS\n");
+  CALL_SUBTEST(test_hip_igammac<float>());
+  CALL_SUBTEST(test_hip_igammac<double>());
+  printf("test_hip_igammac : PASS\n");
 
-  //CALL_SUBTEST(test_hip_betainc<float>());
-  //CALL_SUBTEST(test_hip_betainc<double>());
-  //printf("test_hip_betainc : PASS\n");
+  CALL_SUBTEST(test_hip_betainc<float>());
+  CALL_SUBTEST(test_hip_betainc<double>());
+  printf("test_hip_betainc : PASS\n");
 #endif
 }

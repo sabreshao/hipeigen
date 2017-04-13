@@ -393,7 +393,7 @@ if(EIGEN_TEST_HIP)
         include_directories(/usr/local/cuda/targets/x86_64-linux/include)
 
         set(EIGEN_ADD_TEST_FILENAME_EXTENSION  "cu")
-        #ei_add_test(hip_basic)
+        ei_add_test(hip_basic)
         unset(EIGEN_ADD_TEST_FILENAME_EXTENSION)
       else()
         message(FATAL_ERROR "UNKNOWN HIP_PLATFORM=" ${HIP_PLATFORM})
