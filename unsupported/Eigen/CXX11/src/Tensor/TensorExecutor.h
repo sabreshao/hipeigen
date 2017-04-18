@@ -239,11 +239,7 @@ EigenMetaKernel(hipLaunchParm lp, Evaluator memcopied_eval, Index size) {
   const Index first_index = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
   const Index step_size = hipBlockDim_x * hipGridDim_x;
 
-  // HIP memcopies the kernel arguments. That's fine for POD, but for more
-  // complex types such as evaluators we should really conform to the C++
-  // standard and call a proper copy constructor.
-  Evaluator eval(memcopied_eval);
-
+  const bool vectorizable = Evaluator::PacketAccess & Evaluator::IsAligned;
   EigenMetaKernelEval<Evaluator, Index, vectorizable>::run(eval, first_index, size, step_size);
 }
 
