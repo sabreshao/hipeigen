@@ -116,10 +116,10 @@ void test_hip_argmax_dim()
     assert(hipMemcpyAsync(tensor_arg.data(), d_out, out_bytes, hipMemcpyDeviceToHost, gpu_device.stream()) == hipSuccess);
     assert(hipStreamSynchronize(gpu_device.stream()) == hipSuccess);
 
-    VERIFY_IS_EQUAL(tensor_arg.dimensions().TotalSize(),
+    VERIFY_IS_EQUAL(tensor_arg.size(),
                     size_t(2*3*5*7 / tensor.dimension(dim)));
 
-    for (size_t n = 0; n < tensor_arg.dimensions().TotalSize(); ++n) {
+    for (DenseIndex n = 0; n < tensor_arg.size(); ++n) {
       // Expect max to be in the first index of the reduced dimension
       VERIFY_IS_EQUAL(tensor_arg.data()[n], 0);
     }
@@ -144,7 +144,7 @@ void test_hip_argmax_dim()
     assert(hipMemcpyAsync(tensor_arg.data(), d_out, out_bytes, hipMemcpyDeviceToHost, gpu_device.stream()) == hipSuccess);
     assert(hipStreamSynchronize(gpu_device.stream()) == hipSuccess);
 
-    for (size_t n = 0; n < tensor_arg.dimensions().TotalSize(); ++n) {
+    for (DenseIndex n = 0; n < tensor_arg.size(); ++n) {
       // Expect max to be in the last index of the reduced dimension
       VERIFY_IS_EQUAL(tensor_arg.data()[n], tensor.dimension(dim) - 1);
     }
@@ -205,10 +205,10 @@ void test_hip_argmin_dim()
     assert(hipMemcpyAsync(tensor_arg.data(), d_out, out_bytes, hipMemcpyDeviceToHost, gpu_device.stream()) == hipSuccess);
     assert(hipStreamSynchronize(gpu_device.stream()) == hipSuccess);
 
-    VERIFY_IS_EQUAL(tensor_arg.dimensions().TotalSize(),
-                    size_t(2*3*5*7 / tensor.dimension(dim)));
+    VERIFY_IS_EQUAL(tensor_arg.size(),
+                    2*3*5*7 / tensor.dimension(dim));
 
-    for (size_t n = 0; n < tensor_arg.dimensions().TotalSize(); ++n) {
+    for (DenseIndex n = 0; n < tensor_arg.size(); ++n) {
       // Expect min to be in the first index of the reduced dimension
       VERIFY_IS_EQUAL(tensor_arg.data()[n], 0);
     }
@@ -233,7 +233,7 @@ void test_hip_argmin_dim()
     assert(hipMemcpyAsync(tensor_arg.data(), d_out, out_bytes, hipMemcpyDeviceToHost, gpu_device.stream()) == hipSuccess);
     assert(hipStreamSynchronize(gpu_device.stream()) == hipSuccess);
 
-    for (size_t n = 0; n < tensor_arg.dimensions().TotalSize(); ++n) {
+    for (DenseIndex n = 0; n < tensor_arg.size(); ++n) {
       // Expect max to be in the last index of the reduced dimension
       VERIFY_IS_EQUAL(tensor_arg.data()[n], tensor.dimension(dim) - 1);
     }

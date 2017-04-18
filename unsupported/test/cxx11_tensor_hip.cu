@@ -305,8 +305,8 @@ void test_hip_contraction()
 
   hipMemcpy(t_result.data(), d_t_result, t_result_bytes, hipMemcpyDeviceToHost);
 
-  for (size_t i = 0; i < t_result.dimensions().TotalSize(); i++) {
-    if (fabs(t_result.data()[i] - m_result.data()[i]) >= 1e-4) {
+  for (DenseIndex i = 0; i < t_result.size(); i++) {
+    if (fabs(t_result.data()[i] - m_result.data()[i]) >= 1e-4f) {
       std::cout << "mismatch detected at index " << i << ": " << t_result.data()[i] << " vs " <<  m_result.data()[i] << std::endl;
       assert(false);
     }

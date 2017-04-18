@@ -100,7 +100,8 @@ template <typename T> struct SumReducer
   static const bool IsStateful = false;
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void reduce(const T t, T* accum) const {
-    (*accum) += t;
+    internal::scalar_sum_op<T> sum_op;
+    *accum = sum_op(*accum, t);
   }
   template <typename Packet>
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void reducePacket(const Packet& p, Packet* accum) const {
@@ -124,7 +125,8 @@ template <typename T> struct SumReducer
   }
   template <typename Packet>
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE T finalizeBoth(const T saccum, const Packet& vaccum) const {
-    return saccum + predux(vaccum);
+    internal::scalar_sum_op<T> sum_op;
+    return sum_op(saccum, predux(vaccum));
   }
 };
 
@@ -146,7 +148,8 @@ template <typename T> struct MeanReducer
   MeanReducer() : scalarCount_(0), packetCount_(0) { }
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void reduce(const T t, T* accum) {
-    (*accum) += t;
+    internal::scalar_sum_op<T> sum_op;
+    *accum = sum_op(*accum, t);
     scalarCount_++;
   }
   template <typename Packet>
@@ -172,7 +175,8 @@ template <typename T> struct MeanReducer
   }
   template <typename Packet>
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE T finalizeBoth(const T saccum, const Packet& vaccum) const {
-    return (saccum + predux(vaccum)) / (scalarCount_ + packetCount_ * unpacket_traits<Packet>::size);
+    internal::scalar_sum_op<T> sum_op;
+    return sum_op(saccum, predux(vaccum)) / (scalarCount_ + packetCount_ * unpacket_traits<Packet>::size);
   }
 
   protected:
@@ -191,25 +195,25 @@ struct reducer_traits<MeanReducer<T>, Device> {
 
 template <typename T, bool IsMax = true, bool IsInteger = true>
 struct MinMaxBottomValue {
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE static T bottom_value() {
+  EIGEN_DEVICE_FUNC static EIGEN_STRONG_INLINE T bottom_value() {
     return Eigen::NumTraits<T>::lowest();
   }
 };
 template <typename T>
 struct MinMaxBottomValue<T, true, false> {
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE static T bottom_value() {
+  EIGEN_DEVICE_FUNC static EIGEN_STRONG_INLINE T bottom_value() {
     return -Eigen::NumTraits<T>::infinity();
   }
 };
 template <typename T>
 struct MinMaxBottomValue<T, false, true> {
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE static T bottom_value() {
+  EIGEN_DEVICE_FUNC static EIGEN_STRONG_INLINE T bottom_value() {
     return Eigen::NumTraits<T>::highest();
   }
 };
 template <typename T>
 struct MinMaxBottomValue<T, false, false> {
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE static T bottom_value() {
+  EIGEN_DEVICE_FUNC static EIGEN_STRONG_INLINE T bottom_value() {
     return Eigen::NumTraits<T>::infinity();
   }
 };
@@ -303,7 +307,8 @@ template <typename T> struct ProdReducer
   static const bool IsStateful = false;
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void reduce(const T t, T* accum) const {
-    (*accum) *= t;
+    internal::scalar_product_op<T> prod_op;
+    (*accum) = prod_op(*accum, t);
   }
   template <typename Packet>
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void reducePacket(const Packet& p, Packet* accum) const {
@@ -327,7 +332,8 @@ template <typename T> struct ProdReducer
   }
   template <typename Packet>
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE T finalizeBoth(const T saccum, const Packet& vaccum) const {
-    return saccum * predux_mul(vaccum);
+    internal::scalar_product_op<T> prod_op;
+    return prod_op(saccum, predux_mul(vaccum));
   }
 };
 
@@ -1038,7 +1044,7 @@ class GaussianGenerator {
     }
   }
 
-  T operator()(const array<Index, NumDims>& coordinates) const {
+  EIGEN_DEVICE_FUNC T operator()(const array<Index, NumDims>& coordinates) const {
     T tmp = T(0);
     for (size_t i = 0; i < NumDims; ++i) {
       T offset = coordinates[i] - m_means[i];

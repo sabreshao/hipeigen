@@ -392,6 +392,7 @@ struct has_ReturnType
   enum { value = sizeof(testFunctor<T>(0)) == sizeof(meta_yes) };
 };
 
+//FIXME: why add EIGEN_DEVICE_FUNC here??
 template<typename T> EIGEN_DEVICE_FUNC const T& return_ref();
 
 template <typename T, typename IndexType=Index>
@@ -475,7 +476,7 @@ template<typename T, typename U> struct scalar_product_traits
 } // end namespace internal
 
 namespace numext {
-  
+
 #if defined(__HIP_DEVICE_COMPILE__) && (__HIP_DEVICE_COMPILE__ == 1)
 template<typename T> EIGEN_DEVICE_FUNC   void swap(T &a, T &b) { T tmp = b; b = a; a = tmp; }
 #else

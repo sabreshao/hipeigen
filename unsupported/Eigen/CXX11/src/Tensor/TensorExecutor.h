@@ -233,9 +233,9 @@ struct EigenMetaKernelEval<Evaluator, Index, true> {
 
 template <typename Evaluator, typename Index>
 __global__ void
+//FIXME: why add 1 here?
 __launch_bounds__(1024, 1)
 EigenMetaKernel(hipLaunchParm lp, Evaluator memcopied_eval, Index size) {
-
   const Index first_index = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
   const Index step_size = hipBlockDim_x * hipGridDim_x;
 
@@ -244,7 +244,6 @@ EigenMetaKernel(hipLaunchParm lp, Evaluator memcopied_eval, Index size) {
   // standard and call a proper copy constructor.
   Evaluator eval(memcopied_eval);
 
-  const bool vectorizable = Evaluator::PacketAccess & Evaluator::IsAligned;
   EigenMetaKernelEval<Evaluator, Index, vectorizable>::run(eval, first_index, size, step_size);
 }
 
@@ -270,6 +269,20 @@ inline void TensorExecutor<Expression, GpuDevice, Vectorizable>::run(
 
 #endif  // __HIPCC__ || __NVCC__ || __HCC__
 #endif  // EIGEN_USE_GPU
+
+// SYCL Executor policy
+#ifdef EIGEN_USE_SYCL
+
+template <typename Expression, bool Vectorizable>
+class TensorExecutor<Expression, SyclDevice, Vectorizable> {
+public:
+  static inline void run(const Expression &expr, const SyclDevice &device) {
+    // call TensorSYCL module
+    TensorSycl::run(expr, device);
+  }
+};
+
+#endif
 
 } // end namespace internal
 
