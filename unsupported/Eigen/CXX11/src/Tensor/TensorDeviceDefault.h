@@ -75,8 +75,8 @@ struct DefaultDevice {
     return 1;
 #else
     // Running on a HIP device
-    #ifdef __NVCC__
-        return __CUDA_ARCH__ / 100;
+    #ifdef __HIPCC__
+        return __HIP_DEVICE_COMPILE__ / 100;
     #else
         return 1;          // Temporary fix : Return 1 as major for hcc backend
     #endif

@@ -16,14 +16,13 @@ namespace internal {
 namespace {
 
 EIGEN_DEVICE_FUNC uint64_t get_random_seed() {
-#ifdef __CUDA_ARCH__
+#ifdef __HIP_DEVICE_COMPILE__
   // We don't support 3d kernels since we currently only use 1 and
   // 2d kernels.
-  assert(threadIdx.z == 0);
+  assert(hipThreadIdx_z == 0);
   return clock64() +
-      blockIdx.x * blockDim.x + threadIdx.x +
-      gridDim.x * blockDim.x * (blockIdx.y * blockDim.y + threadIdx.y);
-
+      hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x +
+      hipGridDim_x * hipBlockDim_x * (hipBlockIdx_y * hipBlockDim_y + hipThreadIdx_y);
 #elif defined _WIN32
   // Use the current time as a baseline.
   SYSTEMTIME st;

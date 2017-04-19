@@ -101,7 +101,7 @@ struct real_default_impl<Scalar,true>
 
 template<typename Scalar> struct real_impl : real_default_impl<Scalar> {};
 
-#ifdef __CUDA_ARCH__
+#ifdef __HIP_DEVICE_COMPILE__
 template<typename T>
 struct real_impl<std::complex<T> >
 {
@@ -149,7 +149,7 @@ struct imag_default_impl<Scalar,true>
 
 template<typename Scalar> struct imag_impl : imag_default_impl<Scalar> {};
 
-#ifdef __CUDA_ARCH__
+#ifdef __HIP_DEVICE_COMPILE__
 template<typename T>
 struct imag_impl<std::complex<T> >
 {
@@ -648,7 +648,7 @@ template<typename Scalar>
 struct random_default_impl<Scalar, false, true>
 {
   static inline Scalar run(const Scalar& x, const Scalar& y)
-  { 
+  {
     typedef typename conditional<NumTraits<Scalar>::IsSigned,std::ptrdiff_t,std::size_t>::type ScalarX;
     if(y<x)
       return x;
@@ -1397,13 +1397,13 @@ template<> struct random_impl<bool>
 template<> struct scalar_fuzzy_impl<bool>
 {
   typedef bool RealScalar;
-  
+
   template<typename OtherScalar> EIGEN_DEVICE_FUNC
   static inline bool isMuchSmallerThan(const bool& x, const bool&, const bool&)
   {
     return !x;
   }
-  
+
   EIGEN_DEVICE_FUNC
   static inline bool isApprox(bool x, bool y, bool)
   {
@@ -1415,10 +1415,10 @@ template<> struct scalar_fuzzy_impl<bool>
   {
     return (!x) || y;
   }
-  
+
 };
 
-  
+
 } // end namespace internal
 
 } // end namespace Eigen
