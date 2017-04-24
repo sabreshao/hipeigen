@@ -160,12 +160,13 @@ template <typename T> class array<T, 1> {
   }
 #endif
 
-  __attribute__((annotate("user_deserialize")))
+  
+#ifdef __HCC__
+ __attribute__((annotate("user_deserialize")))
   array(T v0) [[cpu]][[hc]] {
     values[0] = v0;
   }
-#ifdef __HCC__
-  __attribute__((annotate("serialize")))
+ __attribute__((annotate("serialize")))
   void __cxxamp_serialize(Kalmar::Serialize &s) const {
     s.Append(sizeof(T), &values[0]);
   }
@@ -206,13 +207,13 @@ template <typename T> class array<T, 2> {
   }
 #endif
 
+#ifdef __HCC__
   __attribute__((annotate("user_deserialize")))
   array(T v0, T v1) [[cpu]][[hc]] {
     values[0] = v0;
     values[1] = v1;
   }
 
-#ifdef __HCC__
   __attribute__((annotate("serialize")))
   void __cxxamp_serialize(Kalmar::Serialize &s) const {
     s.Append(sizeof(T), &values[0]);
@@ -255,6 +256,7 @@ template <typename T> class array<T, 3> {
   }
 #endif
 
+#ifdef __HCC__
   __attribute__((annotate("user_deserialize")))
   array(T v0, T v1, T v2) [[cpu]][[hc]] {
     values[0] = v0;
@@ -262,7 +264,6 @@ template <typename T> class array<T, 3> {
     values[2] = v2;
   }
 
-#ifdef __HCC__
   __attribute__((annotate("serialize")))
   void __cxxamp_serialize(Kalmar::Serialize &s) const {
     s.Append(sizeof(T), &values[0]);
@@ -306,6 +307,7 @@ template <typename T> class array<T, 4> {
   }
 #endif
 
+#ifdef __HCC__
   __attribute__((annotate("user_deserialize")))
   array(T v0, T v1, T v2, T v3) [[cpu]][[hc]] {
     values[0] = v0;
@@ -314,7 +316,6 @@ template <typename T> class array<T, 4> {
     values[3] = v3;
   }
 
-#ifdef __HCC__
   __attribute__((annotate("serialize")))
   void __cxxamp_serialize(Kalmar::Serialize &s) const {
     s.Append(sizeof(T), &values[0]);
@@ -359,6 +360,7 @@ template <typename T> class array<T, 5> {
   }
 #endif
 
+#ifdef __HCC__
   __attribute__((annotate("user_deserialize")))
   array(T v0, T v1, T v2, T v3, T v4) [[cpu]][[hc]] {
     values[0] = v0;
@@ -368,7 +370,6 @@ template <typename T> class array<T, 5> {
     values[4] = v4;
   }
 
-#ifdef __HCC__
   __attribute__((annotate("serialize")))
   void __cxxamp_serialize(Kalmar::Serialize &s) const {
     s.Append(sizeof(T), &values[0]);
