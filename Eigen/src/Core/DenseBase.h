@@ -260,10 +260,10 @@ template<typename Derived> class DenseBase
 #ifndef EIGEN_PARSED_BY_DOXYGEN
     /** \internal Represents a matrix with all coefficients equal to one another*/
     typedef CwiseNullaryOp<internal::scalar_constant_op<Scalar>,PlainObject> ConstantReturnType;
-    /** \internal Represents a vector with linearly spaced coefficients that allows sequential access only. */
-    typedef CwiseNullaryOp<internal::linspaced_op<Scalar,PacketScalar,false>,PlainObject> SequentialLinSpacedReturnType;
+    /** \internal \deprecated Represents a vector with linearly spaced coefficients that allows sequential access only. */
+    typedef CwiseNullaryOp<internal::linspaced_op<Scalar,PacketScalar>,PlainObject> SequentialLinSpacedReturnType;
     /** \internal Represents a vector with linearly spaced coefficients that allows random access. */
-    typedef CwiseNullaryOp<internal::linspaced_op<Scalar,PacketScalar,true>,PlainObject> RandomAccessLinSpacedReturnType;
+    typedef CwiseNullaryOp<internal::linspaced_op<Scalar,PacketScalar>,PlainObject> RandomAccessLinSpacedReturnType;
     /** \internal the return type of MatrixBase::eigenvalues() */
     typedef Matrix<typename NumTraits<typename internal::traits<Derived>::Scalar>::Real, internal::traits<Derived>::ColsAtCompileTime, 1> EigenvaluesReturnType;
 
@@ -463,7 +463,17 @@ template<typename Derived> class DenseBase
     EIGEN_DEVICE_FUNC
     void visit(Visitor& func) const;
 
-    inline const WithFormat<Derived> format(const IOFormat& fmt) const;
+    /** \returns a WithFormat proxy object allowing to print a matrix the with given
+      * format \a fmt.
+      *
+      * See class IOFormat for some examples.
+      *
+      * \sa class IOFormat, class WithFormat
+      */
+    inline const WithFormat<Derived> format(const IOFormat& fmt) const
+    {
+      return WithFormat<Derived>(derived(), fmt);
+    }
 
     /** \returns the unique coefficient of a 1x1 expression */
     EIGEN_DEVICE_FUNC
@@ -558,12 +568,15 @@ template<typename Derived> class DenseBase
     EIGEN_DEVICE_FUNC void reverseInPlace();
 
 #define EIGEN_CURRENT_STORAGE_BASE_CLASS Eigen::DenseBase
+#define EIGEN_DOC_BLOCK_ADDONS_NOT_INNER_PANEL
+#define EIGEN_DOC_BLOCK_ADDONS_INNER_PANEL_IF(COND)
 #   include "../plugins/BlockMethods.h"
 #   ifdef EIGEN_DENSEBASE_PLUGIN
 #     include EIGEN_DENSEBASE_PLUGIN
 #   endif
 #undef EIGEN_CURRENT_STORAGE_BASE_CLASS
-
+#undef EIGEN_DOC_BLOCK_ADDONS_NOT_INNER_PANEL
+#undef EIGEN_DOC_BLOCK_ADDONS_INNER_PANEL_IF
 
     // disable the use of evalTo for dense objects with a nice compilation error
     template<typename Dest>

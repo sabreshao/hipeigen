@@ -47,7 +47,21 @@ static bool m_devicePropInitialized = false;
 
 static void initializeDeviceProp() {
   if (!m_devicePropInitialized) {
-    if (!m_devicePropInitialized) {
+    // Attempts to ensure proper behavior in the case of multiple threads
+    // calling this function simultaneously. This would be trivial to
+    // implement if we could use std::mutex, but unfortunately mutex don't
+    // compile with nvcc, so we resort to atomics and thread fences instead.
+    // Note that if the caller uses a compiler that doesn't support c++11 we
+    // can't ensure that the initialization is thread safe.
+#if __cplusplus >= 201103L
+    static std::atomic<bool> first(true);
+    if (first.exchange(false)) {
+#else
+    static bool first = true;
+    if (first) {
+      first = false;
+#endif
+      // We're the first thread to reach this point.
       int num_devices;
       hipError_t status = hipGetDeviceCount(&num_devices);
       if (status != hipSuccess) {
@@ -68,7 +82,19 @@ static void initializeDeviceProp() {
           assert(status == hipSuccess);
         }
       }
+
+#if __cplusplus >= 201103L
+      std::atomic_thread_fence(std::memory_order_release);
+#endif
       m_devicePropInitialized = true;
+    } else {
+      // Wait for the other thread to inititialize the properties.
+      while (!m_devicePropInitialized) {
+#if __cplusplus >= 201103L
+        std::atomic_thread_fence(std::memory_order_acquire);
+#endif
+        sleep(1);
+      }
     }
   }
 }
@@ -174,39 +200,24 @@ struct GpuDevice {
     return stream_->stream();
   }
 
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void* allocate(size_t num_bytes) const {
+  EIGEN_STRONG_INLINE void* allocate(size_t num_bytes) const {
 #if !defined(__HIP_DEVICE_COMPILE__) || (__HIP_DEVICE_COMPILE__ == 0)
     return stream_->allocate(num_bytes);
-#else
-    eigen_assert(false && "The default device should be used instead to generate kernel code");
-    return NULL;
-#endif
   }
 
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void deallocate(void* buffer) const {
+  EIGEN_STRONG_INLINE void deallocate(void* buffer) const {
 #if !defined(__HIP_DEVICE_COMPILE__) || (__HIP_DEVICE_COMPILE__ == 0)
     stream_->deallocate(buffer);
-#else
-    eigen_assert(false && "The default device should be used instead to generate kernel code");
-#endif
   }
 
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void* scratchpad() const {
+  EIGEN_STRONG_INLINE void* scratchpad() const {
 #if !defined(__HIP_DEVICE_COMPILE__) || (__HIP_DEVICE_COMPILE__ == 0)
     return stream_->scratchpad();
-#else
-    eigen_assert(false && "The default device should be used instead to generate kernel code");
-    return NULL;
-#endif
   }
 
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE unsigned int* semaphore() const {
+  EIGEN_STRONG_INLINE unsigned int* semaphore() const {
 #if !defined(__HIP_DEVICE_COMPILE__) || (__HIP_DEVICE_COMPILE__ == 0)
     return stream_->semaphore();
-#else
-    eigen_assert(false && "The default device should be used instead to generate kernel code");
-    return NULL;
-#endif
   }
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void memcpy(void* dst, const void* src, size_t n) const {
@@ -216,11 +227,11 @@ struct GpuDevice {
     EIGEN_UNUSED_VARIABLE(err)
     assert(err == hipSuccess);
 #else
-    eigen_assert(false && "The default device should be used instead to generate kernel code");
+  eigen_assert(false && "The default device should be used instead to generate kernel code");
 #endif
   }
 
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void memcpyHostToDevice(void* dst, const void* src, size_t n) const {
+  EIGEN_STRONG_INLINE void memcpyHostToDevice(void* dst, const void* src, size_t n) const {
 #if !defined(__HIP_DEVICE_COMPILE__) || (__HIP_DEVICE_COMPILE__ == 0)
     hipError_t err =
         hipMemcpyAsync(dst, src, n, hipMemcpyHostToDevice, stream_->stream());
@@ -231,7 +242,7 @@ struct GpuDevice {
 #endif
   }
 
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void memcpyDeviceToHost(void* dst, const void* src, size_t n) const {
+  EIGEN_STRONG_INLINE void memcpyDeviceToHost(void* dst, const void* src, size_t n) const {
 #if !defined(__HIP_DEVICE_COMPILE__) || (__HIP_DEVICE_COMPILE__ == 0)
     hipError_t err =
         hipMemcpyAsync(dst, src, n, hipMemcpyDeviceToHost, stream_->stream());
@@ -249,21 +260,21 @@ struct GpuDevice {
     EIGEN_UNUSED_VARIABLE(err)
     assert(err == hipSuccess);
 #else
-    eigen_assert(false && "The default device should be used instead to generate kernel code");
+  eigen_assert(false && "The default device should be used instead to generate kernel code");
 #endif
   }
 
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE size_t numThreads() const {
+  EIGEN_STRONG_INLINE size_t numThreads() const {
     // FIXME
     return 32;
   }
 
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE size_t firstLevelCacheSize() const {
+  EIGEN_STRONG_INLINE size_t firstLevelCacheSize() const {
     // FIXME
     return 48*1024;
   }
 
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE size_t lastLevelCacheSize() const {
+  EIGEN_STRONG_INLINE size_t lastLevelCacheSize() const {
     // We won't try to take advantage of the l2 cache for the time being, and
     // there is no l3 cache on hip devices.
     return firstLevelCacheSize();
@@ -284,56 +295,26 @@ struct GpuDevice {
 #endif
   }
 
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE int getNumHipMultiProcessors() const {
-#if !defined(__HIP_DEVICE_COMPILE__) || (__HIP_DEVICE_COMPILE__ == 0)
+  EIGEN_STRONG_INLINE int getNumHipMultiProcessors() const {
     return stream_->deviceProperties().multiProcessorCount;
-#else
-    eigen_assert(false && "The default device should be used instead to generate kernel code");
-    return 0;
-#endif
   }
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE int maxHipThreadsPerBlock() const {
-#if !defined(__HIP_DEVICE_COMPILE__) || (__HIP_DEVICE_COMPILE__ == 0)
+  EIGEN_STRONG_INLINE int maxHipThreadsPerBlock() const {
     return stream_->deviceProperties().maxThreadsPerBlock;
-#else
-    eigen_assert(false && "The default device should be used instead to generate kernel code");
-    return 0;
-#endif
   }
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE int maxHipThreadsPerMultiProcessor() const {
-#if !defined(__HIP_DEVICE_COMPILE__) || (__HIP_DEVICE_COMPILE__ == 0)
+  EIGEN_STRONG_INLINE int maxHipThreadsPerMultiProcessor() const {
     return stream_->deviceProperties().maxThreadsPerMultiProcessor;
-#else
-    eigen_assert(false && "The default device should be used instead to generate kernel code");
-    return 0;
-#endif
   }
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE int sharedMemPerBlock() const {
-#if !defined(__HIP_DEVICE_COMPILE__) || (__HIP_DEVICE_COMPILE__ == 0)
+  EIGEN_STRONG_INLINE int sharedMemPerBlock() const {
     return stream_->deviceProperties().sharedMemPerBlock;
-#else
-    eigen_assert(false && "The default device should be used instead to generate kernel code");
-    return 0;
-#endif
   }
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE int majorDeviceVersion() const {
-#if !defined(__HIP_DEVICE_COMPILE__) || (__HIP_DEVICE_COMPILE__ == 0)
+  EIGEN_STRONG_INLINE int majorDeviceVersion() const {
     return stream_->deviceProperties().major;
-#else
-    eigen_assert(false && "The default device should be used instead to generate kernel code");
-    return 0;
-#endif
   }
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE int minorDeviceVersion() const {
-#if !defined(__HIP_DEVICE_COMPILE__) || (__HIP_DEVICE_COMPILE__ == 0)
+  EIGEN_STRONG_INLINE int minorDeviceVersion() const {
     return stream_->deviceProperties().minor;
-#else
-    eigen_assert(false && "The default device should be used instead to generate kernel code");
-    return 0;
-#endif
   }
 
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE int maxBlocks() const {
+  EIGEN_STRONG_INLINE int maxBlocks() const {
     return max_blocks_;
   }
 

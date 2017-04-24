@@ -71,7 +71,7 @@ void test_hip_contraction(int m_size, int k_size, int n_size)
   t_result = t_left.contract(t_right, dims);
 
   hipMemcpy(t_result_gpu.data(), d_t_result, t_result_bytes, hipMemcpyDeviceToHost);
-  for (size_t i = 0; i < t_result.size(); i++) {
+  for (DenseIndex i = 0; i < t_result.size(); i++) {
     if (fabs(t_result(i) - t_result_gpu(i)) < 1e-4f) {
       continue;
     }

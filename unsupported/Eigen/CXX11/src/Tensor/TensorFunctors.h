@@ -99,7 +99,8 @@ template <typename T> struct SumReducer
   static const bool IsStateful = false;
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void reduce(const T t, T* accum) const {
-    (*accum) += t;
+    internal::scalar_sum_op<T> sum_op;
+    *accum = sum_op(*accum, t);
   }
   template <typename Packet>
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void reducePacket(const Packet& p, Packet* accum) const {
@@ -123,7 +124,8 @@ template <typename T> struct SumReducer
   }
   template <typename Packet>
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE T finalizeBoth(const T saccum, const Packet& vaccum) const {
-    return saccum + predux(vaccum);
+    internal::scalar_sum_op<T> sum_op;
+    return sum_op(saccum, predux(vaccum));
   }
 };
 
@@ -145,7 +147,8 @@ template <typename T> struct MeanReducer
   MeanReducer() : scalarCount_(0), packetCount_(0) { }
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void reduce(const T t, T* accum) {
-    (*accum) += t;
+    internal::scalar_sum_op<T> sum_op;
+    *accum = sum_op(*accum, t);
     scalarCount_++;
   }
   template <typename Packet>
@@ -171,7 +174,8 @@ template <typename T> struct MeanReducer
   }
   template <typename Packet>
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE T finalizeBoth(const T saccum, const Packet& vaccum) const {
-    return (saccum + predux(vaccum)) / (scalarCount_ + packetCount_ * unpacket_traits<Packet>::size);
+    internal::scalar_sum_op<T> sum_op;
+    return sum_op(saccum, predux(vaccum)) / (scalarCount_ + packetCount_ * unpacket_traits<Packet>::size);
   }
 
   protected:
@@ -190,25 +194,25 @@ struct reducer_traits<MeanReducer<T>, Device> {
 
 template <typename T, bool IsMax = true, bool IsInteger = true>
 struct MinMaxBottomValue {
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE static T bottom_value() {
+  EIGEN_DEVICE_FUNC static EIGEN_STRONG_INLINE T bottom_value() {
     return Eigen::NumTraits<T>::lowest();
   }
 };
 template <typename T>
 struct MinMaxBottomValue<T, true, false> {
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE static T bottom_value() {
+  EIGEN_DEVICE_FUNC static EIGEN_STRONG_INLINE T bottom_value() {
     return -Eigen::NumTraits<T>::infinity();
   }
 };
 template <typename T>
 struct MinMaxBottomValue<T, false, true> {
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE static T bottom_value() {
+  EIGEN_DEVICE_FUNC static EIGEN_STRONG_INLINE T bottom_value() {
     return Eigen::NumTraits<T>::highest();
   }
 };
 template <typename T>
 struct MinMaxBottomValue<T, false, false> {
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE static T bottom_value() {
+  EIGEN_DEVICE_FUNC static EIGEN_STRONG_INLINE T bottom_value() {
     return Eigen::NumTraits<T>::infinity();
   }
 };
@@ -302,7 +306,8 @@ template <typename T> struct ProdReducer
   static const bool IsStateful = false;
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void reduce(const T t, T* accum) const {
-    (*accum) *= t;
+    internal::scalar_product_op<T> prod_op;
+    (*accum) = prod_op(*accum, t);
   }
   template <typename Packet>
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void reducePacket(const Packet& p, Packet* accum) const {
@@ -326,7 +331,8 @@ template <typename T> struct ProdReducer
   }
   template <typename Packet>
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE T finalizeBoth(const T saccum, const Packet& vaccum) const {
-    return saccum * predux_mul(vaccum);
+    internal::scalar_product_op<T> prod_op;
+    return prod_op(saccum, predux_mul(vaccum));
   }
 };
 
@@ -439,450 +445,450 @@ struct reducer_traits<ArgMinTupleReducer<T>, Device> {
 };
 
 
-// Random number generation
-namespace {
-#if defined(__HIP_DEVICE_COMPILE__) && (__HIP_DEVICE_COMPILE__ == 1)
-__device__ int get_random_seed() {
-    return clock();
-}
-#else
-static inline int get_random_seed() {
-#ifdef _WIN32
-    SYSTEMTIME st;
-    GetSystemTime(&st);
-    return st.wSecond + 1000 * st.wMilliseconds;
-#elif defined __APPLE__
-    return static_cast<int>(mach_absolute_time());
-#else
-    timespec ts;
-    clock_gettime(CLOCK_REALTIME, &ts);
-    return static_cast<int>(ts.tv_nsec);
-#endif
-}
-#endif
-}
+//// Random number generation
+//namespace {
+//#if defined(__HIP_DEVICE_COMPILE__) && (__HIP_DEVICE_COMPILE__ == 1)
+//__device__ int get_random_seed() {
+    //return clock();
+//}
+//#else
+//static inline int get_random_seed() {
+//#ifdef _WIN32
+    //SYSTEMTIME st;
+    //GetSystemTime(&st);
+    //return st.wSecond + 1000 * st.wMilliseconds;
+//#elif defined __APPLE__
+    //return static_cast<int>(mach_absolute_time());
+//#else
+    //timespec ts;
+    //clock_gettime(CLOCK_REALTIME, &ts);
+    //return static_cast<int>(ts.tv_nsec);
+//#endif
+//}
+//#endif
+//}
 
-#if !defined (EIGEN_USE_GPU) || !defined(__HIPCC__) || \
-    !defined(__HIP_DEVICE_COMPILE__) || (__HIP_DEVICE_COMPILE__ == 0)
-// We're not compiling a hip kernel
-template <typename T> class UniformRandomGenerator {
+//#if !defined (EIGEN_USE_GPU) || !defined(__HIPCC__) || \
+    //!defined(__HIP_DEVICE_COMPILE__) || (__HIP_DEVICE_COMPILE__ == 0)
+//// We're not compiling a hip kernel
+//template <typename T> class UniformRandomGenerator {
 
- public:
-  static const bool PacketAccess = true;
+ //public:
+  //static const bool PacketAccess = true;
 
-  UniformRandomGenerator(bool deterministic = true) : m_deterministic(deterministic) {
-    if (!deterministic) {
-      srand(get_random_seed());
-    }
-  }
-  UniformRandomGenerator(const UniformRandomGenerator& other) {
-    m_deterministic = other.m_deterministic;
-  }
+  //UniformRandomGenerator(bool deterministic = true) : m_deterministic(deterministic) {
+    //if (!deterministic) {
+      //srand(get_random_seed());
+    //}
+  //}
+  //UniformRandomGenerator(const UniformRandomGenerator& other) {
+    //m_deterministic = other.m_deterministic;
+  //}
 
-  T operator()() const {
-    return random<T>();
-  }
-  template<typename PacketType>
-  PacketType packetOp() const {
-    const int packetSize = internal::unpacket_traits<PacketType>::size;
-    EIGEN_ALIGN_MAX T values[packetSize];
-    for (int i = 0; i < packetSize; ++i) {
-      values[i] = random<T>();
-    }
-    return internal::pload<PacketType>(values);
-  }
+  //T operator()() const {
+    //return random<T>();
+  //}
+  //template<typename PacketType>
+  //PacketType packetOp() const {
+    //const int packetSize = internal::unpacket_traits<PacketType>::size;
+    //EIGEN_ALIGN_MAX T values[packetSize];
+    //for (int i = 0; i < packetSize; ++i) {
+      //values[i] = random<T>();
+    //}
+    //return internal::pload<PacketType>(values);
+  //}
 
- private:
-  bool m_deterministic;
-};
+ //private:
+  //bool m_deterministic;
+//};
 
-#if __cplusplus > 199711 || EIGEN_COMP_MSVC >= 1900
-template <> class UniformRandomGenerator<float> {
- public:
-  static const bool PacketAccess = true;
+//#if __cplusplus > 199711 || EIGEN_COMP_MSVC >= 1900
+//template <> class UniformRandomGenerator<float> {
+ //public:
+  //static const bool PacketAccess = true;
 
-  UniformRandomGenerator(bool deterministic = true) : m_deterministic(deterministic), m_generator(new std::mt19937()) {
-    if (!deterministic) {
-      m_generator->seed(get_random_seed());
-    }
-  }
-  UniformRandomGenerator(const UniformRandomGenerator<float>& other) {
-    m_generator = new std::mt19937();
-    m_generator->seed(other() * UINT_MAX);
-    m_deterministic = other.m_deterministic;
-  }
-  ~UniformRandomGenerator() {
-    delete m_generator;
-  }
+  //UniformRandomGenerator(bool deterministic = true) : m_deterministic(deterministic), m_generator(new std::mt19937()) {
+    //if (!deterministic) {
+      //m_generator->seed(get_random_seed());
+    //}
+  //}
+  //UniformRandomGenerator(const UniformRandomGenerator<float>& other) {
+    //m_generator = new std::mt19937();
+    //m_generator->seed(other() * UINT_MAX);
+    //m_deterministic = other.m_deterministic;
+  //}
+  //~UniformRandomGenerator() {
+    //delete m_generator;
+  //}
 
-  float operator()() const {
-    return m_distribution(*m_generator);
-  }
-  template<typename PacketType>
-  PacketType packetOp() const {
-    const int packetSize = internal::unpacket_traits<PacketType>::size;
-    EIGEN_ALIGN_MAX float values[packetSize];
-    for (int k = 0; k < packetSize; ++k) {
-      values[k] = this->operator()();
-    }
-    return internal::pload<PacketType>(values);
-  }
+  //float operator()() const {
+    //return m_distribution(*m_generator);
+  //}
+  //template<typename PacketType>
+  //PacketType packetOp() const {
+    //const int packetSize = internal::unpacket_traits<PacketType>::size;
+    //EIGEN_ALIGN_MAX float values[packetSize];
+    //for (int k = 0; k < packetSize; ++k) {
+      //values[k] = this->operator()();
+    //}
+    //return internal::pload<PacketType>(values);
+  //}
 
- private:
-  UniformRandomGenerator& operator = (const UniformRandomGenerator&);
-  // Make sure m_deterministic comes first to match the layout of the cpu
-  // version of the code.
-  bool m_deterministic;
-  std::mt19937* m_generator;
-  mutable std::uniform_real_distribution<float> m_distribution;
-};
+ //private:
+  //UniformRandomGenerator& operator = (const UniformRandomGenerator&);
+  //// Make sure m_deterministic comes first to match the layout of the cpu
+  //// version of the code.
+  //bool m_deterministic;
+  //std::mt19937* m_generator;
+  //mutable std::uniform_real_distribution<float> m_distribution;
+//};
 
-template <> class UniformRandomGenerator<double> {
- public:
-  static const bool PacketAccess = true;
+//template <> class UniformRandomGenerator<double> {
+ //public:
+  //static const bool PacketAccess = true;
 
-  UniformRandomGenerator(bool deterministic = true) : m_deterministic(deterministic), m_generator(new std::mt19937()) {
-    if (!deterministic) {
-      m_generator->seed(get_random_seed());
-    }
-  }
-  UniformRandomGenerator(const UniformRandomGenerator<double>& other) {
-    m_generator = new std::mt19937();
-    m_generator->seed(other() * UINT_MAX);
-    m_deterministic = other.m_deterministic;
-  }
-  ~UniformRandomGenerator() {
-    delete m_generator;
-  }
+  //UniformRandomGenerator(bool deterministic = true) : m_deterministic(deterministic), m_generator(new std::mt19937()) {
+    //if (!deterministic) {
+      //m_generator->seed(get_random_seed());
+    //}
+  //}
+  //UniformRandomGenerator(const UniformRandomGenerator<double>& other) {
+    //m_generator = new std::mt19937();
+    //m_generator->seed(other() * UINT_MAX);
+    //m_deterministic = other.m_deterministic;
+  //}
+  //~UniformRandomGenerator() {
+    //delete m_generator;
+  //}
 
-  double operator()() const {
-    return m_distribution(*m_generator);
-  }
-  template<typename PacketType>
-  PacketType packetOp() const {
-    const int packetSize = internal::unpacket_traits<PacketType>::size;
-    EIGEN_ALIGN_MAX double values[packetSize];
-    for (int k = 0; k < packetSize; ++k) {
-      values[k] = this->operator()();
-    }
-    return internal::pload<PacketType>(values);
-  }
+  //double operator()() const {
+    //return m_distribution(*m_generator);
+  //}
+  //template<typename PacketType>
+  //PacketType packetOp() const {
+    //const int packetSize = internal::unpacket_traits<PacketType>::size;
+    //EIGEN_ALIGN_MAX double values[packetSize];
+    //for (int k = 0; k < packetSize; ++k) {
+      //values[k] = this->operator()();
+    //}
+    //return internal::pload<PacketType>(values);
+  //}
 
- private:
-  UniformRandomGenerator& operator = (const UniformRandomGenerator&);
-  // Make sure m_deterministic comes first to match the layout of the cpu
-  // version of the code.
-  bool m_deterministic;
-  std::mt19937* m_generator;
-  mutable std::uniform_real_distribution<double> m_distribution;
-};
-#endif
+ //private:
+  //UniformRandomGenerator& operator = (const UniformRandomGenerator&);
+  //// Make sure m_deterministic comes first to match the layout of the cpu
+  //// version of the code.
+  //bool m_deterministic;
+  //std::mt19937* m_generator;
+  //mutable std::uniform_real_distribution<double> m_distribution;
+//};
+//#endif
 
-#else
+//#else
 
-// We're compiling a hip kernel
-template <typename T> class UniformRandomGenerator;
+//// We're compiling a hip kernel
+//template <typename T> class UniformRandomGenerator;
 
-template <> class UniformRandomGenerator<float> {
- public:
-  static const bool PacketAccess = true;
+//template <> class UniformRandomGenerator<float> {
+ //public:
+  //static const bool PacketAccess = true;
 
-  __device__ UniformRandomGenerator(bool deterministic = true) : m_deterministic(deterministic) {
-    const int tid = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
-    const int seed = deterministic ? 0 : get_random_seed();
-    curand_init(seed, tid, 0, &m_state);
-  }
+  //__device__ UniformRandomGenerator(bool deterministic = true) : m_deterministic(deterministic) {
+    //const int tid = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
+    //const int seed = deterministic ? 0 : get_random_seed();
+    //curand_init(seed, tid, 0, &m_state);
+  //}
 
-  __device__ UniformRandomGenerator(const UniformRandomGenerator& other) {
-    m_deterministic = other.m_deterministic;
-    const int tid = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
-    const int seed = m_deterministic ? 0 : get_random_seed();
-     curand_init(seed, tid, 0, &m_state);
-  }
+  //__device__ UniformRandomGenerator(const UniformRandomGenerator& other) {
+    //m_deterministic = other.m_deterministic;
+    //const int tid = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
+    //const int seed = m_deterministic ? 0 : get_random_seed();
+     //curand_init(seed, tid, 0, &m_state);
+  //}
 
-  __device__ float operator()() const {
-    return curand_uniform(&m_state);
-  }
-  template<typename PacketType>
-  __device__ float4 packetOp() const {
+  //__device__ float operator()() const {
+    //return curand_uniform(&m_state);
+  //}
+  //template<typename PacketType>
+  //__device__ float4 packetOp() const {
+    ////EIGEN_STATIC_ASSERT((is_same<PacketType, float4>::value), YOU_MADE_A_PROGRAMMING_MISTAKE);
+    ////return curand_uniform4(&m_state);
+    //return make_float4(0, 0, 0, 0);
+  //}
+
+ //private:
+  //bool m_deterministic;
+  //mutable curandStatePhilox4_32_10_t m_state;
+//};
+
+//template <> class UniformRandomGenerator<double> {
+ //public:
+  //static const bool PacketAccess = true;
+
+  //__device__ UniformRandomGenerator(bool deterministic = true) : m_deterministic(deterministic) {
+    //const int tid = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
+    //const int seed = deterministic ? 0 : get_random_seed();
+    //curand_init(seed, tid, 0, &m_state);
+  //}
+  //__device__ UniformRandomGenerator(const UniformRandomGenerator& other) {
+    //m_deterministic = other.m_deterministic;
+    //const int tid = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
+    //const int seed = m_deterministic ? 0 : get_random_seed();
+    //curand_init(seed, tid, 0, &m_state);
+  //}
+  //__device__ double operator()() const {
+    //return curand_uniform_double(&m_state);
+  //}
+  //template<typename PacketType>
+  //__device__ double2 packetOp() const {
+    //EIGEN_STATIC_ASSERT((is_same<PacketType, double2>::value), YOU_MADE_A_PROGRAMMING_MISTAKE);
+    //return curand_uniform2_double(&m_state);
+  //}
+
+ //private:
+  //bool m_deterministic;
+  //mutable curandStatePhilox4_32_10_t m_state;
+//};
+
+//template <> class UniformRandomGenerator<std::complex<float> > {
+ //public:
+  //static const bool PacketAccess = false;
+
+  //__device__ UniformRandomGenerator(bool deterministic = true) : m_deterministic(deterministic) {
+    //const int tid = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
+    //const int seed = deterministic ? 0 : get_random_seed();
+    //curand_init(seed, tid, 0, &m_state);
+  //}
+  //__device__ UniformRandomGenerator(const UniformRandomGenerator& other) {
+    //m_deterministic = other.m_deterministic;
+    //const int tid = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
+    //const int seed = m_deterministic ? 0 : get_random_seed();
+    //curand_init(seed, tid, 0, &m_state);
+  //}
+  //__device__ std::complex<float> operator()() const {
+    //float4 vals = curand_uniform4(&m_state);
+    //return std::complex<float>(vals.x, vals.y);
+  //}
+
+ //private:
+  //bool m_deterministic;
+  //mutable curandStatePhilox4_32_10_t m_state;
+//};
+
+//template <> class UniformRandomGenerator<std::complex<double> > {
+ //public:
+  //static const bool PacketAccess = false;
+
+  //__device__ UniformRandomGenerator(bool deterministic = true) : m_deterministic(deterministic) {
+    //const int tid = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
+    //const int seed = deterministic ? 0 : get_random_seed();
+    //curand_init(seed, tid, 0, &m_state);
+  //}
+  //__device__ UniformRandomGenerator(const UniformRandomGenerator& other) {
+    //m_deterministic = other.m_deterministic;
+    //const int tid = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
+    //const int seed = m_deterministic ? 0 : get_random_seed();
+    //curand_init(seed, tid, 0, &m_state);
+  //}
+  //__device__ std::complex<double> operator()() const {
+    //double2 vals = curand_uniform2_double(&m_state);
+    //return std::complex<double>(vals.x, vals.y);
+  //}
+
+ //private:
+  //bool m_deterministic;
+  //mutable curandStatePhilox4_32_10_t m_state;
+//};
+
+//#endif
+
+//template <typename Scalar>
+//struct functor_traits<UniformRandomGenerator<Scalar> > {
+  //enum {
+    //// Rough estimate.
+    //Cost = 100 * NumTraits<Scalar>::MulCost,
+    //PacketAccess = UniformRandomGenerator<Scalar>::PacketAccess
+  //};
+//};
+
+
+
+//#if (!defined (EIGEN_USE_GPU) || !defined(__HIPCC__) || \
+    //!defined(__HIP_DEVICE_COMPILE__) || (__HIP_DEVICE_COMPILE__ == 0)) && \
+    //(defined(__HCC__) || (defined(__NVCC__) && __cplusplus > 199711 || EIGEN_COMP_MSVC >= 1900))
+//// We're not compiling a hip kernel
+//template <typename T> class NormalRandomGenerator {
+ //public:
+  //static const bool PacketAccess = true;
+
+  //NormalRandomGenerator(bool deterministic = true) : m_deterministic(deterministic), m_distribution(0, 1), m_generator(new std::mt19937()) {
+    //if (!deterministic) {
+      //m_generator->seed(get_random_seed());
+    //}
+  //}
+  //NormalRandomGenerator(const NormalRandomGenerator& other)
+      //: m_deterministic(other.m_deterministic), m_distribution(other.m_distribution), m_generator(new std::mt19937()) {
+    //m_generator->seed(other() * UINT_MAX);
+  //}
+  //~NormalRandomGenerator() {
+    //delete m_generator;
+  //}
+  //T operator()() const {
+    //return m_distribution(*m_generator);
+  //}
+  //template<typename PacketType>
+  //PacketType packetOp() const {
+    //const int packetSize = internal::unpacket_traits<PacketType>::size;
+    //EIGEN_ALIGN_MAX T values[packetSize];
+    //for (int i = 0; i < packetSize; ++i) {
+      //values[i] = m_distribution(*m_generator);
+    //}
+    //return internal::pload<PacketType>(values);
+  //}
+
+ //private:
+  //// No assignment
+  //NormalRandomGenerator& operator = (const NormalRandomGenerator&);
+
+  //bool m_deterministic;
+  //mutable std::normal_distribution<T> m_distribution;
+  //std::mt19937* m_generator;
+//};
+
+//#elif defined (EIGEN_USE_GPU) && defined(__HIPCC__) && defined(__HIP_DEVICE_COMPILE__) && (__HIP_DEVICE_COMPILE__ == 1)
+
+//// We're compiling a hip kernel
+//template <typename T> class NormalRandomGenerator;
+
+//template <> class NormalRandomGenerator<float> {
+ //public:
+  //static const bool PacketAccess = true;
+
+  //__device__ NormalRandomGenerator(bool deterministic = true) : m_deterministic(deterministic) {
+    //const int tid = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
+    //const int seed = deterministic ? 0 : get_random_seed();
+    //curand_init(seed, tid, 0, &m_state);
+  //}
+  //__device__ NormalRandomGenerator(const NormalRandomGenerator<float>& other) {
+    //m_deterministic = other.m_deterministic;
+    //const int tid = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
+    //const int seed = m_deterministic ? 0 : get_random_seed();
+    //curand_init(seed, tid, 0, &m_state);
+  //}
+  //__device__ float operator()() const {
+    //return curand_normal(&m_state);
+  //}
+  //template<typename PacketType>
+   //__device__ float4 packetOp() const {
     //EIGEN_STATIC_ASSERT((is_same<PacketType, float4>::value), YOU_MADE_A_PROGRAMMING_MISTAKE);
-    //return curand_uniform4(&m_state);
-    return make_float4(0, 0, 0, 0);
-  }
+    //return curand_normal4(&m_state);
+  //}
 
- private:
-  bool m_deterministic;
-  mutable curandStatePhilox4_32_10_t m_state;
-};
+ //private:
+  //bool m_deterministic;
+  //mutable curandStatePhilox4_32_10_t m_state;
+//};
 
-template <> class UniformRandomGenerator<double> {
- public:
-  static const bool PacketAccess = true;
+//template <> class NormalRandomGenerator<double> {
+ //public:
+  //static const bool PacketAccess = true;
 
-  __device__ UniformRandomGenerator(bool deterministic = true) : m_deterministic(deterministic) {
-    const int tid = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
-    const int seed = deterministic ? 0 : get_random_seed();
-    curand_init(seed, tid, 0, &m_state);
-  }
-  __device__ UniformRandomGenerator(const UniformRandomGenerator& other) {
-    m_deterministic = other.m_deterministic;
-    const int tid = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
-    const int seed = m_deterministic ? 0 : get_random_seed();
-    curand_init(seed, tid, 0, &m_state);
-  }
-  __device__ double operator()() const {
-    return curand_uniform_double(&m_state);
-  }
-  template<typename PacketType>
-  __device__ double2 packetOp() const {
-    EIGEN_STATIC_ASSERT((is_same<PacketType, double2>::value), YOU_MADE_A_PROGRAMMING_MISTAKE);
-    return curand_uniform2_double(&m_state);
-  }
+  //__device__ NormalRandomGenerator(bool deterministic = true) : m_deterministic(deterministic) {
+    //const int tid = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
+    //const int seed = deterministic ? 0 : get_random_seed();
+    //curand_init(seed, tid, 0, &m_state);
+  //}
+  //__device__ NormalRandomGenerator(const NormalRandomGenerator<double>& other) {
+    //m_deterministic = other.m_deterministic;
+    //const int tid = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
+    //const int seed = m_deterministic ? 0 : get_random_seed();
+    //curand_init(seed, tid, 0, &m_state);
+  //}
+  //__device__ double operator()() const {
+    //return curand_normal_double(&m_state);
+  //}
+  //template<typename PacketType>
+  //__device__ double2 packetOp() const {
+    //EIGEN_STATIC_ASSERT((is_same<PacketType, double2>::value), YOU_MADE_A_PROGRAMMING_MISTAKE);
+    //return curand_normal2_double(&m_state);
+  //}
 
- private:
-  bool m_deterministic;
-  mutable curandStatePhilox4_32_10_t m_state;
-};
+ //private:
+  //bool m_deterministic;
+  //mutable curandStatePhilox4_32_10_t m_state;
+//};
 
-template <> class UniformRandomGenerator<std::complex<float> > {
- public:
-  static const bool PacketAccess = false;
+//template <> class NormalRandomGenerator<std::complex<float> > {
+ //public:
+  //static const bool PacketAccess = false;
 
-  __device__ UniformRandomGenerator(bool deterministic = true) : m_deterministic(deterministic) {
-    const int tid = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
-    const int seed = deterministic ? 0 : get_random_seed();
-    curand_init(seed, tid, 0, &m_state);
-  }
-  __device__ UniformRandomGenerator(const UniformRandomGenerator& other) {
-    m_deterministic = other.m_deterministic;
-    const int tid = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
-    const int seed = m_deterministic ? 0 : get_random_seed();
-    curand_init(seed, tid, 0, &m_state);
-  }
-  __device__ std::complex<float> operator()() const {
-    float4 vals = curand_uniform4(&m_state);
-    return std::complex<float>(vals.x, vals.y);
-  }
+  //__device__ NormalRandomGenerator(bool deterministic = true) : m_deterministic(deterministic) {
+    //const int tid = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
+    //const int seed = deterministic ? 0 : get_random_seed();
+    //curand_init(seed, tid, 0, &m_state);
+  //}
+  //__device__ NormalRandomGenerator(const NormalRandomGenerator& other) {
+    //m_deterministic = other.m_deterministic;
+    //const int tid = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
+    //const int seed = m_deterministic ? 0 : get_random_seed();
+    //curand_init(seed, tid, 0, &m_state);
+  //}
+  //__device__ std::complex<float> operator()() const {
+    //float4 vals = curand_normal4(&m_state);
+    //return std::complex<float>(vals.x, vals.y);
+  //}
 
- private:
-  bool m_deterministic;
-  mutable curandStatePhilox4_32_10_t m_state;
-};
+ //private:
+  //bool m_deterministic;
+  //mutable curandStatePhilox4_32_10_t m_state;
+//};
 
-template <> class UniformRandomGenerator<std::complex<double> > {
- public:
-  static const bool PacketAccess = false;
+//template <> class NormalRandomGenerator<std::complex<double> > {
+ //public:
+  //static const bool PacketAccess = false;
 
-  __device__ UniformRandomGenerator(bool deterministic = true) : m_deterministic(deterministic) {
-    const int tid = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
-    const int seed = deterministic ? 0 : get_random_seed();
-    curand_init(seed, tid, 0, &m_state);
-  }
-  __device__ UniformRandomGenerator(const UniformRandomGenerator& other) {
-    m_deterministic = other.m_deterministic;
-    const int tid = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
-    const int seed = m_deterministic ? 0 : get_random_seed();
-    curand_init(seed, tid, 0, &m_state);
-  }
-  __device__ std::complex<double> operator()() const {
-    double2 vals = curand_uniform2_double(&m_state);
-    return std::complex<double>(vals.x, vals.y);
-  }
+  //__device__ NormalRandomGenerator(bool deterministic = true) : m_deterministic(deterministic) {
+    //const int tid = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
+    //const int seed = deterministic ? 0 : get_random_seed();
+    //curand_init(seed, tid, 0, &m_state);
+  //}
+  //__device__ NormalRandomGenerator(const NormalRandomGenerator& other) {
+    //m_deterministic = other.m_deterministic;
+    //const int tid = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
+    //const int seed = m_deterministic ? 0 : get_random_seed();
+    //curand_init(seed, tid, 0, &m_state);
+  //}
+  //__device__ std::complex<double> operator()() const {
+    //double2 vals = curand_normal2_double(&m_state);
+    //return std::complex<double>(vals.x, vals.y);
+  //}
 
- private:
-  bool m_deterministic;
-  mutable curandStatePhilox4_32_10_t m_state;
-};
+ //private:
+  //bool m_deterministic;
+  //mutable curandStatePhilox4_32_10_t m_state;
+//};
 
-#endif
+//#else
 
-template <typename Scalar>
-struct functor_traits<UniformRandomGenerator<Scalar> > {
-  enum {
-    // Rough estimate.
-    Cost = 100 * NumTraits<Scalar>::MulCost,
-    PacketAccess = UniformRandomGenerator<Scalar>::PacketAccess
-  };
-};
+//template <typename T> class NormalRandomGenerator {
+ //public:
+  //static const bool PacketAccess = false;
+  //NormalRandomGenerator(bool deterministic = true) : m_deterministic(deterministic) {}
 
+ //private:
+  //bool m_deterministic;
+//};
 
+//#endif
 
-#if (!defined (EIGEN_USE_GPU) || !defined(__HIPCC__) || \
-    !defined(__HIP_DEVICE_COMPILE__) || (__HIP_DEVICE_COMPILE__ == 0)) && \
-    (defined(__HCC__) || (defined(__NVCC__) && __cplusplus > 199711 || EIGEN_COMP_MSVC >= 1900))
-// We're not compiling a hip kernel
-template <typename T> class NormalRandomGenerator {
- public:
-  static const bool PacketAccess = true;
-
-  NormalRandomGenerator(bool deterministic = true) : m_deterministic(deterministic), m_distribution(0, 1), m_generator(new std::mt19937()) {
-    if (!deterministic) {
-      m_generator->seed(get_random_seed());
-    }
-  }
-  NormalRandomGenerator(const NormalRandomGenerator& other)
-      : m_deterministic(other.m_deterministic), m_distribution(other.m_distribution), m_generator(new std::mt19937()) {
-    m_generator->seed(other() * UINT_MAX);
-  }
-  ~NormalRandomGenerator() {
-    delete m_generator;
-  }
-  T operator()() const {
-    return m_distribution(*m_generator);
-  }
-  template<typename PacketType>
-  PacketType packetOp() const {
-    const int packetSize = internal::unpacket_traits<PacketType>::size;
-    EIGEN_ALIGN_MAX T values[packetSize];
-    for (int i = 0; i < packetSize; ++i) {
-      values[i] = m_distribution(*m_generator);
-    }
-    return internal::pload<PacketType>(values);
-  }
-
- private:
-  // No assignment
-  NormalRandomGenerator& operator = (const NormalRandomGenerator&);
-
-  bool m_deterministic;
-  mutable std::normal_distribution<T> m_distribution;
-  std::mt19937* m_generator;
-};
-
-#elif defined (EIGEN_USE_GPU) && defined(__HIPCC__) && defined(__HIP_DEVICE_COMPILE__) && (__HIP_DEVICE_COMPILE__ == 1)
-
-// We're compiling a hip kernel
-template <typename T> class NormalRandomGenerator;
-
-template <> class NormalRandomGenerator<float> {
- public:
-  static const bool PacketAccess = true;
-
-  __device__ NormalRandomGenerator(bool deterministic = true) : m_deterministic(deterministic) {
-    const int tid = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
-    const int seed = deterministic ? 0 : get_random_seed();
-    curand_init(seed, tid, 0, &m_state);
-  }
-  __device__ NormalRandomGenerator(const NormalRandomGenerator<float>& other) {
-    m_deterministic = other.m_deterministic;
-    const int tid = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
-    const int seed = m_deterministic ? 0 : get_random_seed();
-    curand_init(seed, tid, 0, &m_state);
-  }
-  __device__ float operator()() const {
-    return curand_normal(&m_state);
-  }
-  template<typename PacketType>
-   __device__ float4 packetOp() const {
-    EIGEN_STATIC_ASSERT((is_same<PacketType, float4>::value), YOU_MADE_A_PROGRAMMING_MISTAKE);
-    return curand_normal4(&m_state);
-  }
-
- private:
-  bool m_deterministic;
-  mutable curandStatePhilox4_32_10_t m_state;
-};
-
-template <> class NormalRandomGenerator<double> {
- public:
-  static const bool PacketAccess = true;
-
-  __device__ NormalRandomGenerator(bool deterministic = true) : m_deterministic(deterministic) {
-    const int tid = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
-    const int seed = deterministic ? 0 : get_random_seed();
-    curand_init(seed, tid, 0, &m_state);
-  }
-  __device__ NormalRandomGenerator(const NormalRandomGenerator<double>& other) {
-    m_deterministic = other.m_deterministic;
-    const int tid = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
-    const int seed = m_deterministic ? 0 : get_random_seed();
-    curand_init(seed, tid, 0, &m_state);
-  }
-  __device__ double operator()() const {
-    return curand_normal_double(&m_state);
-  }
-  template<typename PacketType>
-  __device__ double2 packetOp() const {
-    EIGEN_STATIC_ASSERT((is_same<PacketType, double2>::value), YOU_MADE_A_PROGRAMMING_MISTAKE);
-    return curand_normal2_double(&m_state);
-  }
-
- private:
-  bool m_deterministic;
-  mutable curandStatePhilox4_32_10_t m_state;
-};
-
-template <> class NormalRandomGenerator<std::complex<float> > {
- public:
-  static const bool PacketAccess = false;
-
-  __device__ NormalRandomGenerator(bool deterministic = true) : m_deterministic(deterministic) {
-    const int tid = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
-    const int seed = deterministic ? 0 : get_random_seed();
-    curand_init(seed, tid, 0, &m_state);
-  }
-  __device__ NormalRandomGenerator(const NormalRandomGenerator& other) {
-    m_deterministic = other.m_deterministic;
-    const int tid = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
-    const int seed = m_deterministic ? 0 : get_random_seed();
-    curand_init(seed, tid, 0, &m_state);
-  }
-  __device__ std::complex<float> operator()() const {
-    float4 vals = curand_normal4(&m_state);
-    return std::complex<float>(vals.x, vals.y);
-  }
-
- private:
-  bool m_deterministic;
-  mutable curandStatePhilox4_32_10_t m_state;
-};
-
-template <> class NormalRandomGenerator<std::complex<double> > {
- public:
-  static const bool PacketAccess = false;
-
-  __device__ NormalRandomGenerator(bool deterministic = true) : m_deterministic(deterministic) {
-    const int tid = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
-    const int seed = deterministic ? 0 : get_random_seed();
-    curand_init(seed, tid, 0, &m_state);
-  }
-  __device__ NormalRandomGenerator(const NormalRandomGenerator& other) {
-    m_deterministic = other.m_deterministic;
-    const int tid = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
-    const int seed = m_deterministic ? 0 : get_random_seed();
-    curand_init(seed, tid, 0, &m_state);
-  }
-  __device__ std::complex<double> operator()() const {
-    double2 vals = curand_normal2_double(&m_state);
-    return std::complex<double>(vals.x, vals.y);
-  }
-
- private:
-  bool m_deterministic;
-  mutable curandStatePhilox4_32_10_t m_state;
-};
-
-#else
-
-template <typename T> class NormalRandomGenerator {
- public:
-  static const bool PacketAccess = false;
-  NormalRandomGenerator(bool deterministic = true) : m_deterministic(deterministic) {}
-
- private:
-  bool m_deterministic;
-};
-
-#endif
-
-template <typename Scalar>
-struct functor_traits<NormalRandomGenerator<Scalar> > {
-  enum {
-    // Rough estimate.
-    Cost = 100 * NumTraits<Scalar>::MulCost,
-    PacketAccess = NormalRandomGenerator<Scalar>::PacketAccess
-  };
-};
+//template <typename Scalar>
+//struct functor_traits<NormalRandomGenerator<Scalar> > {
+  //enum {
+    //// Rough estimate.
+    //Cost = 100 * NumTraits<Scalar>::MulCost,
+    //PacketAccess = NormalRandomGenerator<Scalar>::PacketAccess
+  //};
+//};
 
 
 template <typename T, typename Index, size_t NumDims>
@@ -899,7 +905,7 @@ class GaussianGenerator {
     }
   }
 
-  T operator()(const array<Index, NumDims>& coordinates) const {
+  EIGEN_DEVICE_FUNC T operator()(const array<Index, NumDims>& coordinates) const {
     T tmp = T(0);
     for (size_t i = 0; i < NumDims; ++i) {
       T offset = coordinates[i] - m_means[i];

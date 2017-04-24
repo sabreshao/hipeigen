@@ -167,8 +167,8 @@ void test_hip_elementwise() {
   gpu_device.synchronize();
 
   for (int i = 0; i < num_elem; ++i) {
-    std::cout << "Checking elemwise " << i << std::endl;
-    VERIFY_IS_APPROX(full_prec(i), half_prec(i));
+    std::cout << "Checking elemwise " << i << ": full prec = " << full_prec(i) << " vs half prec = " << half_prec(i) << std::endl;
+    VERIFY_IS_APPROX(static_cast<Eigen::half>(full_prec(i)), static_cast<Eigen::half>(half_prec(i)));
   }
 
   gpu_device.deallocate(d_float1);
@@ -341,8 +341,8 @@ void test_hip_reductions(int size1, int size2, int redux) {
   Eigen::TensorMap<Eigen::Tensor<Eigen::half, 1>, Eigen::Aligned> gpu_res_float(
       d_res_float, result_size);
 
-  gpu_float1.device(gpu_device) = gpu_float1.random() - 0.5f;
-  gpu_float2.device(gpu_device) = gpu_float2.random() - 0.5f;
+  gpu_float1.device(gpu_device) = gpu_float1.random() * 2.0f;
+  gpu_float2.device(gpu_device) = gpu_float2.random() * 2.0f;
 
   Eigen::array<int, 1> redux_dim = {{redux}};
   gpu_res_float.device(gpu_device) = gpu_float1.sum(redux_dim).cast<Eigen::half>();
