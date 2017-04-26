@@ -279,7 +279,7 @@ if(EIGEN_TEST_HIP)
         include_directories(${HIP_PATH}/include)
         include_directories(/usr/local/cuda/targets/x86_64-linux/include)
 
-        set(HIP_NVCC_FLAGS  "${EIGEN_CUDA_CXX11_FLAG} ${EIGEN_CUDA_RELAXED_CONSTEXPR} -arch compute_${EIGEN_CUDA_COMPUTE_ARCH} -Xcudafe \"--display_error_number\" ${CUDA_NVCC_FLAGS}")
+        set(HIP_NVCC_FLAGS  "${EIGEN_CUDA_CXX11_FLAG} ${EIGEN_CUDA_RELAXED_CONSTEXPR} -std=c++11 -gencode arch=compute_52,code=sm_52 -Xcudafe \"--display_error_number\" ${CUDA_NVCC_FLAGS}")
         #include_directories("${CMAKE_CURRENT_BINARY_DIR}" "${CUDA_TOOLKIT_ROOT_DIR}/include")
         set(EIGEN_ADD_TEST_FILENAME_EXTENSION "cu")
 
