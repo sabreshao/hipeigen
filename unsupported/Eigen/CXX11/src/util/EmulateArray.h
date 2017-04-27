@@ -170,6 +170,10 @@ template <typename T> class array<T, 1> {
   void __cxxamp_serialize(Kalmar::Serialize &s) const {
     s.Append(sizeof(T), &values[0]);
   }
+#elif defined(__NVCC__)
+  __device__ __host__ array(T v0) {
+    values[0] = v0;
+  }
 #endif
 };
 
@@ -218,6 +222,11 @@ template <typename T> class array<T, 2> {
   void __cxxamp_serialize(Kalmar::Serialize &s) const {
     s.Append(sizeof(T), &values[0]);
     s.Append(sizeof(T), &values[1]);
+  }
+#elif defined(__NVCC__)
+  __device__ __host__ array(T v0, T v1) {
+    values[0] = v0;
+    values[1] = v1;
   }
 #endif
 };
@@ -269,6 +278,12 @@ template <typename T> class array<T, 3> {
     s.Append(sizeof(T), &values[0]);
     s.Append(sizeof(T), &values[1]);
     s.Append(sizeof(T), &values[2]);
+  }
+#elif defined(__NVCC__)
+  __device__ __host__ array(T v0, T v1, T v2) {
+    values[0] = v0;
+    values[1] = v1;
+    values[2] = v2;
   }
 #endif
 };
@@ -322,6 +337,13 @@ template <typename T> class array<T, 4> {
     s.Append(sizeof(T), &values[1]);
     s.Append(sizeof(T), &values[2]);
     s.Append(sizeof(T), &values[3]);
+  }
+#elif defined(__NVCC__)
+  __device__ __host__ array(T v0, T v1, T v2, T v3) {
+    values[0] = v0;
+    values[1] = v1;
+    values[2] = v2;
+    values[3] = v3;
   }
 #endif
 };
@@ -377,6 +399,14 @@ template <typename T> class array<T, 5> {
     s.Append(sizeof(T), &values[2]);
     s.Append(sizeof(T), &values[3]);
     s.Append(sizeof(T), &values[4]);
+  }
+#elif defined(__NVCC__)
+  __device__ __host__ array(T v0, T v1, T v2, T v3, T v4) {
+    values[0] = v0;
+    values[1] = v1;
+    values[2] = v2;
+    values[3] = v3;
+    values[4] = v4;
   }
 #endif
 };
