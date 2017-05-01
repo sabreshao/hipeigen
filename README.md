@@ -4,4 +4,4 @@ For more information go to http://eigen.tuxfamily.org/.
 
 **hipEigen adds HIP backend support on Eigen 0.3.3.3 release**
 
-For build and test instructions, please review INSTALL. 
+For details, please refer to README.ROCm.md

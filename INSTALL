@@ -34,20 +34,3 @@ You can adjust the installation destination (the "prefix")
 by passing the -DCMAKE_INSTALL_PREFIX=myprefix option to cmake, as is
 explained in the message that cmake prints at the end.
 
-
-Build and Run hipeigen direct tests
-***********************************
-
-To build the direct tests for hipeigen:
-Do:
-  cd build_dir
-  make check -j 
-
-The expected test results on ROCM1.5 is as follows:
-96% tests passed, 3 tests failed out of 73
-The following tests FAILED:
-                  1 - hip_basic (SEGFAULT)
-                54 - sparse_extra_3 (OTHER_FAULT)
-                63 - cxx11_tensor_contract_hip (SEGFAULT)
-
-We are fixing those known issues and will update this document.
