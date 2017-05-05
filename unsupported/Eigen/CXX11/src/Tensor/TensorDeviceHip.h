@@ -201,67 +201,55 @@ struct GpuDevice {
   }
 
   EIGEN_STRONG_INLINE void* allocate(size_t num_bytes) const {
-#if !defined(__HIP_DEVICE_COMPILE__) || (__HIP_DEVICE_COMPILE__ == 0)
     return stream_->allocate(num_bytes);
   }
 
   EIGEN_STRONG_INLINE void deallocate(void* buffer) const {
-#if !defined(__HIP_DEVICE_COMPILE__) || (__HIP_DEVICE_COMPILE__ == 0)
     stream_->deallocate(buffer);
   }
 
   EIGEN_STRONG_INLINE void* scratchpad() const {
-#if !defined(__HIP_DEVICE_COMPILE__) || (__HIP_DEVICE_COMPILE__ == 0)
     return stream_->scratchpad();
   }
 
   EIGEN_STRONG_INLINE unsigned int* semaphore() const {
-#if !defined(__HIP_DEVICE_COMPILE__) || (__HIP_DEVICE_COMPILE__ == 0)
     return stream_->semaphore();
   }
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void memcpy(void* dst, const void* src, size_t n) const {
-#if !defined(__HIP_DEVICE_COMPILE__) || (__HIP_DEVICE_COMPILE__ == 0)
+#ifndef __HIP_DEVICE_COMPILE__
     hipError_t err = hipMemcpyAsync(dst, src, n, hipMemcpyDeviceToDevice,
                                       stream_->stream());
     EIGEN_UNUSED_VARIABLE(err)
     assert(err == hipSuccess);
 #else
   eigen_assert(false && "The default device should be used instead to generate kernel code");
-#endif
+#endif //__HIP_DEVICE_COMPILE__
   }
 
   EIGEN_STRONG_INLINE void memcpyHostToDevice(void* dst, const void* src, size_t n) const {
-#if !defined(__HIP_DEVICE_COMPILE__) || (__HIP_DEVICE_COMPILE__ == 0)
     hipError_t err =
         hipMemcpyAsync(dst, src, n, hipMemcpyHostToDevice, stream_->stream());
     EIGEN_UNUSED_VARIABLE(err)
     assert(err == hipSuccess);
-#else
-    eigen_assert(false && "The default device should be used instead to generate kernel code");
-#endif
-  }
+ }
 
   EIGEN_STRONG_INLINE void memcpyDeviceToHost(void* dst, const void* src, size_t n) const {
-#if !defined(__HIP_DEVICE_COMPILE__) || (__HIP_DEVICE_COMPILE__ == 0)
     hipError_t err =
         hipMemcpyAsync(dst, src, n, hipMemcpyDeviceToHost, stream_->stream());
     EIGEN_UNUSED_VARIABLE(err)
     assert(err == hipSuccess);
-#else
-    eigen_assert(false && "The default device should be used instead to generate kernel code");
-#endif
-  }
+ }
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void memset(void* buffer, int c, size_t n) const {
-#if !defined(__HIP_DEVICE_COMPILE__) || (__HIP_DEVICE_COMPILE__ == 0)
+#ifndef __HIP_DEVICE_COMPILE__
     //TODO:hipError_t err = hipMemsetAsync(buffer, c, n, stream_->stream());
     hipError_t err = hipMemset(buffer, c, n);
     EIGEN_UNUSED_VARIABLE(err)
     assert(err == hipSuccess);
 #else
   eigen_assert(false && "The default device should be used instead to generate kernel code");
-#endif
+#endif //__HIP_DEVICE_COMPILE__
   }
 
   EIGEN_STRONG_INLINE size_t numThreads() const {
@@ -281,8 +269,7 @@ struct GpuDevice {
   }
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void synchronize() const {
-#if defined(__HIPCC__) && \
-    !defined(__HIP_DEVICE_COMPILE__) || (__HIP_DEVICE_COMPILE__ == 0)
+#if defined(__HIPCC__) && !defined(__HIP_DEVICE_COMPILE__) 
     hipError_t err = hipStreamSynchronize(stream_->stream());
     if (err != hipSuccess) {
       std::cerr << "Error detected in HIP stream: "
@@ -342,7 +329,7 @@ struct GpuDevice {
 // FIXME: Should be device and kernel specific.
 #ifdef __HIPCC__
 static EIGEN_DEVICE_FUNC inline void setHipSharedMemConfig(hipSharedMemConfig config) {
-#if !defined(__HIP_DEVICE_COMPILE__) || (__HIP_DEVICE_COMPILE__ == 0)
+#if !defined(__HIP_DEVICE_COMPILE__) 
 #if defined(__NVCC__)
   //TODO: Enable Shared mem setting once supported in NV platform
   hipError_t status = hipSuccess;
