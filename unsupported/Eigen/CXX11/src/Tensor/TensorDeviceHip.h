@@ -223,7 +223,7 @@ struct GpuDevice {
   }
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void memcpy(void* dst, const void* src, size_t n) const {
-#if !defined(__HIP_DEVICE_COMPILE__) || (__HIP_DEVICE_COMPILE__ == 0)
+#ifndef __HIP_DEVICE_COMPILE__
     hipError_t err = hipMemcpyAsync(dst, src, n, hipMemcpyDeviceToDevice,
                                       stream_->stream());
     EIGEN_UNUSED_VARIABLE(err)
@@ -248,7 +248,7 @@ struct GpuDevice {
   }
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void memset(void* buffer, int c, size_t n) const {
-#if !defined(__HIP_DEVICE_COMPILE__) || (__HIP_DEVICE_COMPILE__ == 0)
+#ifndef __HIP_DEVICE_COMPILE__
     //TODO:hipError_t err = hipMemsetAsync(buffer, c, n, stream_->stream());
     hipError_t err = hipMemset(buffer, c, n);
     EIGEN_UNUSED_VARIABLE(err)
@@ -275,14 +275,14 @@ struct GpuDevice {
   }
 
 // FIXME - this will move into HIP
-#if __HIP_DEVICE_COMPILE__ == 1
+#ifdef __HIP_DEVICE_COMPILE__
 #undef assert
 #define assert(COND)
 #endif
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void synchronize() const {
-#if (defined(__HCC__) || defined(__NVCC__)) && \
-    (!defined(__HIP_DEVICE_COMPILE__) || (__HIP_DEVICE_COMPILE__ == 0))
+#if defined(__HIPCC__) && \
+    !defined(__HIP_DEVICE_COMPILE__)
     hipError_t err = hipStreamSynchronize(stream_->stream());
     if (err != hipSuccess) {
       std::cerr << "Error detected in HIP stream: "
@@ -342,13 +342,8 @@ struct GpuDevice {
 // FIXME: Should be device and kernel specific.
 #ifdef __HIPCC__
 static EIGEN_DEVICE_FUNC inline void setHipSharedMemConfig(hipSharedMemConfig config) {
-#if !defined(__HIP_DEVICE_COMPILE__) || (__HIP_DEVICE_COMPILE__ == 0)
-#if defined(__NVCC__)
-  //TODO: Enable Shared mem setting once supported in NV platform
-  hipError_t status = hipSuccess;
-#elif defined(__HCC__)
+#ifndef __HIP_DEVICE_COMPILE__
   hipError_t status = hipDeviceSetSharedMemConfig(config);
-#endif
   EIGEN_UNUSED_VARIABLE(status)
   assert(status == hipSuccess);
 #else

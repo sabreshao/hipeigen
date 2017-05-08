@@ -35,7 +35,7 @@ struct DefaultDevice {
   }
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE size_t numThreads() const {
-#if !defined(__HIP_DEVICE_COMPILE__) || (__HIP_DEVICE_COMPILE__ == 0)
+#if !defined(__HIP_DEVICE_COMPILE__) 
     // Running on the host CPU
     return 1;
 #else
@@ -49,7 +49,7 @@ struct DefaultDevice {
   }
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE size_t firstLevelCacheSize() const {
-#if !defined(__HIP_DEVICE_COMPILE__) || (__HIP_DEVICE_COMPILE__ == 0)
+#if !defined(__HIP_DEVICE_COMPILE__) 
     // Running on the host CPU
     return l1CacheSize();
 #else
@@ -59,7 +59,7 @@ struct DefaultDevice {
   }
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE size_t lastLevelCacheSize() const {
-#if !defined(__HIP_DEVICE_COMPILE__) || (__HIP_DEVICE_COMPILE__ == 0)
+#if !defined(__HIP_DEVICE_COMPILE__) 
     // Running single threaded on the host CPU
     return l3CacheSize();
 #else
@@ -69,16 +69,16 @@ struct DefaultDevice {
   }
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE int majorDeviceVersion() const {
-#if !defined(__HIP_DEVICE_COMPILE__) || (__HIP_DEVICE_COMPILE__ == 0)
+#if !defined(__HIP_DEVICE_COMPILE__) 
     // Running single threaded on the host CPU
     // Should return an enum that encodes the ISA supported by the CPU
     return 1;
 #else
     // Running on a HIP device
-    #ifdef __HIPCC__
-        return __HIP_DEVICE_COMPILE__ / 100;
+    #ifdef __NVCC__
+        return __CUDA_ARCH__ / 100; //this is to return the major version of NVCC compiler
     #else
-        return 1;          // Temporary fix : Return 1 as major for hcc backend
+        return 1;          // FIXME : Return 1 as major for hcc backend
     #endif
 #endif
   }

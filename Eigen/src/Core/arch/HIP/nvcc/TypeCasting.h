@@ -20,7 +20,7 @@ struct scalar_cast_op<float, Eigen::half> {
   typedef Eigen::half result_type;
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE Eigen::half operator() (const float& a) const {
     #if defined(EIGEN_HAS_HIP_FP16) && \
-        (defined(__HIP_DEVICE_COMPILE__) && (__HIP_DEVICE_COMPILE__ == 1) && \
+        (defined(__HIP_DEVICE_COMPILE__) && \
         defined(__HIP_ARCH_HAS_WARP_SHUFFLE__))
       return __float2half(a);
     #else
@@ -40,7 +40,7 @@ struct scalar_cast_op<int, Eigen::half> {
   typedef Eigen::half result_type;
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE Eigen::half operator() (const int& a) const {
     #if defined(EIGEN_HAS_HIP_FP16) && \
-        (defined(__HIP_DEVICE_COMPILE__) && (__HIP_DEVICE_COMPILE__ == 1) && \
+        (defined(__HIP_DEVICE_COMPILE__) && \
         defined(__HIP_ARCH_HAS_WARP_SHUFFLE__))
       return __float2half(static_cast<float>(a));
     #else
@@ -60,7 +60,7 @@ struct scalar_cast_op<Eigen::half, float> {
   typedef float result_type;
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE float operator() (const Eigen::half& a) const {
     #if defined(EIGEN_HAS_HIP_FP16) && \
-        (defined(__HIP_DEVICE_COMPILE__) && (__HIP_DEVICE_COMPILE__ == 1) && \
+        (defined(__HIP_DEVICE_COMPILE__) && \
         defined(__HIP_ARCH_HAS_WARP_SHUFFLE__))
       return __half2float(a);
     #else
@@ -76,7 +76,7 @@ struct functor_traits<scalar_cast_op<Eigen::half, float> >
 
 
 #if defined(EIGEN_HAS_HIP_FP16) && \
-    (defined(__HIP_DEVICE_COMPILE__) && (__HIP_DEVICE_COMPILE__ == 1) && \
+    (defined(__HIP_DEVICE_COMPILE__) && \
     defined(__HIP_ARCH_HAS_WARP_SHUFFLE__))
 
 template <>

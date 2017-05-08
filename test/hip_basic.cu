@@ -169,7 +169,7 @@ void test_hip_basic()
   int nthreads = 100;
   Eigen::VectorXf in, out;
   
-  #if defined(__HIP_DEVICE_COMPILE__) && (__HIP_DEVICE_COMPILE__ == 0)
+  #ifndef __HIP_DEVICE_COMPILE__ 
   int data_size = nthreads * 512;
   in.setRandom(data_size);
   out.setRandom(data_size);

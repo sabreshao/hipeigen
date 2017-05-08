@@ -46,7 +46,7 @@
   #include "hip/hip_runtime.h"
 #endif
 
-#if defined(__HIP_DEVICE_COMPILE__) && (__HIP_DEVICE_COMPILE__ == 1)
+#if defined(__HIP_DEVICE_COMPILE__) 
   #if defined(__NVCC__) && (__CUDA_ARCH__ >= 530)
     #define __HIP_ARCH_HAS_HALF_PRECISION_SUPPORT__
   #elif defined(__HCC__)
@@ -293,7 +293,7 @@ union FP32 {
 
 EIGEN_STRONG_INLINE EIGEN_DEVICE_FUNC __hip_half float_to_half_rtne(float ff) {
 #if defined(EIGEN_HAS_HIP_FP16) && \
-    (defined(__HIP_DEVICE_COMPILE__) && (__HIP_DEVICE_COMPILE__ == 1)) && \
+    defined(__HIP_DEVICE_COMPILE__) && \
     defined(__HIP_ARCH_HAS_WARP_SHUFFLE__)
   return __hip_float2half(ff);
 
@@ -350,7 +350,7 @@ EIGEN_STRONG_INLINE EIGEN_DEVICE_FUNC __hip_half float_to_half_rtne(float ff) {
 
 EIGEN_STRONG_INLINE EIGEN_DEVICE_FUNC float half_to_float(__hip_half h) {
 #if defined(EIGEN_HAS_HIP_FP16) && \
-    (defined(__HIP_DEVICE_COMPILE__) && (__HIP_DEVICE_COMPILE__ == 1)) && \
+    defined(__HIP_DEVICE_COMPILE__)  && \
     defined(__HIP_ARCH_HAS_WARP_SHUFFLE__)
   return __hip_half2float(h);
 
@@ -568,7 +568,7 @@ struct hash<Eigen::half> {
 
 
 // Add the missing shfl_xor intrinsic
-#if defined(__HIP_DEVICE_COMPILE__) && (__HIP_DEVICE_COMPILE__ == 1) && defined(__HIP_ARCH_HAS_WARP_SHUFFLE__)
+#if defined(__HIP_DEVICE_COMPILE__) && defined(__HIP_ARCH_HAS_WARP_SHUFFLE__)
 __device__ EIGEN_STRONG_INLINE Eigen::half __shfl_xor(Eigen::half var, int laneMask, int width=warpSize) {
   //TODO: Fix it
   //return static_cast<Eigen::half>(__shfl_xor(static_cast<float>(var), laneMask, width));
@@ -577,7 +577,7 @@ __device__ EIGEN_STRONG_INLINE Eigen::half __shfl_xor(Eigen::half var, int laneM
 #endif
 
 // ldg() has an overload for __half, but we also need one for Eigen::half.
-#if defined(__HIP_DEVICE_COMPILE__) && (__HIP_DEVICE_COMPILE__ == 1) && \
+#if defined(__HIP_DEVICE_COMPILE__) && \
     defined(__HIP_ARCH_HAS_WARP_FUNNEL_SHIFT__) && defined(__HIP_ARCH_HAS_DYNAMIC_PARALLEL__)
 EIGEN_STRONG_INLINE EIGEN_DEVICE_FUNC Eigen::half __ldg(const Eigen::half* ptr) {
   //TODO: Fix it
@@ -588,7 +588,7 @@ EIGEN_STRONG_INLINE EIGEN_DEVICE_FUNC Eigen::half __ldg(const Eigen::half* ptr) 
 #endif
 
 
-#if defined(__HIP_DEVICE_COMPILE__) && (__HIP_DEVICE_COMPILE__ == 1)
+#if defined(__HIP_DEVICE_COMPILE__)
 namespace Eigen {
 namespace numext {
 

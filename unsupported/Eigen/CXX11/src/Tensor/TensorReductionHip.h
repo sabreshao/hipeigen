@@ -34,7 +34,7 @@ namespace internal {
 // updated the content of the output address it will try again.
 template <typename T, typename R>
 __device__ EIGEN_ALWAYS_INLINE void atomicReduce(T* output, T accum, R& reducer) {
-#if defined(__HIP_DEVICE_COMPILE__) && (__HIP_DEVICE_COMPILE__ == 1) && \
+#if defined(__HIP_DEVICE_COMPILE__) && \
     defined(__HIP_ARCH_HAS_WARP_SHUFFLE__)
   if (sizeof(T) == 4)
   {

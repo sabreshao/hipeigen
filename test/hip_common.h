@@ -69,13 +69,13 @@ void run_and_compare_to_hip(const Kernel& ker, int n, const Input& in, Output& o
 {
   Input  in_ref,  in_hip;
   Output out_ref, out_hip;
-  #if (__HIP_DEVICE_COMPILE__ == 0)
+  #ifndef __HIP_DEVICE_COMPILE__
   in_ref = in_hip = in;
   out_ref = out_hip = out;
   #endif
   run_on_cpu (ker, n, in_ref,  out_ref);
   run_on_hip(ker, n, in_hip, out_hip);
-  #if (__HIP_DEVICE_COMPILE__ == 0)
+  #ifndef __HIP_DEVICE_COMPILE__
   VERIFY_IS_APPROX(in_ref, in_hip);
   VERIFY_IS_APPROX(out_ref, out_hip);
   #endif

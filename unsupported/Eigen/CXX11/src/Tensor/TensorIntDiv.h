@@ -38,7 +38,7 @@ namespace {
   EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE
   typename internal::enable_if<sizeof(T)==4,int>::type count_leading_zeros(const T val)
   {
-#if defined(__HIP_DEVICE_COMPILE__) && (__HIP_DEVICE_COMPILE__ == 1)
+#if defined(__HIP_DEVICE_COMPILE__) 
     #ifdef __NVCC__
     return __clz(val);
     #elif __HCC__
@@ -58,7 +58,7 @@ namespace {
   EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE
   typename internal::enable_if<sizeof(T)==8,int>::type count_leading_zeros(const T val)
   {
-#if defined(__HIP_DEVICE_COMPILE__) && (__HIP_DEVICE_COMPILE__ == 1)
+#if defined(__HIP_DEVICE_COMPILE__) 
     #ifdef __NVCC__
     return __clzll(val);
     #elif __HCC__
@@ -97,7 +97,7 @@ namespace {
 
   template <typename T>
   EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE uint32_t muluh(const uint32_t a, const T b) {
-#if defined(__HIP_DEVICE_COMPILE__) && (__HIP_DEVICE_COMPILE__ == 1)
+#if defined(__HIP_DEVICE_COMPILE__)
     #ifdef __NVCC__
     return __umulhi(a, b);
     #elif __HCC__
@@ -110,7 +110,7 @@ namespace {
 
   template <typename T>
   EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE uint64_t muluh(const uint64_t a, const T b) {
-#if defined(__HIP_DEVICE_COMPILE__) && (__HIP_DEVICE_COMPILE__ == 1)
+#if defined(__HIP_DEVICE_COMPILE__)
     #ifdef __NVCC__
     return __umul64hi(a, b);
     #elif __HCC__
@@ -135,7 +135,7 @@ namespace {
   template <typename T>
   struct DividerHelper<64, T> {
     static EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE uint64_t computeMultiplier(const int log_div, const T divider) {
-#if defined(__SIZEOF_INT128__) && (!defined(__HIP_DEVICE_COMPILE__) || (__HIP_DEVICE_COMPILE__ == 0))
+#if defined(__SIZEOF_INT128__) && !defined(__HIP_DEVICE_COMPILE__)
       return static_cast<uint64_t>((static_cast<__uint128_t>(1) << (64+log_div)) / static_cast<__uint128_t>(divider) - (static_cast<__uint128_t>(1) << 64) + 1);
 #else
       const uint64_t shift = 1ULL << log_div;

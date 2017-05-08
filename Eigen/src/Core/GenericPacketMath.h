@@ -298,7 +298,7 @@ template<typename Scalar, typename Packet> EIGEN_DEVICE_FUNC inline void pstoreu
 /** \internal tries to do cache prefetching of \a addr */
 template<typename Scalar> EIGEN_DEVICE_FUNC inline void prefetch(const Scalar* addr)
 {
-#if defined(__HIP_DEVICE_COMPILE__) && (__HIP_DEVICE_COMPILE__ == 1)
+#if defined(__HIP_DEVICE_COMPILE__)
 #if defined(__LP64__)
   // 64-bit pointer operand constraint for inlined asm
   //TODO:@Neel/Guru get HIP equivalent for asm operations

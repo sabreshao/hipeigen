@@ -11,7 +11,7 @@
 #ifndef EIGEN_META_H
 #define EIGEN_META_H
 
-#if defined(__HIP_DEVICE_COMPILE__) && (__HIP_DEVICE_COMPILE__ == 1)
+#if defined(__HIP_DEVICE_COMPILE__)
   #ifdef __NVCC__
     #include <cfloat>
     #include <math_constants.h>
@@ -174,7 +174,7 @@ template<bool Condition, typename T=void> struct enable_if;
 template<typename T> struct enable_if<true,T>
 { typedef T type; };
 
-#if defined(__HIP_DEVICE_COMPILE__) && (__HIP_DEVICE_COMPILE__ == 1)
+#if defined(__HIP_DEVICE_COMPILE__) 
 #if !defined(__FLT_EPSILON__)
 #define __FLT_EPSILON__ FLT_EPSILON
 #define __DBL_EPSILON__ DBL_EPSILON
@@ -477,13 +477,13 @@ template<typename T, typename U> struct scalar_product_traits
 
 namespace numext {
 
-#if defined(__HIP_DEVICE_COMPILE__) && (__HIP_DEVICE_COMPILE__ == 1)
+#if defined(__HIP_DEVICE_COMPILE__) 
 template<typename T> EIGEN_DEVICE_FUNC   void swap(T &a, T &b) { T tmp = b; b = a; a = tmp; }
 #else
 template<typename T> EIGEN_STRONG_INLINE void swap(T &a, T &b) { std::swap(a,b); }
 #endif
 
-#if defined(__HIP_DEVICE_COMPILE__) && (__HIP_DEVICE_COMPILE__ == 1)
+#if defined(__HIP_DEVICE_COMPILE__) 
 using internal::device::numeric_limits;
 #else
 using std::numeric_limits;
