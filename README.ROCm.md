@@ -87,9 +87,8 @@ Do:
 
 The expected test results on ROCM1.5 is as follows:
 ```shell
-96% tests passed, 3 tests failed out of 73
+97% tests passed, 2 tests failed out of 73
 The following tests FAILED:
-            1 - hip_basic (SEGFAULT)
             54 - sparse_extra_3 (OTHER_FAULT)
             63 - cxx11_tensor_contract_hip (SEGFAULT)
 ```
