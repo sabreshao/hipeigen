@@ -246,6 +246,7 @@ if(EIGEN_TEST_HIP)
         include_directories(${CMAKE_CURRENT_BINARY_DIR})
         include_directories(${HIP_PATH}/include)
 
+        set(HIP_HCC_FLAGS  "-std=c++11 -Wno-deprecated-register")
         set(EIGEN_ADD_TEST_FILENAME_EXTENSION  "cu")
 
         ei_add_test(cxx11_tensor_device)
