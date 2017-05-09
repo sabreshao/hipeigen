@@ -463,8 +463,7 @@ static inline int get_random_seed() {
 #endif
 }
 
-#if !defined (EIGEN_USE_GPU) || !defined(__HIPCC__) || \
-    !defined(__HIP_DEVICE_COMPILE__) || (__HIP_DEVICE_COMPILE__ == 0)
+#if !defined (EIGEN_USE_GPU) || !defined(__HIPCC__) || !defined(__HIP_DEVICE_COMPILE__)
 // We're not compiling a hip kernel
 template <typename T> class UniformRandomGenerator {
 
@@ -794,9 +793,8 @@ struct functor_traits<UniformRandomGenerator<Scalar> > {
 
 
 
-#if (!defined (EIGEN_USE_GPU) || !defined(__HIPCC__) || \
-    !defined(__HIP_DEVICE_COMPILE__) || (__HIP_DEVICE_COMPILE__ == 0)) && \
-    (defined(__HCC__) || (defined(__NVCC__) && __cplusplus > 199711 || EIGEN_COMP_MSVC >= 1900))
+#if (!defined(EIGEN_USE_GPU) || !(defined(__HCC__) || defined(__NVCC__)) || \
+    !defined(__HIP_DEVICE_COMPILE__)) && (__cplusplus > 199711 || EIGEN_COMP_MSVC >= 1900)
 // We're not compiling a hip kernel
 template <typename T> class NormalRandomGenerator {
  public:
@@ -836,7 +834,7 @@ template <typename T> class NormalRandomGenerator {
   std::mt19937* m_generator;
 };
 
-#elif defined (EIGEN_USE_GPU) && defined(__HIPCC__) && defined(__HIP_DEVICE_COMPILE__) && (__HIP_DEVICE_COMPILE__ == 1)
+#elif defined(EIGEN_USE_GPU) && defined(__HIPCC__) && defined(__HIP_DEVICE_COMPILE__) && (__HIP_DEVICE_COMPILE__ == 1)
 
 // We're compiling a hip kernel
 template <typename T> class NormalRandomGenerator;

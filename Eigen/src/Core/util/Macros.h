@@ -961,7 +961,7 @@ namespace Eigen {
 #else
 #  if defined(__HIP_DEVICE_COMPILE__) && (__HIP_DEVICE_COMPILE__ == 1)
 #    define EIGEN_THROW_X(X) asm("trap;") return {}
-#    define EIGEN_THROW //asm("trap;"); return {}
+#    define EIGEN_THROW asm("trap;"); return {}
 #  else
 #    define EIGEN_THROW_X(X) std::abort()
 #    define EIGEN_THROW std::abort()

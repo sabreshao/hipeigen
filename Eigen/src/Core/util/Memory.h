@@ -156,10 +156,10 @@ EIGEN_DEVICE_FUNC inline void* aligned_malloc(size_t size)
 
   void *result;
   #if (EIGEN_DEFAULT_ALIGN_BYTES==0) || EIGEN_MALLOC_ALREADY_ALIGNED
-    #if (!defined(__HIP_DEVICE_COMPILE__)) || (__HIP_DEVICE_COMPILE__ == 0)
-    result = std::malloc(size);
-    #else
+    #if defined(__HCC__) && defined(__HIP_DEVICE_COMPILE__)
     result = aligned_malloc(size);
+    #else
+    result = std::malloc(size);
     #endif
     #if EIGEN_DEFAULT_ALIGN_BYTES==16
     eigen_assert((size<16 || (std::size_t(result)%16)==0) && "System's malloc returned an unaligned pointer. Compile with EIGEN_MALLOC_ALREADY_ALIGNED=0 to fallback to handmade alignd memory allocator.");
@@ -178,10 +178,10 @@ EIGEN_DEVICE_FUNC inline void* aligned_malloc(size_t size)
 EIGEN_DEVICE_FUNC inline void aligned_free(void *ptr)
 {
   #if (EIGEN_DEFAULT_ALIGN_BYTES==0) || EIGEN_MALLOC_ALREADY_ALIGNED
-    #if (!defined(__HIP_DEVICE_COMPILE__)) || (__HIP_DEVICE_COMPILE__ == 0)
-    std::free(ptr);
-    #else
+    #if defined(__HCC__) && defined(__HIP_DEVICE_COMPILE__)
     aligned_free(ptr);
+    #else
+    std::free(ptr);
     #endif
   #else
     handmade_aligned_free(ptr);
@@ -226,10 +226,10 @@ template<> EIGEN_DEVICE_FUNC inline void* conditional_aligned_malloc<false>(size
 {
   check_that_malloc_is_allowed();
 
-  #if (!defined(__HIP_DEVICE_COMPILE__)) || (__HIP_DEVICE_COMPILE__ == 0)
-  void *result = std::malloc(size);
-  #else
+  #if defined(__HCC__) && defined(__HIP_DEVICE_COMPILE__)
   void *result = aligned_malloc(size);
+  #else
+  void *result = std::malloc(size);
   #endif
   if(!result && size)
     throw_std_bad_alloc();
@@ -244,10 +244,10 @@ template<bool Align> EIGEN_DEVICE_FUNC inline void conditional_aligned_free(void
 
 template<> EIGEN_DEVICE_FUNC inline void conditional_aligned_free<false>(void *ptr)
 {
-  #if (!defined(__HIP_DEVICE_COMPILE__)) || (__HIP_DEVICE_COMPILE__ == 0)
-  std::free(ptr);
-  #else
+  #if defined(__HCC__) && defined(__HIP_DEVICE_COMPILE__)
   aligned_free(ptr);
+  #else
+  std::free(ptr);
   #endif
 }
 
