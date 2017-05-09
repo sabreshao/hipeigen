@@ -144,8 +144,7 @@ namespace Eigen
 
 #define EIGEN_DEFAULT_IO_FORMAT IOFormat(4, 0, "  ", "\n", "", "", "", "")
 
-#if (defined(_CPPUNWIND) || defined(__EXCEPTIONS)) && \
-    !(defined(__HIP_DEVICE_COMPILE__) && (__HIP_DEVICE_COMPILE__ == 1))
+#if (defined(_CPPUNWIND) || defined(__EXCEPTIONS)) && !defined(__HIP_DEVICE_COMPILE__)
   #define EIGEN_EXCEPTIONS
 #endif
 
@@ -218,8 +217,7 @@ namespace Eigen
       }
     #endif //EIGEN_EXCEPTIONS
 
-  //#elif !defined(__HIP_DEVICE_COMPILE__) // EIGEN_DEBUG_ASSERTS
-  #elif (!defined(__HCC__) && !defined(__NVCC__))// EIGEN_DEBUG_ASSERTS
+  #elif !defined(__HIPCC__) // EIGEN_DEBUG_ASSERTS
     // see bug 89. The copy_bool here is working around a bug in gcc <= 4.3
     #define eigen_assert(a) \
       if( (!Eigen::internal::copy_bool(a)) && (!no_more_assert) )\
