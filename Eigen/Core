@@ -14,9 +14,28 @@
 // first thing Eigen does: stop the compiler from committing suicide
 #include "src/Core/util/DisableStupidWarnings.h"
 
+
+#ifdef __HIPCC__
+#warning "HIPCC is defined"
+#endif
+
+#ifdef __HIP_DEVICE_COMPILE__
+#warning "HIP DEVICE COMPILE is defined"
+#endif
+
+#ifdef __GNUC__
+#warning "GNUC is defined"
+#endif
+
+#ifdef EIGEN_USE_GPU 
+#warning "EIGEN_USE_GPU is defined"
+#endif
+
+
 // Handle HIPCC/CUDA/SYCL
 #if defined(__HCC__) || defined(__NVCC__) || defined(__HIPCC__) || defined(__SYCL_DEVICE_ONLY__)
   #include <hip/hip_runtime.h>
+
 
   // Do not try asserts on HIP!
   #ifndef EIGEN_NO_DEBUG
