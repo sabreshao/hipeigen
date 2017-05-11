@@ -22,16 +22,16 @@ struct DefaultDevice {
     internal::aligned_free(buffer);
   }
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void memcpy(void* dst, const void* src, size_t n) const {
-    memcpy(dst, src, n);
+    ::memcpy(dst, src, n);
   }
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void memcpyHostToDevice(void* dst, const void* src, size_t n) const {
-    memcpy(dst, src, n);
+    ::memcpy(dst, src, n);
   }
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void memcpyDeviceToHost(void* dst, const void* src, size_t n) const {
-    memcpy(dst, src, n);
+    ::memcpy(dst, src, n);
   }
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void memset(void* buffer, int c, size_t n) const {
-    //memset(buffer, c, n);
+    ::memset(buffer, c, n);
   }
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE size_t numThreads() const {
