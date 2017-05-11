@@ -85,12 +85,5 @@ Do:
   make check -j 
 ```
 
-The expected test results on ROCM1.5 is as follows:
-```shell
-97% tests passed, 2 tests failed out of 73
-The following tests FAILED:
-            54 - sparse_extra_3 (OTHER_FAULT)
-            63 - cxx11_tensor_contract_hip (SEGFAULT)
-```
-We are fixing those known issues.
+All direct tests should pass with ROCm1.5.
 
