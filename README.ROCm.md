@@ -82,7 +82,7 @@ To build the direct tests for hipeigen:
 Do:
 ```shell
   cd build_dir
-  make check -j 
+  make check -j $(nproc)
 ```
 
 All direct tests should pass with ROCm1.5.
