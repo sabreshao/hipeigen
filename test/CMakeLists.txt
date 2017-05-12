@@ -142,8 +142,6 @@ endif(TEST_LIB)
 set_property(GLOBAL PROPERTY EIGEN_CURRENT_SUBPROJECT "Official")
 add_custom_target(BuildOfficial)
 
-IF(FALSE)
-
 ei_add_test(rand)
 ei_add_test(meta)
 ei_add_test(sizeof)
@@ -345,8 +343,6 @@ if(Boost_FOUND)
 else()
   ei_add_property(EIGEN_MISSING_BACKENDS "Boost.Multiprecision, ")
 endif()
-
-ENDIF(FALSE)
 
 # HIP unit tests
 option(EIGEN_TEST_HIP "Enable HIP support in unit tests" ON)

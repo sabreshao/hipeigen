@@ -106,7 +106,6 @@ else()
     ei_add_property(EIGEN_MISSING_BACKENDS "OpenGL, ")
 endif()
 
-IF(FALSE)
 ei_add_test(polynomialsolver)
 ei_add_test(polynomialutils)
 ei_add_test(splines)
@@ -122,6 +121,7 @@ ei_add_test(special_functions)
 # when using visual studio. We should make the check more strict to enable the tests for
 # newer versions of MSVC.
 if (NOT CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+if (FALSE)
 ei_add_test(cxx11_tensor_dimension)
 ei_add_test(cxx11_tensor_map)
 ei_add_test(cxx11_tensor_assign)
@@ -140,6 +140,7 @@ if("${CMAKE_SIZEOF_VOID_P}" EQUAL "8")
   # This test requires __uint128_t which is only available on 64bit systems
   ei_add_test(cxx11_tensor_uint128)
 endif()
+endif (FALSE)
 endif()
 
 if(EIGEN_TEST_CXX11)
@@ -196,7 +197,6 @@ if(EIGEN_TEST_CXX11)
   ei_add_test(cxx11_tensor_scan)
 
 endif()
-ENDIF(FALSE)
 
 # These tests needs hipcc
 if(EIGEN_TEST_HIP)
