@@ -123,23 +123,23 @@ ei_add_test(special_functions)
 if (NOT CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
 ei_add_test(cxx11_tensor_dimension)
 if (FALSE)
-ei_add_test(cxx11_tensor_map)
-ei_add_test(cxx11_tensor_assign)
-ei_add_test(cxx11_tensor_comparisons)
-ei_add_test(cxx11_tensor_forced_eval)
-ei_add_test(cxx11_tensor_math)
-ei_add_test(cxx11_tensor_const)
+ei_add_test(cxx11_tensor_map)         # long int -> int
+ei_add_test(cxx11_tensor_assign)      # long int -> int
+ei_add_test(cxx11_tensor_comparisons) # long int -> bool, long int -> float
+ei_add_test(cxx11_tensor_forced_eval) # long int -> float
+ei_add_test(cxx11_tensor_math)        # long int -> float
+ei_add_test(cxx11_tensor_const)       # long int -> int
 endif (FALSE)
 ei_add_test(cxx11_tensor_intdiv)
 if (FALSE)
-ei_add_test(cxx11_tensor_casts)
+ei_add_test(cxx11_tensor_casts)       # long int -> char, long int -> double, long int -> float, long int -> int, long int -> complex<float>
 endif (FALSE)
 ei_add_test(cxx11_tensor_empty)
 if (FALSE)
-ei_add_test(cxx11_tensor_sugar)
-ei_add_test(cxx11_tensor_roundings)
-ei_add_test(cxx11_tensor_layout_swap)
-ei_add_test(cxx11_tensor_io)
+ei_add_test(cxx11_tensor_sugar)       # long int -> int, long int -> float
+ei_add_test(cxx11_tensor_roundings)   # long int -> float
+ei_add_test(cxx11_tensor_layout_swap) # long int -> float
+ei_add_test(cxx11_tensor_io)          # long int -> int, long int -> double, long int -> string
 endif (FALSE)
 if("${CMAKE_SIZEOF_VOID_P}" EQUAL "8")
   # This test requires __uint128_t which is only available on 64bit systems
