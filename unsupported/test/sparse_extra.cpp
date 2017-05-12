@@ -10,7 +10,7 @@
 
 // import basic and product tests for deprectaed DynamicSparseMatrix
 #define EIGEN_NO_DEPRECATED_WARNING
-#include "sparse_product.cpp"
+//#include "sparse_product.cpp"
 #include "sparse_basic.cpp"
 #include <Eigen/SparseExtra>
 
@@ -141,7 +141,7 @@ void test_sparse_extra()
 //    CALL_SUBTEST_3(( sparse_basic(DynamicSparseMatrix<double>(s, s)) ));
 //    CALL_SUBTEST_3(( sparse_basic(DynamicSparseMatrix<double,ColMajor,long int>(s, s)) ));
 
-    CALL_SUBTEST_3( (sparse_product<DynamicSparseMatrix<float, ColMajor> >()) );
-    CALL_SUBTEST_3( (sparse_product<DynamicSparseMatrix<float, RowMajor> >()) );
+//    CALL_SUBTEST_3( (sparse_product<DynamicSparseMatrix<float, ColMajor> >()) );
+//    CALL_SUBTEST_3( (sparse_product<DynamicSparseMatrix<float, RowMajor> >()) );
   }
 }
