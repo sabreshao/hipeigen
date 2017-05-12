@@ -12,6 +12,7 @@
 #define EIGEN_NO_DEPRECATED_WARNING
 //#include "sparse_product.cpp"
 #include "sparse_basic.cpp"
+#include "sparse_product.cpp"
 #include <Eigen/SparseExtra>
 
 template<typename SetterType,typename DenseType, typename Scalar, int Options>
