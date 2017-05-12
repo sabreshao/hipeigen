@@ -158,6 +158,12 @@ template <typename T> class array<T, 1> {
     eigen_assert(l.size() == 1);
     internal::smart_copy(l.begin(), l.end(), values);
   }
+#else
+  template <typename U>
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE array(U& i0) {
+    values[0] = static_cast<T>(i0);
+  }
 #endif
 
 #ifdef __HCC__
@@ -203,6 +209,13 @@ template <typename T> class array<T, 2> {
   EIGEN_STRONG_INLINE array(std::initializer_list<T> l) {
     eigen_assert(l.size() == 2);
     internal::smart_copy(l.begin(), l.end(), values);
+  }
+#else
+  template <typename U>
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE array(U& i0, U& i1) {
+    values[0] = static_cast<T>(i0);
+    values[1] = static_cast<T>(i1);
   }
 #endif
 
@@ -252,6 +265,14 @@ template <typename T> class array<T, 3> {
   EIGEN_STRONG_INLINE array(std::initializer_list<T> l) {
     eigen_assert(l.size() == 3);
     internal::smart_copy(l.begin(), l.end(), values);
+  }
+#else
+  template <typename U>
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE array(U& i0, U& i1, U& i2) {
+    values[0] = static_cast<T>(i0);
+    values[1] = static_cast<T>(i1);
+    values[2] = static_cast<T>(i2);
   }
 #endif
 
@@ -303,6 +324,15 @@ template <typename T> class array<T, 4> {
   EIGEN_STRONG_INLINE array(std::initializer_list<T> l) {
     eigen_assert(l.size() == 4);
     internal::smart_copy(l.begin(), l.end(), values);
+  }
+#else
+  template <typename U>
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE array(U& i0, U& i1, U& i2, U& i3) {
+    values[0] = static_cast<T>(i0);
+    values[1] = static_cast<T>(i1);
+    values[2] = static_cast<T>(i2);
+    values[3] = static_cast<T>(i3);
   }
 #endif
 
@@ -356,6 +386,16 @@ template <typename T> class array<T, 5> {
   EIGEN_STRONG_INLINE array(std::initializer_list<T> l) {
     eigen_assert(l.size() == 5);
     internal::smart_copy(l.begin(), l.end(), values);
+  }
+#else
+  template <typename U>
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE array(U& i0, U& i1, U& i2, U& i3, U& i4) {
+    values[0] = static_cast<T>(i0);
+    values[1] = static_cast<T>(i1);
+    values[2] = static_cast<T>(i2);
+    values[3] = static_cast<T>(i3);
+    values[4] = static_cast<T>(i4);
   }
 #endif
 
