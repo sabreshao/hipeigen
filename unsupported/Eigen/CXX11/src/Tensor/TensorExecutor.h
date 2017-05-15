@@ -235,7 +235,7 @@ template <typename Evaluator, typename Index>
 __global__ void
 //FIXME: why add 1 here?
 __launch_bounds__(1024, 1)
-EigenMetaKernel(hipLaunchParm lp, Evaluator eval, Index size){
+EigenMetaKernel( Evaluator eval, Index size){
   const Index first_index = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
   const Index step_size = hipBlockDim_x * hipGridDim_x;
 
@@ -257,7 +257,7 @@ inline void TensorExecutor<Expression, GpuDevice, Vectorizable>::run(
     // Create a least one block to ensure we won't crash when tensorflow calls with tensors of size 0.
     const int num_blocks = numext::maxi<int>(numext::mini<int>(max_blocks, divup<int>(size, block_size)), 1);
 
-    hipLaunchKernel(HIP_KERNEL_NAME(EigenMetaKernel<TensorEvaluator<Expression, GpuDevice>, Index>),
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(EigenMetaKernel<TensorEvaluator<Expression, GpuDevice>, Index>),
         dim3(num_blocks), dim3(block_size), 0, device.stream(), evaluator, size);
   }
   evaluator.cleanup();

@@ -20,7 +20,7 @@ void run_on_cpu(const Kernel& ker, int n, const Input& in, Output& out)
 
 template<typename Kernel, typename Input, typename Output>
 __global__ __attribute__((used))
-void run_on_hip_meta_kernel(hipLaunchParm lp, const Kernel ker, int n, const Input* in, Output* out)
+void run_on_hip_meta_kernel(const Kernel ker, int n, const Input* in, Output* out)
 {
   int i = hipThreadIdx_x + hipBlockIdx_x*hipBlockDim_x;
   if(i<n) {
@@ -49,7 +49,7 @@ void run_on_hip(const Kernel& ker, int n, const Input& in, Output& out)
   dim3 Grids( (n+int(Blocks.x)-1)/int(Blocks.x) );
 
   hipDeviceSynchronize();
-  hipLaunchKernel(HIP_KERNEL_NAME(run_on_hip_meta_kernel<Kernel,
+  hipLaunchKernelGGL(HIP_KERNEL_NAME(run_on_hip_meta_kernel<Kernel,
                                                          typename std::decay<decltype(*d_in)>::type,
                                                          typename std::decay<decltype(*d_out)>::type>), 
                   dim3(Grids), dim3(Blocks), 0, 0, ker, n, d_in, d_out);

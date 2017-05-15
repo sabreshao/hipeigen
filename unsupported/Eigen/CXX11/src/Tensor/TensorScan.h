@@ -256,7 +256,7 @@ struct ScanLauncher {
 // parallel, but it would be better to use a parallel scan algorithm and
 // optimize memory access.
 template <typename Self, typename Reducer>
-__global__ void ScanKernel(hipLaunchParm lp, Self self, Index total_size, typename Self::CoeffReturnType* data) {
+__global__ void ScanKernel(Self self, Index total_size, typename Self::CoeffReturnType* data) {
   // Compute offset as in the CPU version
   Index val = hipThreadIdx_x + hipBlockIdx_x * hipBlockDim_x;
   Index offset = (val / self.stride()) * self.stride() * self.size() + val % self.stride();
@@ -286,7 +286,7 @@ struct ScanLauncher<Self, Reducer, GpuDevice> {
      Index num_blocks = (total_size / self.size() + 63) / 64;
      Index block_size = 64;
 
-     hipLaunchKernel(HIP_KERNEL_NAME(ScanKernel<Self, Reducer>), dim3(num_blocks), dim3(block_size), 0, self.device().stream(), self, total_size, data);
+     hipLaunchKernelGGL(HIP_KERNEL_NAME(ScanKernel<Self, Reducer>), dim3(num_blocks), dim3(block_size), 0, self.device().stream(), self, total_size, data);
   }
 };
 #endif  // EIGEN_USE_GPU && __HIPCC__
