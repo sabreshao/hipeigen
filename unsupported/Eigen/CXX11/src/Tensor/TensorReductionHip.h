@@ -128,7 +128,7 @@ __device__ inline void atomicReduce(float* output, float accum, SumReducer<float
 
 
 template <typename CoeffType, typename Index>
-__global__ void ReductionInitKernel(hipLaunchParm lp, const CoeffType val, Index num_preserved_coeffs, CoeffType* output) {
+__global__ void ReductionInitKernel(const CoeffType val, Index num_preserved_coeffs, CoeffType* output) {
   const Index thread_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
   const Index num_threads = hipBlockDim_x * hipGridDim_x;
   for (Index i = thread_id; i < num_preserved_coeffs; i += num_threads) {
@@ -139,7 +139,7 @@ __global__ void ReductionInitKernel(hipLaunchParm lp, const CoeffType val, Index
 
 template <int BlockSize, int NumPerThread, typename Self,
           typename Reducer, typename Index>
-__global__ void FullReductionKernel(hipLaunchParm lp, Reducer reducer, const Self input, Index num_coeffs,
+__global__ void FullReductionKernel(Reducer reducer, const Self input, Index num_coeffs,
                                     typename Self::CoeffReturnType* output, unsigned int* semaphore) {
 #if defined(__HIP_DEVICE_COMPILE__) && (__HIP_DEVICE_COMPILE__ == 1) &&\
     defined(__HIP_ARCH_HAS_WARP_SHUFFLE__)
@@ -211,7 +211,7 @@ __global__ void FullReductionKernel(hipLaunchParm lp, Reducer reducer, const Sel
 #ifdef EIGEN_HAS_HIP_FP16
 template <typename Self,
           typename Reducer, typename Index>
-__global__ void ReductionInitFullReduxKernelHalfFloat(hipLaunchParm lp, Reducer reducer, const Self input, Index num_coeffs, half2* scratch) {
+__global__ void ReductionInitFullReduxKernelHalfFloat(Reducer reducer, const Self input, Index num_coeffs, half2* scratch) {
   eigen_assert(hipBlockDim_x == 1);
   eigen_assert(hipGridDim_x == 1);
   if (num_coeffs % 2 != 0) {
@@ -224,7 +224,7 @@ __global__ void ReductionInitFullReduxKernelHalfFloat(hipLaunchParm lp, Reducer 
 
 template <typename Self,
           typename Reducer, typename Index>
-__global__ void ReductionInitKernelHalfFloat(hipLaunchParm lp, Reducer reducer, const Self input, Index num_coeffs, half* output) {
+__global__ void ReductionInitKernelHalfFloat(Reducer reducer, const Self input, Index num_coeffs, half* output) {
   const Index thread_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
   const Index num_threads = hipBlockDim_x * hipGridDim_x;
   const Index num_packets = num_coeffs / 2;
@@ -239,7 +239,7 @@ __global__ void ReductionInitKernelHalfFloat(hipLaunchParm lp, Reducer reducer, 
 
 template <int BlockSize, int NumPerThread, typename Self,
           typename Reducer, typename Index>
-__global__ void FullReductionKernelHalfFloat(hipLaunchParm lp, Reducer reducer, const Self input, Index num_coeffs,
+__global__ void FullReductionKernelHalfFloat(Reducer reducer, const Self input, Index num_coeffs,
                                     half* output, half2* scratch) {
   eigen_assert(NumPerThread % 2 == 0);
 
@@ -284,7 +284,7 @@ __global__ void FullReductionKernelHalfFloat(hipLaunchParm lp, Reducer reducer, 
 }
 
 template <typename Op>
-__global__ void ReductionCleanupKernelHalfFloat(hipLaunchParm lp, Op& reducer, half* output, half2* scratch) {
+__global__ void ReductionCleanupKernelHalfFloat(Op& reducer, half* output, half2* scratch) {
   eigen_assert(hipThreadIdx_x == 1);
   half tmp = __low2half(*scratch);
   reducer.reduce(__high2half(*scratch), &tmp);
@@ -320,7 +320,7 @@ struct FullReductionLauncher<
       semaphore = device.semaphore();
     }
 
-    hipLaunchKernel(HIP_KERNEL_NAME(FullReductionKernel<block_size, num_per_thread, Self, Op, Index>),
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(FullReductionKernel<block_size, num_per_thread, Self, Op, Index>),
                        dim3(num_blocks), dim3(block_size), 0, device.stream(), reducer, self, num_coeffs, output, semaphore);
   }
 };
@@ -346,15 +346,15 @@ struct FullReductionLauncher<Self, Op, Eigen::half, true> {
     if (num_blocks > 1) {
       // We initialize the output and the scrathpad outside the reduction kernel when we can't be sure that there
       // won't be a race conditions between multiple thread blocks.
-      hipLaunchKernel(HIP_KERNEL_NAME(ReductionInitFullReduxKernelHalfFloat<Self, Op, Index>),
+      hipLaunchKernelGGL(HIP_KERNEL_NAME(ReductionInitFullReduxKernelHalfFloat<Self, Op, Index>),
                          dim3(1), dim3(1), 0, device.stream(), reducer, self, num_coeffs, scratch);
     }
 
-    hipLaunchKernel(HIP_KERNEL_NAME(FullReductionKernelHalfFloat<block_size, num_per_thread, Self, Op, Index>),
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(FullReductionKernelHalfFloat<block_size, num_per_thread, Self, Op, Index>),
                        dim3(num_blocks), dim3(block_size), 0, device.stream(), reducer, self, num_coeffs, output, scratch);
 
     if (num_blocks > 1) {
-      hipLaunchKernel(HIP_KERNEL_NAME(ReductionCleanupKernelHalfFloat<Op>),
+      hipLaunchKernelGGL(HIP_KERNEL_NAME(ReductionCleanupKernelHalfFloat<Op>),
                          dim3(1), dim3(1), 0, device.stream(), reducer, output, scratch);
     }
   }
@@ -394,7 +394,7 @@ struct FullReducer<Self, Op, GpuDevice, Vectorizable> {
 
 template <int NumPerThread, typename Self,
           typename Reducer, typename Index>
-__global__ void InnerReductionKernel(hipLaunchParm lp, Reducer reducer, const Self input, Index num_coeffs_to_reduce, Index num_preserved_coeffs,
+__global__ void InnerReductionKernel(Reducer reducer, const Self input, Index num_coeffs_to_reduce, Index num_preserved_coeffs,
                                          typename Self::CoeffReturnType* output) {
 #if defined(__HIP_DEVICE_COMPILE__) && (__HIP_DEVICE_COMPILE__ == 1) &&\
     defined(__HIP_ARCH_HAS_WARP_SHUFFLE__)
@@ -472,7 +472,7 @@ __global__ void InnerReductionKernel(hipLaunchParm lp, Reducer reducer, const Se
 
 template <int NumPerThread, typename Self,
           typename Reducer, typename Index>
-__global__ void InnerReductionKernelHalfFloat(hipLaunchParm lp, Reducer reducer, const Self input, Index num_coeffs_to_reduce, Index num_preserved_coeffs,
+__global__ void InnerReductionKernelHalfFloat(Reducer reducer, const Self input, Index num_coeffs_to_reduce, Index num_preserved_coeffs,
                                               half* output) {
   eigen_assert(hipBlockDim_y == 1);
   eigen_assert(hipBlockDim_z == 1);
@@ -599,12 +599,12 @@ struct InnerReductionLauncher<
       const int max_blocks = device.getNumHipMultiProcessors() *
                            device.maxHipThreadsPerMultiProcessor() / 1024;
       const int num_blocks = numext::mini<int>(max_blocks, dyn_blocks);
-      hipLaunchKernel(HIP_KERNEL_NAME(ReductionInitKernel<OutputType, Index>),
+      hipLaunchKernelGGL(HIP_KERNEL_NAME(ReductionInitKernel<OutputType, Index>),
                          dim3(num_blocks), dim3(1024), 0, device.stream(),
                          reducer.initialize(), num_preserved_vals, output);
     }
 
-    hipLaunchKernel(HIP_KERNEL_NAME(InnerReductionKernel<num_per_thread, Self, Op, Index>),
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(InnerReductionKernel<num_per_thread, Self, Op, Index>),
                        dim3(num_blocks), dim3(block_size), 0, device.stream(), reducer, self,
                        num_coeffs_to_reduce, num_preserved_vals, output);
 
@@ -646,11 +646,11 @@ struct InnerReductionLauncher<Self, Op, Eigen::half, true> {
       const int max_blocks = device.getNumHipMultiProcessors() *
                            device.maxHipThreadsPerMultiProcessor() / 1024;
       const int num_blocks = numext::mini<int>(max_blocks, dyn_blocks);
-      hipLaunchKernel(HIP_KERNEL_NAME(ReductionInitKernelHalfFloat<Self, Op, Index>),
+      hipLaunchKernelGGL(HIP_KERNEL_NAME(ReductionInitKernelHalfFloat<Self, Op, Index>),
                          dim3(1), dim3(1), 0, device.stream(), reducer, self, num_preserved_vals, output);
     }
 
-    hipLaunchKernel(HIP_KERNEL_NAME(InnerReductionKernelHalfFloat<num_per_thread, Self, Op, Index>),
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(InnerReductionKernelHalfFloat<num_per_thread, Self, Op, Index>),
                        dim3(num_blocks), dim3(block_size), 0, device.stream(), reducer, self, num_coeffs_to_reduce, num_preserved_vals, output);
 
     return false;
@@ -694,7 +694,7 @@ struct InnerReducer<Self, Op, GpuDevice> {
 
 template <int NumPerThread, typename Self,
           typename Reducer, typename Index>
-__global__ void OuterReductionKernel(hipLaunchParm lp, Reducer reducer, const Self input, Index num_coeffs_to_reduce, Index num_preserved_coeffs,
+__global__ void OuterReductionKernel(Reducer reducer, const Self input, Index num_coeffs_to_reduce, Index num_preserved_coeffs,
                                      typename Self::CoeffReturnType* output) {
   const Index num_threads = hipBlockDim_x * hipGridDim_x;
   const Index thread_id = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
@@ -759,12 +759,12 @@ struct OuterReducer<Self, Op, GpuDevice> {
       const int max_blocks = device.getNumHipMultiProcessors() *
                              device.maxHipThreadsPerMultiProcessor() / 1024;
       const int num_blocks = numext::mini<int>(max_blocks, dyn_blocks);
-      hipLaunchKernel(HIP_KERNEL_NAME(ReductionInitKernel<float, Index>),
+      hipLaunchKernelGGL(HIP_KERNEL_NAME(ReductionInitKernel<float, Index>),
                          dim3(num_blocks), dim3(1024), 0, device.stream(),
                          reducer.initialize(), num_preserved_vals, output);
     }
 
-    hipLaunchKernel(HIP_KERNEL_NAME(OuterReductionKernel<num_per_thread, Self, Op, Index>),
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(OuterReductionKernel<num_per_thread, Self, Op, Index>),
                        dim3(num_blocks), dim3(block_size), 0, device.stream(), reducer, self, num_coeffs_to_reduce, num_preserved_vals, output);
 
     return false;

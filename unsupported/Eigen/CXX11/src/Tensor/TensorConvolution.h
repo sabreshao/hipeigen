@@ -569,7 +569,7 @@ struct GetKernelSize<Dynamic> {
 
 template <typename InputEvaluator, typename Index, typename InputDims,
           int StaticKernelSize>
-__global__ void EigenConvolutionKernel1D(hipLaunchParm lp,
+__global__ void EigenConvolutionKernel1D(
     InputEvaluator eval,
     const internal::IndexMapper<Index, InputDims, 1, InputEvaluator::Layout>
         indexMapper,
@@ -617,7 +617,7 @@ __global__ void EigenConvolutionKernel1D(hipLaunchParm lp,
 
 template <typename InputEvaluator, typename Index, typename InputDims,
           int StaticKernelSizeX, int StaticKernelSizeY>
-__global__ void EigenConvolutionKernel2D(hipLaunchParm lp,
+__global__ void EigenConvolutionKernel2D(
     InputEvaluator eval,
     const internal::IndexMapper<Index, InputDims, 2, InputEvaluator::Layout>
         indexMapper,
@@ -684,7 +684,7 @@ __global__ void EigenConvolutionKernel2D(hipLaunchParm lp,
 };
 
 template <typename InputEvaluator, typename Index, typename InputDims>
-__global__ void EigenConvolutionKernel3D(hipLaunchParm lp, 
+__global__ void EigenConvolutionKernel3D( 
     InputEvaluator eval,
     const internal::IndexMapper<Index, InputDims, 3, InputEvaluator::Layout>
         indexMapper,
@@ -907,17 +907,17 @@ struct TensorEvaluator<const TensorConvolutionOp<Indices, InputArgType, KernelAr
             m_inputImpl.dimensions(), kernel_dims, indices);
         switch(kernel_size) {
           case 4: {
-            hipLaunchKernel(HIP_KERNEL_NAME(EigenConvolutionKernel1D<TensorEvaluator<InputArgType, GpuDevice>, Index, InputDims, 4>),
+            hipLaunchKernelGGL(HIP_KERNEL_NAME(EigenConvolutionKernel1D<TensorEvaluator<InputArgType, GpuDevice>, Index, InputDims, 4>),
                             dim3(num_blocks), dim3(block_size), shared_mem, m_device.stream(), m_inputImpl, indexMapper, m_kernel, numP, numX, maxX, 4, data);
             break;
           }
           case 7: {
-            hipLaunchKernel(HIP_KERNEL_NAME(EigenConvolutionKernel1D<TensorEvaluator<InputArgType, GpuDevice>, Index, InputDims, 7>),
+            hipLaunchKernelGGL(HIP_KERNEL_NAME(EigenConvolutionKernel1D<TensorEvaluator<InputArgType, GpuDevice>, Index, InputDims, 7>),
                             dim3(num_blocks), dim3(block_size), shared_mem, m_device.stream(), m_inputImpl, indexMapper, m_kernel, numP, numX, maxX, 7, data);
             break;
           }
           default: {
-            hipLaunchKernel(HIP_KERNEL_NAME(EigenConvolutionKernel1D<TensorEvaluator<InputArgType, GpuDevice>, Index, InputDims, Dynamic>),
+            hipLaunchKernelGGL(HIP_KERNEL_NAME(EigenConvolutionKernel1D<TensorEvaluator<InputArgType, GpuDevice>, Index, InputDims, Dynamic>),
                             dim3(num_blocks), dim3(block_size), shared_mem, m_device.stream(), m_inputImpl, indexMapper, m_kernel, numP, numX, maxX, kernel_size, data);
           }
         }
@@ -971,12 +971,12 @@ struct TensorEvaluator<const TensorConvolutionOp<Indices, InputArgType, KernelAr
           case 4: {
             switch (kernel_size_y) {
               case 7: {
-                hipLaunchKernel(HIP_KERNEL_NAME(EigenConvolutionKernel2D<TensorEvaluator<InputArgType, GpuDevice>, Index, InputDims, 4, 7>),
+                hipLaunchKernelGGL(HIP_KERNEL_NAME(EigenConvolutionKernel2D<TensorEvaluator<InputArgType, GpuDevice>, Index, InputDims, 4, 7>),
                                 dim3(num_blocks), dim3(block_size), shared_mem, m_device.stream(), m_inputImpl, indexMapper, m_kernel, numP, numX, maxX, numY, maxY, 4, 7, data);
                 break;
               }
               default: {
-                hipLaunchKernel(HIP_KERNEL_NAME(EigenConvolutionKernel2D<TensorEvaluator<InputArgType, GpuDevice>, Index, InputDims, 4, Dynamic>),
+                hipLaunchKernelGGL(HIP_KERNEL_NAME(EigenConvolutionKernel2D<TensorEvaluator<InputArgType, GpuDevice>, Index, InputDims, 4, Dynamic>),
                                 dim3(num_blocks), dim3(block_size), shared_mem, m_device.stream(), m_inputImpl, indexMapper, m_kernel, numP, numX, maxX, numY, maxY, 4, kernel_size_y, data);
                 break;
               }
@@ -986,12 +986,12 @@ struct TensorEvaluator<const TensorConvolutionOp<Indices, InputArgType, KernelAr
           case 7: {
             switch (kernel_size_y) {
               case 4: {
-                hipLaunchKernel(HIP_KERNEL_NAME(EigenConvolutionKernel2D<TensorEvaluator<InputArgType, GpuDevice>, Index, InputDims, 7, 4>),
+                hipLaunchKernelGGL(HIP_KERNEL_NAME(EigenConvolutionKernel2D<TensorEvaluator<InputArgType, GpuDevice>, Index, InputDims, 7, 4>),
                                 dim3(num_blocks), dim3(block_size), shared_mem, m_device.stream(), m_inputImpl, indexMapper, m_kernel, numP, numX, maxX, numY, maxY, 7, 4, data);
                 break;
               }
               default: {
-                hipLaunchKernel(HIP_KERNEL_NAME(EigenConvolutionKernel2D<TensorEvaluator<InputArgType, GpuDevice>, Index, InputDims, 7, Dynamic>),
+                hipLaunchKernelGGL(HIP_KERNEL_NAME(EigenConvolutionKernel2D<TensorEvaluator<InputArgType, GpuDevice>, Index, InputDims, 7, Dynamic>),
                                 dim3(num_blocks), dim3(block_size), shared_mem, m_device.stream(), m_inputImpl, indexMapper, m_kernel, numP, numX, maxX, numY, maxY, 7, kernel_size_y, data);
                 break;
               }
@@ -999,7 +999,7 @@ struct TensorEvaluator<const TensorConvolutionOp<Indices, InputArgType, KernelAr
             break;
           }
           default: {
-            hipLaunchKernel(HIP_KERNEL_NAME(EigenConvolutionKernel2D<TensorEvaluator<InputArgType, GpuDevice>, Index, InputDims, Dynamic, Dynamic>),
+            hipLaunchKernelGGL(HIP_KERNEL_NAME(EigenConvolutionKernel2D<TensorEvaluator<InputArgType, GpuDevice>, Index, InputDims, Dynamic, Dynamic>),
                             dim3(num_blocks), dim3(block_size), shared_mem, m_device.stream(), m_inputImpl, indexMapper, m_kernel, numP, numX, maxX, numY, maxY, kernel_size_x, kernel_size_y, data);
             break;
           }
@@ -1046,7 +1046,7 @@ struct TensorEvaluator<const TensorConvolutionOp<Indices, InputArgType, KernelAr
         internal::IndexMapper<Index, InputDims, 3, Layout> indexMapper(
             m_inputImpl.dimensions(), kernel_dims, indices);
 
-        hipLaunchKernel(HIP_KERNEL_NAME(EigenConvolutionKernel3D<TensorEvaluator<InputArgType, GpuDevice>, Index, InputDims>),
+        hipLaunchKernelGGL(HIP_KERNEL_NAME(EigenConvolutionKernel3D<TensorEvaluator<InputArgType, GpuDevice>, Index, InputDims>),
                         dim3(num_blocks), dim3(block_size), shared_mem, m_device.stream(), m_inputImpl, indexMapper, m_kernel,
                         numP, numX, maxX, numY, maxY, numZ, maxZ, kernel_size_x, kernel_size_y, kernel_size_z, data);
         break;

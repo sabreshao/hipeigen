@@ -335,7 +335,7 @@ struct GpuDevice {
 };
 
 #define LAUNCH_HIP_KERNEL(kernel, gridsize, blocksize, sharedmem, device, ...)             \
-  hipLaunchKernel(HIP_KERNEL_NAME(kernel), dim3(gridsize), dim3(blocksize), (sharedmem), (device).stream(), (__VA_ARGS__)); \
+  hipLaunchKernelGGL(HIP_KERNEL_NAME(kernel), dim3(gridsize), dim3(blocksize), (sharedmem), (device).stream(), (__VA_ARGS__)); \
   assert(hipGetLastError() == hipSuccess);
 
 

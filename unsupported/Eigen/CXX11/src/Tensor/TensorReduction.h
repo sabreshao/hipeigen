@@ -324,24 +324,24 @@ struct OuterReducer {
 
 #if defined(EIGEN_USE_GPU) && defined(__HIPCC__)
 template <int B, int N, typename S, typename R, typename I>
-__global__ void FullReductionKernel(hipLaunchParm lp, R, const S, I, typename S::CoeffReturnType*, unsigned int*);
+__global__ void FullReductionKernel( R, const S, I, typename S::CoeffReturnType*, unsigned int*);
 
 
 #ifdef EIGEN_HAS_HIP_FP16
 template <typename S, typename R, typename I>
-__global__ void ReductionInitFullReduxKernelHalfFloat(hipLaunchParm lp, R, const S, I, half2*);
+__global__ void ReductionInitFullReduxKernelHalfFloat(R, const S, I, half2*);
 template <int B, int N, typename S, typename R, typename I>
-__global__ void FullReductionKernelHalfFloat(hipLaunchParm lp, R, const S, I, half*, half2*);
+__global__ void FullReductionKernelHalfFloat( R, const S, I, half*, half2*);
 template <int NPT, typename S, typename R, typename I>
-__global__ void InnerReductionKernelHalfFloat(hipLaunchParm lp, R, const S, I, I, half*);
+__global__ void InnerReductionKernelHalfFloat(R, const S, I, I, half*);
 
 #endif
 
 template <int NPT, typename S, typename R, typename I>
-__global__ void InnerReductionKernel(hipLaunchParm lp, R, const S, I, I, typename S::CoeffReturnType*);
+__global__ void InnerReductionKernel(R, const S, I, I, typename S::CoeffReturnType*);
 
 template <int NPT, typename S, typename R, typename I>
-__global__ void OuterReductionKernel(hipLaunchParm lp, R, const S, I, I, typename S::CoeffReturnType*);
+__global__ void OuterReductionKernel(R, const S, I, I, typename S::CoeffReturnType*);
 #endif
 
 }  // end namespace internal
