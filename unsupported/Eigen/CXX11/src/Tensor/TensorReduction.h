@@ -12,7 +12,19 @@
 #ifndef EIGEN_CXX11_TENSOR_TENSOR_REDUCTION_H
 #define EIGEN_CXX11_TENSOR_TENSOR_REDUCTION_H
 
+// clang is incompatible with the CUDA syntax wrt making a kernel a class friend,
+// so we'll use a macro to make clang happy.
+#ifndef KERNEL_FRIEND
+#if defined(__clang__) && defined(__CUDA__)
+#define KERNEL_FRIEND friend __global__
+#else
+#define KERNEL_FRIEND friend
+#endif
+#endif
+
+
 namespace Eigen {
+
 
 /** \class TensorReduction
   * \ingroup CXX11_Tensor_Module
@@ -410,7 +422,10 @@ struct TensorEvaluator<const TensorReductionOp<Op, Dims, ArgType, MakePointer_>,
   static const bool RunningFullReduction = (NumOutputDims==0);
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE TensorEvaluator(const XprType& op, const Device& device)
-      : m_impl(op.expression(), device), m_reducer(op.reducer()), m_result(NULL), m_device(device), m_xpr_dims(op.dims())
+      : m_impl(op.expression(), device), m_reducer(op.reducer()), m_result(NULL), m_device(device)
+#if defined(EIGEN_USE_SYCL)
+      , m_xpr_dims(op.dims())
+#endif
   {
     EIGEN_STATIC_ASSERT((NumInputDims >= NumReducedDims), YOU_MADE_A_PROGRAMMING_MISTAKE);
     EIGEN_STATIC_ASSERT((!ReducingInnerMostDims | !PreservingInnerMostDims | (NumReducedDims == NumInputDims)),
@@ -664,13 +679,12 @@ struct TensorEvaluator<const TensorReductionOp<Op, Dims, ArgType, MakePointer_>,
   }
 
   EIGEN_DEVICE_FUNC typename MakePointer_<Scalar>::Type data() const { return m_result; }
-  /// required by sycl in order to extract the accessor
-  const TensorEvaluator<ArgType, Device>& impl() const { return m_impl; }
-  /// added for sycl in order to construct the buffer from the sycl device
-  const Device& device() const{return m_device;}
-  /// added for sycl in order to re-construct the reduction eval on the device for the sub-kernel
-  const Dims& xprDims() const {return m_xpr_dims;}
 
+#if defined(EIGEN_USE_SYCL)
+  const TensorEvaluator<ArgType, Device>& impl() const { return m_impl; }
+  const Device& device() const { return m_device; }
+  const Dims& xprDims() const { return m_xpr_dims; }
+#endif
 
   private:
   template <int, typename, typename> friend struct internal::GenericDimReducer;
@@ -690,7 +704,12 @@ struct TensorEvaluator<const TensorReductionOp<Op, Dims, ArgType, MakePointer_>,
   template <int NPT, typename S, typename R, typename I> friend void internal::InnerReductionKernel(hipLaunchParm, R, const S, I, I, typename S::CoeffReturnType*);
 
   template <int NPT, typename S, typename R, typename I> friend void internal::OuterReductionKernel(hipLaunchParm, R, const S, I, I, typename S::CoeffReturnType*);
+
+#if defined(EIGEN_USE_SYCL)
+ template < typename HostExpr_, typename FunctorExpr_, typename Tuple_of_Acc_, typename Dims_, typename Op_, typename Index_> friend class TensorSycl::internal::ReductionFunctor;
+ template<typename CoeffReturnType_ ,typename OutAccessor_, typename HostExpr_, typename FunctorExpr_, typename Op_, typename Dims_, typename Index_, typename TupleType_> friend class TensorSycl::internal::FullReductionKernelFunctor;
 #endif
+
 
   template <typename S, typename O, typename D> friend struct internal::InnerReducer;
 
@@ -778,7 +797,10 @@ static const bool RunningOnGPU = false;
   typename MakePointer_<CoeffReturnType>::Type m_result;
 
   const Device& m_device;
-  const Dims& m_xpr_dims;
+
+#if defined(EIGEN_USE_SYCL)
+  const Dims m_xpr_dims;
+#endif
 };
 
 } // end namespace Eigen

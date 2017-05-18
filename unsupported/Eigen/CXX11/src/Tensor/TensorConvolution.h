@@ -101,7 +101,7 @@ class IndexMapper {
       }
     } else {
       for (int i = NumDims - 1; i >= 0; --i) {
-        if (i + 1 < offset) {
+        if (static_cast<size_t>(i + 1) < offset) {
           m_hipInputStrides[i] =
               m_hipInputStrides[i + 1] * hipInputDimensions[i + 1];
           m_hipOutputStrides[i] =

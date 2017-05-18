@@ -530,7 +530,6 @@ EigenFloatContractionKernelInternal16x16(const LhsMapper lhs, const RhsMapper rh
                        float2 rhs_shmem2[][8], const Index m_size,
                        const Index n_size, const Index k_size,
                        const Index base_m, const Index base_n) {
-  typedef float Scalar;
 
   // prefetch registers
   float4 lhs_pf0, rhs_pf0;
@@ -571,7 +570,6 @@ EigenFloatContractionKernelInternal16x16(const LhsMapper lhs, const RhsMapper rh
       }                                               \
     }                                                 \
 
-
   Index lhs_vert = base_m+hipThreadIdx_x*4;
 
   for (Index k = 0; k < k_size; k += 16) {
@@ -594,6 +592,7 @@ EigenFloatContractionKernelInternal16x16(const LhsMapper lhs, const RhsMapper rh
         rhs_pf0.y = rhs(rhs_vert + 1, rhs_horiz0);
         rhs_pf0.z = rhs(rhs_vert + 2, rhs_horiz0);
         rhs_pf0.w = rhs(rhs_vert + 3, rhs_horiz0);
+        //rhs_pf0 = rhs.template loadPacket<Unaligned>(rhs_vert, rhs_horiz0);
       } else if (rhs_vert + 2 < k_size) {
         // just CHECK_RHS_BOUNDARY
         rhs_pf0.x = rhs(rhs_vert, rhs_horiz0);
@@ -785,7 +784,6 @@ EigenFloatContractionKernelInternal(const LhsMapper lhs, const RhsMapper rhs,
                        float2 rhs_shmem2[][8], const Index m_size,
                        const Index n_size, const Index k_size,
                        const Index base_m, const Index base_n) {
-  typedef float Scalar;
 
   // prefetch registers
   float4 lhs_pf0, lhs_pf1, lhs_pf2, lhs_pf3;
