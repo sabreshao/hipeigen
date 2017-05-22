@@ -704,6 +704,7 @@ struct TensorEvaluator<const TensorReductionOp<Op, Dims, ArgType, MakePointer_>,
   template <int NPT, typename S, typename R, typename I> friend void internal::InnerReductionKernel(hipLaunchParm, R, const S, I, I, typename S::CoeffReturnType*);
 
   template <int NPT, typename S, typename R, typename I> friend void internal::OuterReductionKernel(hipLaunchParm, R, const S, I, I, typename S::CoeffReturnType*);
+#endif
 
 #if defined(EIGEN_USE_SYCL)
  template < typename HostExpr_, typename FunctorExpr_, typename Tuple_of_Acc_, typename Dims_, typename Op_, typename Index_> friend class TensorSycl::internal::ReductionFunctor;
