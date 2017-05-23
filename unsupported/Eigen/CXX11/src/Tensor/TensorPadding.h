@@ -249,7 +249,7 @@ struct TensorEvaluator<const TensorPaddingOp<PaddingDimensions, ArgType>, Device
       cost += TensorOpCost(0, 0, 2 * TensorOpCost::AddCost<Index>() +
                                  2 * TensorOpCost::MulCost<Index>() +
                     reduction * (2 * TensorOpCost::MulCost<Index>() +
-                                 1 * TensorOpCost::DivCost<Index>()));
+                                 1 * TensorOpCost::DivCost<Index>()), 0);
     }
   }
 
