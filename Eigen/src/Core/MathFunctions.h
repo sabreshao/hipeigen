@@ -1168,7 +1168,7 @@ EIGEN_ALWAYS_INLINE float   expm1(float x) { return cl::sycl::expm1(x); }
 EIGEN_ALWAYS_INLINE double  expm1(double x) { return cl::sycl::expm1(x); }
 #endif // defined(__SYCL_DEVICE_ONLY__)
 
-#ifdef __CUDACC__
+#ifdef __HIPCC__
 template<> EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE
 float expm1(const float &x) { return ::expm1f(x); }
 

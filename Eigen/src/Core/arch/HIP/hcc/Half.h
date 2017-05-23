@@ -403,6 +403,9 @@ EIGEN_STRONG_INLINE EIGEN_DEVICE_FUNC half abs(const half& a) {
 EIGEN_STRONG_INLINE EIGEN_DEVICE_FUNC half exp(const half& a) {
   return half(::expf(float(a)));
 }
+EIGEN_STRONG_INLINE EIGEN_DEVICE_FUNC half expm1(const half& a) {
+  return half(numext::expm1(float(a)));
+}
 EIGEN_STRONG_INLINE EIGEN_DEVICE_FUNC half log(const half& a) {
 #if defined(EIGEN_HAS_HIP_FP16) && defined(__HIP_ARCH_HAS_HALF_PRECISION_SUPPORT__)
   #if defined(__NVCC__) && defined(__CUDACC_VER__) && (__CUDACC_VER__ >= 80000)
