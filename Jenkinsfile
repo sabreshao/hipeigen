@@ -93,6 +93,9 @@ def docker_build_inside_image( def build_image, String build_config, String src_
             set -x
             /opt/rocm/bin/hipconfig
             printenv | sort
+
+            rm -rf ${build_dir_rel}
+            mkdir -p ${build_dir_rel}
             cd ${build_dir_rel}
             rm -rf *
             cmake ${src_dir_abs}/hipeigen
