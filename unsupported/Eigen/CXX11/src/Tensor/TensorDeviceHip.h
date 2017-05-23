@@ -59,7 +59,7 @@ static void initializeDeviceProp() {
     // compile with nvcc, so we resort to atomics and thread fences instead.
     // Note that if the caller uses a compiler that doesn't support c++11 we
     // can't ensure that the initialization is thread safe.
-#if __cplusplus >= 201103L
+#if 0 && __cplusplus >= 201103L
     static std::atomic<bool> first(true);
     if (first.exchange(false)) {
 #else
@@ -89,14 +89,14 @@ static void initializeDeviceProp() {
         }
       }
 
-#if __cplusplus >= 201103L
+#if 0 && __cplusplus >= 201103L
       std::atomic_thread_fence(std::memory_order_release);
 #endif
       m_devicePropInitialized = true;
     } else {
       // Wait for the other thread to inititialize the properties.
       while (!m_devicePropInitialized) {
-#if __cplusplus >= 201103L
+#if 0 && __cplusplus >= 201103L
         std::atomic_thread_fence(std::memory_order_acquire);
 #endif
         sleep(1);

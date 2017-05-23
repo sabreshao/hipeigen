@@ -41,6 +41,7 @@ template<> struct packet_traits<Eigen::half> : default_packet_traits
     HasSqrt   = 1,
     HasRsqrt  = 1,
     HasExp    = 1,
+    HasExpm1  = 1,
     HasLog    = 1,
     HasLog1p  = 1
   };
@@ -283,8 +284,16 @@ template<> __device__ EIGEN_STRONG_INLINE half2 plog1p<half2>(const half2& a) {
   return __floats2half2_rn(r1, r2);
 }
 
+template<> __device__ EIGEN_STRONG_INLINE half2 pexpm1<half2>(const half2& a) {
+  float a1 = __low2float(a);
+  float a2 = __high2float(a);
+  float r1 = expm1f(a1);
+  float r2 = expm1f(a2);
+  return __floats2half2_rn(r1, r2);
+}
+
 #if defined(__HIP_ARCH_HAS_HALF_PRECISION_SUPPORT__) && (defined(__HCC__) || \
-    (defined(__NVCC__) && defined __CUDACC_VER__ && __CUDACC_VER__ >= 80000))
+    (defined(__NVCC__) && defined __CUDACC_VER__ && __CUDACC_VER__ >= 80000 && defined __CUDA_ARCH__ && __CUDA_ARCH__ >= 530))
 
 template<>  __device__ EIGEN_STRONG_INLINE
 half2 plog<half2>(const half2& a) {
