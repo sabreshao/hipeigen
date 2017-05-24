@@ -883,7 +883,7 @@ template<typename T> T generic_fast_tanh_float(const T& a_x);
 
 namespace numext {
 
-#ifndef __HIP_DEVICE_COMPILE__ 
+#if !defined(__HIP_DEVICE_COMPILE__) 
 template<typename T>
 EIGEN_DEVICE_FUNC
 EIGEN_ALWAYS_INLINE T mini(const T& x, const T& y)
