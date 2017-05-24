@@ -59,7 +59,6 @@ namespace Eigen {
 struct half;
 
 namespace half_impl {
-#warning "half.h in hcc path reached"
 #if !defined(EIGEN_HAS_HIP_FP16)
 
 // Make our own __hip_half definition that is similar to HIP's.

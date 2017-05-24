@@ -11,7 +11,6 @@
 #define EIGEN_EMULATE_ARRAY_H
 
 
-
 // The array class is only available starting with cxx11. Emulate our own here
 // if needed. Beware, msvc still doesn't advertise itself as a c++11 compiler!
 // Moreover, HIP doesn't support the STL containers, so we use our own instead.
@@ -175,6 +174,10 @@ template <typename T> class array<T, 1> {
   void __cxxamp_serialize(Kalmar::Serialize &s) const {
     s.Append(sizeof(T), &values[0]);
   }
+#else
+  array(T v0) {
+    values[0] = v0;
+  }
 #endif
 };
 
@@ -230,6 +233,11 @@ template <typename T> class array<T, 2> {
   void __cxxamp_serialize(Kalmar::Serialize &s) const {
     s.Append(sizeof(T), &values[0]);
     s.Append(sizeof(T), &values[1]);
+  }
+#else
+  array(T v0, T v1) {
+    values[0] = v0;
+    values[1] = v1;
   }
 #endif
 };
@@ -289,6 +297,12 @@ template <typename T> class array<T, 3> {
     s.Append(sizeof(T), &values[0]);
     s.Append(sizeof(T), &values[1]);
     s.Append(sizeof(T), &values[2]);
+  }
+#else
+  array(T v0, T v1, T v2) {
+    values[0] = v0;
+    values[1] = v1;
+    values[2] = v2;
   }
 #endif
 };
@@ -351,6 +365,13 @@ template <typename T> class array<T, 4> {
     s.Append(sizeof(T), &values[1]);
     s.Append(sizeof(T), &values[2]);
     s.Append(sizeof(T), &values[3]);
+  }
+#else
+  array(T v0, T v1, T v2, T v3) {
+    values[0] = v0;
+    values[1] = v1;
+    values[2] = v2;
+    values[3] = v3;
   }
 #endif
 };
@@ -417,6 +438,14 @@ template <typename T> class array<T, 5> {
     s.Append(sizeof(T), &values[3]);
     s.Append(sizeof(T), &values[4]);
   }
+#else
+  array(T v0, T v1, T v2, T v3, T v4) {
+    values[0] = v0;
+    values[1] = v1;
+    values[2] = v2;
+    values[3] = v3;
+    values[4] = v4;
+  } 
 #endif
 };
 
