@@ -18,7 +18,6 @@ namespace internal {
 // introduce conflicts between these packet_traits definitions and the ones
 // we'll use on the host side (SSE, AVX, ...)
 #if defined(__HIPCC__) && defined(EIGEN_USE_GPU)
-
 EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE
 float4 plgamma(const float4& a)
 {
