@@ -219,7 +219,6 @@ template<typename Scalar> struct scalar_erfc_op {
   typedef typename packet_traits<Scalar>::type Packet;
   EIGEN_DEVICE_FUNC inline Packet packetOp(const Packet& a) const { return internal::perfc(a); }
 };
-
 template<typename Scalar>
 struct functor_traits<scalar_erfc_op<Scalar> >
 {
