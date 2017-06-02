@@ -161,7 +161,7 @@ template <typename T> class array<T, 1> {
   template <typename U>
   EIGEN_DEVICE_FUNC
   EIGEN_STRONG_INLINE array(U& i0) {
-    values[0] = static_cast<T>(i0);
+    values[0] = i0[0];
   }
 #endif
 
