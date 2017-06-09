@@ -309,6 +309,8 @@ struct TensorEvaluator<const TensorImagePatchOp<Rows, Cols, ArgType>, Device>
       m_fastOutputDepth = internal::TensorIntDivisor<Index>(m_dimensions[NumDims-1]);
     }
   }
+ 
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE ~TensorEvaluator() {}
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE const Dimensions& dimensions() const { return m_dimensions; }
 
