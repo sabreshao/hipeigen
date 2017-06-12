@@ -297,6 +297,8 @@ struct DSizes : array<DenseIndex, NumDims> {
 
   EIGEN_DEVICE_FUNC explicit DSizes(DenseIndex i0, DenseIndex i1, DenseIndex i2, DenseIndex i3, DenseIndex i4) : Base(i0, i1, i2, i3, i4) {}
   
+  EIGEN_DEVICE_FUNC explicit DSizes(DenseIndex i0, DenseIndex i1, DenseIndex i2, DenseIndex i3, DenseIndex i4, DenseIndex i5) : Base(i0, i1, i2, i3, i4, i5) {}
+  
   EIGEN_DEVICE_FUNC explicit ~DSizes() {}
 #endif
 
