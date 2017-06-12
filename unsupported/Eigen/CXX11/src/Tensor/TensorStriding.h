@@ -145,6 +145,8 @@ struct TensorEvaluator<const TensorStridingOp<Strides, ArgType>, Device>
       m_inputStrides[0] *= op.strides()[0];
     }
   }
+ 
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE ~TensorEvaluator() {}
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE const Dimensions& dimensions() const { return m_dimensions; }
 
@@ -274,6 +276,8 @@ struct TensorEvaluator<TensorStridingOp<Strides, ArgType>, Device>
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE TensorEvaluator(const XprType& op, const Device& device)
       : Base(op, device) { }
+ 
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE ~TensorEvaluator() {}
 
   typedef typename XprType::Index Index;
   typedef typename XprType::Scalar Scalar;

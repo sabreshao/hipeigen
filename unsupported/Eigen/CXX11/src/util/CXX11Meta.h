@@ -264,7 +264,7 @@ template<
   typename Reducer
 > struct reduce<Reducer>
 {
-  constexpr static inline int run() { return Reducer::Identity; }
+  EIGEN_DEVICE_FUNC constexpr static inline int run() { return Reducer::Identity; }
 };
 
 template<
@@ -272,7 +272,7 @@ template<
   typename A
 > struct reduce<Reducer, A>
 {
-  constexpr static inline A run(A a) { return a; }
+  EIGEN_DEVICE_FUNC constexpr static inline A run(A a) { return a; }
 };
 
 template<
@@ -281,7 +281,7 @@ template<
   typename... Ts
 > struct reduce<Reducer, A, Ts...>
 {
-  constexpr static inline auto run(A a, Ts... ts) -> decltype(Reducer::run(a, reduce<Reducer, Ts...>::run(ts...))) {
+  EIGEN_DEVICE_FUNC constexpr static inline auto run(A a, Ts... ts) -> decltype(Reducer::run(a, reduce<Reducer, Ts...>::run(ts...))) {
     return Reducer::run(a, reduce<Reducer, Ts...>::run(ts...));
   }
 };
@@ -320,7 +320,7 @@ struct greater_equal_zero_op { template<typename A> constexpr static inline auto
 // together in front... (13.0 doesn't work with array_prod/array_reduce/... anyway, but 13.1
 // does...
 template<typename... Ts>
-constexpr inline decltype(reduce<product_op, Ts...>::run((*((Ts*)0))...)) arg_prod(Ts... ts)
+EIGEN_DEVICE_FUNC constexpr inline decltype(reduce<product_op, Ts...>::run((*((Ts*)0))...)) arg_prod(Ts... ts)
 {
   return reduce<product_op, Ts...>::run(ts...);
 }

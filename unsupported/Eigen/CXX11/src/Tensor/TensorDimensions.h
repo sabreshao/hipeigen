@@ -303,6 +303,8 @@ struct DSizes : array<DenseIndex, NumDims> {
 #endif
 
 #else
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE ~DSizes() {}
+
   EIGEN_DEVICE_FUNC DSizes(const DenseIndex i0, const DenseIndex i1) {
     eigen_assert(NumDims == 2);
     (*this)[0] = i0;

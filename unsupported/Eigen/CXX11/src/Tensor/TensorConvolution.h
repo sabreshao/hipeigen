@@ -372,6 +372,8 @@ struct TensorEvaluator<const TensorConvolutionOp<Indices, InputArgType, KernelAr
       }
     }
   }
+ 
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE ~TensorEvaluator() {}
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE const Dimensions& dimensions() const { return m_dimensions; }
 
@@ -787,6 +789,8 @@ struct TensorEvaluator<const TensorConvolutionOp<Indices, InputArgType, KernelAr
       m_dimensions[index] = result_dim;
     }
   }
+ 
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE ~TensorEvaluator() {}
 
   typedef typename XprType::CoeffReturnType CoeffReturnType;
   typedef typename PacketType<CoeffReturnType, GpuDevice>::type PacketReturnType;

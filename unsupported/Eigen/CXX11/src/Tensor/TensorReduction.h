@@ -477,6 +477,8 @@ struct TensorEvaluator<const TensorReductionOp<Op, Dims, ArgType, MakePointer_>,
       m_preservedStrides[0] = internal::array_prod(input_dims);
     }
   }
+ 
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE ~TensorEvaluator() {}
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE const Dimensions& dimensions() const { return m_dimensions; }
 

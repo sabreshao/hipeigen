@@ -130,6 +130,8 @@ struct TensorEvaluator<const TensorLayoutSwapOp<ArgType>, Device>
       m_dimensions[i] = m_impl.dimensions()[NumDims-1-i];
     }
   }
+ 
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE ~TensorEvaluator() {}
 
   typedef typename XprType::Scalar Scalar;
   typedef typename XprType::CoeffReturnType CoeffReturnType;
@@ -187,6 +189,8 @@ template<typename ArgType, typename Device>
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE TensorEvaluator(const XprType& op, const Device& device)
     : Base(op, device)
   { }
+ 
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE ~TensorEvaluator() {}
 
   typedef typename XprType::Index Index;
   typedef typename XprType::Scalar Scalar;

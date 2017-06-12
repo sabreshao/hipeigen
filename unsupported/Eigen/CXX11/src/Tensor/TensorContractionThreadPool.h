@@ -111,6 +111,8 @@ struct TensorEvaluator<const TensorContractionOp<Indices, LeftArgType, RightArgT
 
   TensorEvaluator(const XprType& op, const Device& device) :
       Base(op, device) {}
+ 
+  ~TensorEvaluator() {}
 
 #ifndef EIGEN_USE_SIMPLE_THREAD_POOL
   template <bool lhs_inner_dim_contiguous, bool rhs_inner_dim_contiguous,

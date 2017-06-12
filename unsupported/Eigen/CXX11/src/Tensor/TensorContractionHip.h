@@ -1387,6 +1387,8 @@ struct TensorEvaluator<const TensorContractionOp<Indices, LeftArgType, RightArgT
 
   EIGEN_DEVICE_FUNC TensorEvaluator(const XprType& op, const Device& device) :
       Base(op, device) {}
+ 
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE ~TensorEvaluator() {}
 
   // We need to redefine this method to make hipcc happy
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE bool evalSubExprsIfNeeded(Scalar* data) {

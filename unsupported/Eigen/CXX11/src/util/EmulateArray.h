@@ -116,6 +116,9 @@ template <typename T, size_t n> class array {
     values[7] = v8;
   }
 
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE ~array() { }
+
 #if EIGEN_HAS_VARIADIC_TEMPLATES
   EIGEN_DEVICE_FUNC
   EIGEN_STRONG_INLINE array(std::initializer_list<T> l) {
@@ -151,6 +154,9 @@ template <typename T> class array<T, 1> {
   EIGEN_DEVICE_FUNC
   EIGEN_STRONG_INLINE array() { }
 
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE ~array() { }
+
 #if EIGEN_HAS_VARIADIC_TEMPLATES
   EIGEN_DEVICE_FUNC
   EIGEN_STRONG_INLINE array(std::initializer_list<T> l) {
@@ -158,11 +164,6 @@ template <typename T> class array<T, 1> {
     internal::smart_copy(l.begin(), l.end(), values);
   }
 #else
-  template <typename U>
-  EIGEN_DEVICE_FUNC
-  EIGEN_STRONG_INLINE array(U& i0) {
-    values[0] = i0[0];
-  }
 #endif
 
 #ifdef __HCC__
@@ -206,6 +207,9 @@ template <typename T> class array<T, 2> {
 
   EIGEN_DEVICE_FUNC
   EIGEN_STRONG_INLINE array() { }
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE ~array() { }
 
 #if EIGEN_HAS_VARIADIC_TEMPLATES
   EIGEN_DEVICE_FUNC
@@ -267,6 +271,9 @@ template <typename T> class array<T, 3> {
 
   EIGEN_DEVICE_FUNC
   EIGEN_STRONG_INLINE array() { }
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE ~array() { }
 
 #if EIGEN_HAS_VARIADIC_TEMPLATES
   EIGEN_DEVICE_FUNC
@@ -332,6 +339,9 @@ template <typename T> class array<T, 4> {
 
   EIGEN_DEVICE_FUNC
   EIGEN_STRONG_INLINE array() { }
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE ~array() { }
 
 #if EIGEN_HAS_VARIADIC_TEMPLATES
   EIGEN_DEVICE_FUNC
@@ -402,6 +412,9 @@ template <typename T> class array<T, 5> {
   EIGEN_DEVICE_FUNC
   EIGEN_STRONG_INLINE array() { }
 
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE ~array() { }
+
 #if EIGEN_HAS_VARIADIC_TEMPLATES
   EIGEN_DEVICE_FUNC
   EIGEN_STRONG_INLINE array(std::initializer_list<T> l) {
@@ -449,6 +462,258 @@ template <typename T> class array<T, 5> {
 #endif
 };
 
+// Specialize array for size 6
+template <typename T> class array<T, 6> {
+ public:
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE T& operator[] (size_t index) { return values[index]; }
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE const T& operator[] (size_t index) const { return values[index]; }
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE T& front() { return values[0]; }
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE const T& front() const { return values[0]; }
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE T& back() { return values[5]; }
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE const T& back() const { return values[5]; }
+
+  EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE
+  static std::size_t size() { return 6; }
+
+  T values[6];
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE array() { }
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE ~array() { }
+
+#if EIGEN_HAS_VARIADIC_TEMPLATES
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE array(std::initializer_list<T> l) {
+    eigen_assert(l.size() == 6);
+    internal::smart_copy(l.begin(), l.end(), values);
+  }
+#else
+  template <typename U>
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE array(U& i0, U& i1, U& i2, U& i3, U& i4, U& i5) {
+    values[0] = static_cast<T>(i0);
+    values[1] = static_cast<T>(i1);
+    values[2] = static_cast<T>(i2);
+    values[3] = static_cast<T>(i3);
+    values[4] = static_cast<T>(i4);
+    values[5] = static_cast<T>(i5);
+  }
+#endif
+
+#ifdef __HCC__
+  __attribute__((annotate("user_deserialize")))
+  array(T v0, T v1, T v2, T v3, T v4, T v5) [[cpu]][[hc]] {
+    values[0] = v0;
+    values[1] = v1;
+    values[2] = v2;
+    values[3] = v3;
+    values[4] = v4;
+    values[5] = v5;
+  }
+
+  __attribute__((annotate("serialize")))
+  void __cxxamp_serialize(Kalmar::Serialize &s) const {
+    s.Append(sizeof(T), &values[0]);
+    s.Append(sizeof(T), &values[1]);
+    s.Append(sizeof(T), &values[2]);
+    s.Append(sizeof(T), &values[3]);
+    s.Append(sizeof(T), &values[4]);
+    s.Append(sizeof(T), &values[5]);
+  }
+#else
+  array(T v0, T v1, T v2, T v3, T v4, T v5) {
+    values[0] = v0;
+    values[1] = v1;
+    values[2] = v2;
+    values[3] = v3;
+    values[4] = v4;
+    values[5] = v5;
+  }
+#endif
+};
+
+// Specialize array for size 7
+template <typename T> class array<T, 7> {
+ public:
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE T& operator[] (size_t index) { return values[index]; }
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE const T& operator[] (size_t index) const { return values[index]; }
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE T& front() { return values[0]; }
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE const T& front() const { return values[0]; }
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE T& back() { return values[6]; }
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE const T& back() const { return values[6]; }
+
+  EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE
+  static std::size_t size() { return 7; }
+
+  T values[7];
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE array() { }
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE ~array() { }
+
+#if EIGEN_HAS_VARIADIC_TEMPLATES
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE array(std::initializer_list<T> l) {
+    eigen_assert(l.size() == 7);
+    internal::smart_copy(l.begin(), l.end(), values);
+  }
+#else
+  template <typename U>
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE array(U& i0, U& i1, U& i2, U& i3, U& i4, U& i5, U& i6) {
+    values[0] = static_cast<T>(i0);
+    values[1] = static_cast<T>(i1);
+    values[2] = static_cast<T>(i2);
+    values[3] = static_cast<T>(i3);
+    values[4] = static_cast<T>(i4);
+    values[5] = static_cast<T>(i5);
+    values[6] = static_cast<T>(i6);
+  }
+#endif
+
+#ifdef __HCC__
+  __attribute__((annotate("user_deserialize")))
+  array(T v0, T v1, T v2, T v3, T v4, T v5, T v6) [[cpu]][[hc]] {
+    values[0] = v0;
+    values[1] = v1;
+    values[2] = v2;
+    values[3] = v3;
+    values[4] = v4;
+    values[5] = v5;
+    values[6] = v6;
+  }
+
+  __attribute__((annotate("serialize")))
+  void __cxxamp_serialize(Kalmar::Serialize &s) const {
+    s.Append(sizeof(T), &values[0]);
+    s.Append(sizeof(T), &values[1]);
+    s.Append(sizeof(T), &values[2]);
+    s.Append(sizeof(T), &values[3]);
+    s.Append(sizeof(T), &values[4]);
+    s.Append(sizeof(T), &values[5]);
+    s.Append(sizeof(T), &values[6]);
+  }
+#else
+  array(T v0, T v1, T v2, T v3, T v4, T v5, T v6) {
+    values[0] = v0;
+    values[1] = v1;
+    values[2] = v2;
+    values[3] = v3;
+    values[4] = v4;
+    values[5] = v5;
+    values[6] = v6;
+  }
+#endif
+};
+
+// Specialize array for size 8
+template <typename T> class array<T, 8> {
+ public:
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE T& operator[] (size_t index) { return values[index]; }
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE const T& operator[] (size_t index) const { return values[index]; }
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE T& front() { return values[0]; }
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE const T& front() const { return values[0]; }
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE T& back() { return values[7]; }
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE const T& back() const { return values[7]; }
+
+  EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE
+  static std::size_t size() { return 8; }
+
+  T values[8];
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE array() { }
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE ~array() { }
+
+#if EIGEN_HAS_VARIADIC_TEMPLATES
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE array(std::initializer_list<T> l) {
+    eigen_assert(l.size() == 8);
+    internal::smart_copy(l.begin(), l.end(), values);
+  }
+#else
+  template <typename U>
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE array(U& i0, U& i1, U& i2, U& i3, U& i4, U& i5, U& i6, U& i7) {
+    values[0] = static_cast<T>(i0);
+    values[1] = static_cast<T>(i1);
+    values[2] = static_cast<T>(i2);
+    values[3] = static_cast<T>(i3);
+    values[4] = static_cast<T>(i4);
+    values[5] = static_cast<T>(i5);
+    values[6] = static_cast<T>(i6);
+    values[7] = static_cast<T>(i7);
+  }
+#endif
+
+#ifdef __HCC__
+  __attribute__((annotate("user_deserialize")))
+  array(T v0, T v1, T v2, T v3, T v4, T v5, T v6, T v7) [[cpu]][[hc]] {
+    values[0] = v0;
+    values[1] = v1;
+    values[2] = v2;
+    values[3] = v3;
+    values[4] = v4;
+    values[5] = v5;
+    values[6] = v6;
+    values[7] = v7;
+  }
+
+  __attribute__((annotate("serialize")))
+  void __cxxamp_serialize(Kalmar::Serialize &s) const {
+    s.Append(sizeof(T), &values[0]);
+    s.Append(sizeof(T), &values[1]);
+    s.Append(sizeof(T), &values[2]);
+    s.Append(sizeof(T), &values[3]);
+    s.Append(sizeof(T), &values[4]);
+    s.Append(sizeof(T), &values[5]);
+    s.Append(sizeof(T), &values[6]);
+    s.Append(sizeof(T), &values[7]);
+  }
+#else
+  array(T v0, T v1, T v2, T v3, T v4, T v5, T v6, T v7) {
+    values[0] = v0;
+    values[1] = v1;
+    values[2] = v2;
+    values[3] = v3;
+    values[4] = v4;
+    values[5] = v5;
+    values[6] = v6;
+    values[7] = v7;
+  }
+#endif
+};
+
 // Specialize array for zero size
 template <typename T> class array<T, 0> {
  public:
@@ -488,6 +753,9 @@ template <typename T> class array<T, 0> {
 
   EIGEN_DEVICE_FUNC
   EIGEN_STRONG_INLINE array() : dummy() { }
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE ~array() { }
 
 #if EIGEN_HAS_VARIADIC_TEMPLATES
   EIGEN_DEVICE_FUNC array(std::initializer_list<T> l) : dummy() {
