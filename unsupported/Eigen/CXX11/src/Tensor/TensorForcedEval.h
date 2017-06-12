@@ -110,6 +110,8 @@ struct TensorEvaluator<const TensorForcedEvalOp<ArgType, MakePointer_>, Device>
 	/// op_ is used for sycl
       : m_impl(op.expression(), device), m_op(op.expression()), m_device(device), m_buffer(NULL)
   { }
+ 
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE ~TensorEvaluator() {}
 
   EIGEN_DEVICE_FUNC const Dimensions& dimensions() const { return m_impl.dimensions(); }
 

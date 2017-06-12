@@ -109,6 +109,8 @@ struct TensorEvaluator<const TensorAssignOp<LeftArgType, RightArgType>, Device>
   {
     EIGEN_STATIC_ASSERT((static_cast<int>(TensorEvaluator<LeftArgType, Device>::Layout) == static_cast<int>(TensorEvaluator<RightArgType, Device>::Layout)), YOU_MADE_A_PROGRAMMING_MISTAKE);
   }
+ 
+  EIGEN_DEVICE_FUNC ~TensorEvaluator() {}
 
   EIGEN_DEVICE_FUNC const Dimensions& dimensions() const
   {

@@ -116,6 +116,9 @@ template <typename T, size_t n> class array {
     values[7] = v8;
   }
 
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE ~array() { }
+
 #if EIGEN_HAS_VARIADIC_TEMPLATES
   EIGEN_DEVICE_FUNC
   EIGEN_STRONG_INLINE array(std::initializer_list<T> l) {
@@ -151,6 +154,9 @@ template <typename T> class array<T, 1> {
   EIGEN_DEVICE_FUNC
   EIGEN_STRONG_INLINE array() { }
 
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE ~array() { }
+
 #if EIGEN_HAS_VARIADIC_TEMPLATES
   EIGEN_DEVICE_FUNC
   EIGEN_STRONG_INLINE array(std::initializer_list<T> l) {
@@ -158,11 +164,6 @@ template <typename T> class array<T, 1> {
     internal::smart_copy(l.begin(), l.end(), values);
   }
 #else
-  template <typename U>
-  EIGEN_DEVICE_FUNC
-  EIGEN_STRONG_INLINE array(U& i0) {
-    values[0] = i0[0];
-  }
 #endif
 
 #ifdef __HCC__
@@ -206,6 +207,9 @@ template <typename T> class array<T, 2> {
 
   EIGEN_DEVICE_FUNC
   EIGEN_STRONG_INLINE array() { }
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE ~array() { }
 
 #if EIGEN_HAS_VARIADIC_TEMPLATES
   EIGEN_DEVICE_FUNC
@@ -267,6 +271,9 @@ template <typename T> class array<T, 3> {
 
   EIGEN_DEVICE_FUNC
   EIGEN_STRONG_INLINE array() { }
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE ~array() { }
 
 #if EIGEN_HAS_VARIADIC_TEMPLATES
   EIGEN_DEVICE_FUNC
@@ -332,6 +339,9 @@ template <typename T> class array<T, 4> {
 
   EIGEN_DEVICE_FUNC
   EIGEN_STRONG_INLINE array() { }
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE ~array() { }
 
 #if EIGEN_HAS_VARIADIC_TEMPLATES
   EIGEN_DEVICE_FUNC
@@ -401,6 +411,9 @@ template <typename T> class array<T, 5> {
 
   EIGEN_DEVICE_FUNC
   EIGEN_STRONG_INLINE array() { }
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE ~array() { }
 
 #if EIGEN_HAS_VARIADIC_TEMPLATES
   EIGEN_DEVICE_FUNC
@@ -474,6 +487,9 @@ template <typename T> class array<T, 6> {
 
   EIGEN_DEVICE_FUNC
   EIGEN_STRONG_INLINE array() { }
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE ~array() { }
 
 #if EIGEN_HAS_VARIADIC_TEMPLATES
   EIGEN_DEVICE_FUNC
@@ -551,6 +567,9 @@ template <typename T> class array<T, 7> {
 
   EIGEN_DEVICE_FUNC
   EIGEN_STRONG_INLINE array() { }
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE ~array() { }
 
 #if EIGEN_HAS_VARIADIC_TEMPLATES
   EIGEN_DEVICE_FUNC
@@ -632,6 +651,9 @@ template <typename T> class array<T, 8> {
 
   EIGEN_DEVICE_FUNC
   EIGEN_STRONG_INLINE array() { }
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE ~array() { }
 
 #if EIGEN_HAS_VARIADIC_TEMPLATES
   EIGEN_DEVICE_FUNC
@@ -731,6 +753,9 @@ template <typename T> class array<T, 0> {
 
   EIGEN_DEVICE_FUNC
   EIGEN_STRONG_INLINE array() : dummy() { }
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE ~array() { }
 
 #if EIGEN_HAS_VARIADIC_TEMPLATES
   EIGEN_DEVICE_FUNC array(std::initializer_list<T> l) : dummy() {

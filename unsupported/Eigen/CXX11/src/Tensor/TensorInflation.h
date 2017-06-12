@@ -126,6 +126,8 @@ struct TensorEvaluator<const TensorInflationOp<Strides, ArgType>, Device>
       }
     }
   }
+ 
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE ~TensorEvaluator() {}
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE const Dimensions& dimensions() const { return m_dimensions; }
 

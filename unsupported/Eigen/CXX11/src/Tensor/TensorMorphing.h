@@ -116,6 +116,8 @@ struct TensorEvaluator<const TensorReshapingOp<NewDimensions, ArgType>, Device>
     // of the input tensor.
     eigen_assert(internal::array_prod(m_impl.dimensions()) == internal::array_prod(op.dimensions()));
   }
+ 
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE ~TensorEvaluator() {}
 
   typedef typename XprType::Index Index;
   typedef typename XprType::Scalar Scalar;
@@ -177,6 +179,8 @@ template<typename NewDimensions, typename ArgType, typename Device>
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE TensorEvaluator(const XprType& op, const Device& device)
     : Base(op, device)
   { }
+ 
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE ~TensorEvaluator() {}
 
   typedef typename XprType::Index Index;
   typedef typename XprType::Scalar Scalar;
@@ -353,6 +357,8 @@ struct TensorEvaluator<const TensorSlicingOp<StartIndices, Sizes, ArgType>, Devi
       }
     }
   }
+ 
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE ~TensorEvaluator() {}
 
   typedef typename XprType::Index Index;
   typedef typename XprType::Scalar Scalar;
@@ -546,6 +552,8 @@ struct TensorEvaluator<TensorSlicingOp<StartIndices, Sizes, ArgType>, Device>
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE TensorEvaluator(const XprType& op, const Device& device)
     : Base(op, device)
     { }
+ 
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE ~TensorEvaluator() {}
 
   typedef typename XprType::Index Index;
   typedef typename XprType::Scalar Scalar;
@@ -778,6 +786,8 @@ struct TensorEvaluator<const TensorStridingSlicingOp<StartIndices, StopIndices, 
                                           device.lastLevelCacheSize() /
                                           sizeof(Scalar));
   }
+ 
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE ~TensorEvaluator() {}
 
   typedef typename XprType::Index Index;
   typedef typename XprType::Scalar Scalar;
@@ -868,6 +878,8 @@ struct TensorEvaluator<TensorStridingSlicingOp<StartIndices, StopIndices, Stride
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE TensorEvaluator(const XprType& op, const Device& device)
     : Base(op, device)
     { }
+ 
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE ~TensorEvaluator() {}
 
   typedef typename XprType::Index Index;
   typedef typename XprType::Scalar Scalar;
