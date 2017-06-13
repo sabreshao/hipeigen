@@ -189,7 +189,8 @@ template<typename T> struct numeric_limits
   static T (max)() { assert(false && "Highest not supported for this type"); }
   static T (min)() { assert(false && "Lowest not supported for this type"); }
   static T infinity() { assert(false && "Infinity not supported for this type"); }
-  static T quiet_NaN() { assert(false && "quiet_NaN not supported for this type"); }
+  EIGEN_DEVICE_FUNC
+  static T quiet_NaN() { return 0; }
 };
 //TODO: Use appropriate alternates for HIPRT predefined numbers
 template<> struct numeric_limits<float>
