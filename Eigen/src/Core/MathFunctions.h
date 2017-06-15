@@ -558,7 +558,7 @@ namespace std_fallback {
 
 template<typename Scalar>
 struct log1p_impl {
-  static inline Scalar run(const Scalar& x)
+  EIGEN_DEVICE_FUNC static inline Scalar run(const Scalar& x)
   {
     EIGEN_STATIC_ASSERT_NON_INTEGER(Scalar)
     #if EIGEN_HAS_CXX11_MATH
