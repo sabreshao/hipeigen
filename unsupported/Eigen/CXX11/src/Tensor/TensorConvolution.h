@@ -901,8 +901,8 @@ struct TensorEvaluator<const TensorConvolutionOp<Indices, InputArgType, KernelAr
 
         //cout << "launching 1D kernel with block_size.x: " << block_size.x << " block_size.y: " << block_size.y << " num_blocks.x: " << num_blocks.x << " num_blocks.y: " << num_blocks.y << " maxX: " << maxX << " shared_mem: " << shared_mem << " in stream " << m_device.stream() << endl;
 
-        const array<Index, 1> indices(m_indices[0]);
-        const array<Index, 1> kernel_dims(m_kernelImpl.dimensions()[0]);
+        const array<Index, 1> indices({m_indices[0]});
+        const array<Index, 1> kernel_dims({m_kernelImpl.dimensions()[0]});
         internal::IndexMapper<Index, InputDims, 1, Layout> indexMapper(
             m_inputImpl.dimensions(), kernel_dims, indices);
         switch(kernel_size) {
@@ -962,9 +962,9 @@ struct TensorEvaluator<const TensorConvolutionOp<Indices, InputArgType, KernelAr
 
         //cout << "launching 2D kernel with block_size.x: " << block_size.x << " block_size.y: " << block_size.y  << " block_size.z: " << block_size.z << " num_blocks.x: " << num_blocks.x << " num_blocks.y: " << num_blocks.y << " num_blocks.z: " << num_blocks.z << " maxX: " << maxX << " maxY: " << maxY << " maxP: " << maxP << " shared_mem: " << shared_mem << " in stream " << m_device.stream() << endl;
 
-        const array<Index, 2> indices(m_indices[idxX], m_indices[idxY]);
-        const array<Index, 2> kernel_dims(m_kernelImpl.dimensions()[idxX],
-                                          m_kernelImpl.dimensions()[idxY]);
+        const array<Index, 2> indices({m_indices[idxX], m_indices[idxY]});
+        const array<Index, 2> kernel_dims({m_kernelImpl.dimensions()[idxX],
+                                          m_kernelImpl.dimensions()[idxY]});
         internal::IndexMapper<Index, InputDims, 2, Layout> indexMapper(
             m_inputImpl.dimensions(), kernel_dims, indices);
         switch (kernel_size_x) {
@@ -1038,11 +1038,11 @@ struct TensorEvaluator<const TensorConvolutionOp<Indices, InputArgType, KernelAr
         assert(shared_mem <= maxSharedMem);
 
         //cout << "launching 3D kernel with block_size.x: " << block_size.x << " block_size.y: " << block_size.y  << " block_size.z: " << block_size.z << " num_blocks.x: " << num_blocks.x << " num_blocks.y: " << num_blocks.y << " num_blocks.z: " << num_blocks.z  << " shared_mem: " << shared_mem << " in stream " << m_device.stream() << endl;
-        const array<Index, 3> indices(m_indices[idxX], m_indices[idxY],
-                                      m_indices[idxZ]);
-        const array<Index, 3> kernel_dims(m_kernelImpl.dimensions()[idxX],
+        const array<Index, 3> indices({m_indices[idxX], m_indices[idxY],
+                                      m_indices[idxZ]});
+        const array<Index, 3> kernel_dims({m_kernelImpl.dimensions()[idxX],
                                           m_kernelImpl.dimensions()[idxY],
-                                          m_kernelImpl.dimensions()[idxZ]);
+                                          m_kernelImpl.dimensions()[idxZ]});
         internal::IndexMapper<Index, InputDims, 3, Layout> indexMapper(
             m_inputImpl.dimensions(), kernel_dims, indices);
 

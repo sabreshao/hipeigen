@@ -289,13 +289,13 @@ struct DSizes : array<DenseIndex, NumDims> {
   }
 
 #if defined(__HCC_HC__)
-  EIGEN_DEVICE_FUNC explicit DSizes(DenseIndex i0, DenseIndex i1) : Base(i0, i1) {}
+  EIGEN_DEVICE_FUNC explicit DSizes(DenseIndex i0, DenseIndex i1) : Base({i0, i1}) {}
 
-  EIGEN_DEVICE_FUNC explicit DSizes(DenseIndex i0, DenseIndex i1, DenseIndex i2) : Base(i0, i1, i2) {}
+  EIGEN_DEVICE_FUNC explicit DSizes(DenseIndex i0, DenseIndex i1, DenseIndex i2) : Base({i0, i1, i2}) {}
 
-  EIGEN_DEVICE_FUNC explicit DSizes(DenseIndex i0, DenseIndex i1, DenseIndex i2, DenseIndex i3) : Base(i0, i1, i2, i3) {}
+  EIGEN_DEVICE_FUNC explicit DSizes(DenseIndex i0, DenseIndex i1, DenseIndex i2, DenseIndex i3) : Base({i0, i1, i2, i3}) {}
 
-  EIGEN_DEVICE_FUNC explicit DSizes(DenseIndex i0, DenseIndex i1, DenseIndex i2, DenseIndex i3, DenseIndex i4) : Base(i0, i1, i2, i3, i4) {}
+  EIGEN_DEVICE_FUNC explicit DSizes(DenseIndex i0, DenseIndex i1, DenseIndex i2, DenseIndex i3, DenseIndex i4) : Base({i0, i1, i2, i3, i4}) {}
 #endif
 
 #else
