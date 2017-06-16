@@ -166,7 +166,8 @@ template <typename T> class array<T, 1> {
   }
 #endif
 
-#ifdef __HCC__
+//#ifdef __HCC__
+#if 0
   __attribute__((annotate("user_deserialize")))
   array(T v0) [[cpu]][[hc]] {
     values[0] = v0;
@@ -219,7 +220,7 @@ template <typename T> class array<T, 2> {
   }
 #endif
 
-#ifdef __HCC__
+#if 0
   __attribute__((annotate("user_deserialize")))
   array(T v0, T v1) [[cpu]][[hc]] {
     values[0] = v0;
@@ -276,7 +277,7 @@ template <typename T> class array<T, 3> {
   }
 #endif
 
-#ifdef __HCC__
+#if 0
   __attribute__((annotate("user_deserialize")))
   array(T v0, T v1, T v2) [[cpu]][[hc]] {
     values[0] = v0;
@@ -336,7 +337,7 @@ template <typename T> class array<T, 4> {
   }
 #endif
 
-#ifdef __HCC__
+#if 0
   __attribute__((annotate("user_deserialize")))
   array(T v0, T v1, T v2, T v3) [[cpu]][[hc]] {
     values[0] = v0;
@@ -399,7 +400,7 @@ template <typename T> class array<T, 5> {
   }
 #endif
 
-#ifdef __HCC__
+#if 0
   __attribute__((annotate("user_deserialize")))
   array(T v0, T v1, T v2, T v3, T v4) [[cpu]][[hc]] {
     values[0] = v0;

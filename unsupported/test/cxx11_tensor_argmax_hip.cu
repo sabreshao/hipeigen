@@ -23,9 +23,9 @@ using Eigen::Tensor;
 template <int Layout>
 void test_hip_simple_argmax()
 {
-  Tensor<double, 3, Layout> in(Eigen::array<DenseIndex, 3>(72,53,97));
-  Tensor<DenseIndex, 1, Layout> out_max(Eigen::array<DenseIndex, 1>(1));
-  Tensor<DenseIndex, 1, Layout> out_min(Eigen::array<DenseIndex, 1>(1));
+  Tensor<double, 3, Layout> in(Eigen::array<DenseIndex, 3>({72,53,97}));
+  Tensor<DenseIndex, 1, Layout> out_max(Eigen::array<DenseIndex, 1>({1}));
+  Tensor<DenseIndex, 1, Layout> out_min(Eigen::array<DenseIndex, 1>({1}));
   in.setRandom();
   in *= in.constant(100.0);
   in(0, 0, 0) = -1000.0;
