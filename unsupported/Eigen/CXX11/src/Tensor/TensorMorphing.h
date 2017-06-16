@@ -841,7 +841,7 @@ struct TensorEvaluator<const TensorStridingSlicingOp<StartIndices, StopIndices, 
     return inputIndex;
   }
 
-  static EIGEN_STRONG_INLINE Index clamp(Index value, Index min, Index max) {
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE Index clamp(Index value, Index min, Index max) {
     return numext::maxi(min, numext::mini(max,value));
   }
 
