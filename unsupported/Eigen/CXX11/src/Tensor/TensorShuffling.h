@@ -63,6 +63,8 @@ class TensorShufflingOp : public TensorBase<TensorShufflingOp<Shuffle, XprType> 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE TensorShufflingOp(const XprType& expr, const Shuffle& shuffle)
       : m_xpr(expr), m_shuffle(shuffle) {}
 
+  EIGEN_DEVICE_FUNC ~TensorShufflingOp() {}
+
     EIGEN_DEVICE_FUNC
     const Shuffle& shufflePermutation() const { return m_shuffle; }
 

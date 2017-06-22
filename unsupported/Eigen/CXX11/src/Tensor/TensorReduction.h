@@ -364,6 +364,8 @@ class TensorReductionOp : public TensorBase<TensorReductionOp<Op, Dims, XprType,
     TensorReductionOp(const XprType& expr, const Dims& dims, const Op& reducer) : m_expr(expr), m_dims(dims), m_reducer(reducer)
     { }
 
+    EIGEN_DEVICE_FUNC ~TensorReductionOp() {}
+
     EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE
     const XprType& expression() const { return m_expr; }
     EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE
