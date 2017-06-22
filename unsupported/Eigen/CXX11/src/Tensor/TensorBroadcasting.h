@@ -78,6 +78,8 @@ class TensorBroadcastingOp : public TensorBase<TensorBroadcastingOp<Broadcast, X
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE TensorBroadcastingOp(const XprType& expr, const Broadcast& broadcast)
       : m_xpr(expr), m_broadcast(broadcast) {}
 
+  EIGEN_DEVICE_FUNC ~TensorBroadcastingOp() {}
+
     EIGEN_DEVICE_FUNC
     const Broadcast& broadcast() const { return m_broadcast; }
 
