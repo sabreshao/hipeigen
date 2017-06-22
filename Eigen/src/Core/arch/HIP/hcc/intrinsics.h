@@ -13,7 +13,7 @@
 #define __HIP_FP16_DECL_PREFIX__ __device__
 
 /*-----------------------HIPRT NUMBERS-----------------------*/
-__HIP_FP16_DECL_PREFIX__ float __hip_int_as_float(int a) {
+__HIP_FP16_DECL_PREFIX__ inline float __hip_int_as_float(int a) {
   union {
     int a;
     float b;
@@ -24,7 +24,7 @@ __HIP_FP16_DECL_PREFIX__ float __hip_int_as_float(int a) {
 
 // HILO INT 2 DOUBLE
 // Combine two 32 bit integer into a 64 bit double
-__HIP_FP16_DECL_PREFIX__  double __hip_hiloint2double(int hi, int lo) {
+__HIP_FP16_DECL_PREFIX__  inline double __hip_hiloint2double(int hi, int lo) {
    union {
       long longType;
       double doubleType;
@@ -38,7 +38,7 @@ __HIP_FP16_DECL_PREFIX__  double __hip_hiloint2double(int hi, int lo) {
    return u.doubleType;
 }
 
-__HIP_FP16_DECL_PREFIX__ double __hip_longlong_as_double(const long long x) {
+__HIP_FP16_DECL_PREFIX__ inline double __hip_longlong_as_double(const long long x) {
    union {
       long long a;
       double b;
@@ -48,7 +48,7 @@ __HIP_FP16_DECL_PREFIX__ double __hip_longlong_as_double(const long long x) {
    return u.b;
 }
 
-__HIP_FP16_DECL_PREFIX__ long long __hip_double_as_longlong(const double x) {
+__HIP_FP16_DECL_PREFIX__ inline long long __hip_double_as_longlong(const double x) {
    union {
       long long a;
       double b;
@@ -94,35 +94,35 @@ struct __hip_half2 {
     unsigned int x;
 };
 
-__HIP_FP16_DECL_PREFIX__ __hip_half __hip_low2half(const __hip_half2 h)
+__HIP_FP16_DECL_PREFIX__ inline __hip_half __hip_low2half(const __hip_half2 h)
 {
     __hip_half ret;
     ret.x = h.x & 0xFFFF;
     return ret;
 }
 
-__HIP_FP16_DECL_PREFIX__ __hip_half __hip_high2half(const __hip_half2 h)
+__HIP_FP16_DECL_PREFIX__ inline __hip_half __hip_high2half(const __hip_half2 h)
 {
     __hip_half ret;
     ret.x = (h.x >> 16) & 0xFFFF;
     return ret;
 }
 
-__HIP_FP16_DECL_PREFIX__ __hip_half2 __hip_halves2half2(const __hip_half l, const __hip_half h)
+__HIP_FP16_DECL_PREFIX__ inline __hip_half2 __hip_halves2half2(const __hip_half l, const __hip_half h)
 {
     __hip_half2 ret;
     ret.x = (h.x << 16) | (l.x & 0xFFFF);
     return ret;
 }
 
-__HIP_FP16_DECL_PREFIX__ __hip_half2 __hip_half2half2(const __hip_half hl)
+__HIP_FP16_DECL_PREFIX__ inline __hip_half2 __hip_half2half2(const __hip_half hl)
 {
     __hip_half2 ret;
     ret.x = (hl.x << 16) | (hl.x & 0xFFFF);
     return ret;
 }
 
-__HIP_FP16_DECL_PREFIX__ float __hip_half2float(const __hip_half h)
+__HIP_FP16_DECL_PREFIX__ inline float __hip_half2float(const __hip_half h)
 {
     const SP_FP32 magic = { 113 << 23 };
     const unsigned int shifted_exp = 0x7c00 << 13; // exponent mask after shift
@@ -144,21 +144,21 @@ __HIP_FP16_DECL_PREFIX__ float __hip_half2float(const __hip_half h)
     return o.f;
 }
 
-__HIP_FP16_DECL_PREFIX__ float __hip_low2float(const __hip_half2 l)
+__HIP_FP16_DECL_PREFIX__ inline float __hip_low2float(const __hip_half2 l)
 {
     __hip_half t1 = __hip_low2half(l);
     float ret = __hip_half2float(t1);
     return ret;
 }
 
-__HIP_FP16_DECL_PREFIX__ float __hip_high2float(const __hip_half2 h)
+__HIP_FP16_DECL_PREFIX__ inline float __hip_high2float(const __hip_half2 h)
 {
     __hip_half t1 = __hip_high2half(h);
     float ret = __hip_half2float(t1);
     return ret;
 }
 
-__HIP_FP16_DECL_PREFIX__ __hip_half __hip_float2half(const float h)
+__HIP_FP16_DECL_PREFIX__ inline __hip_half __hip_float2half(const float h)
 {
     SP_FP32 f; f.f = h;
 
@@ -202,14 +202,14 @@ __HIP_FP16_DECL_PREFIX__ __hip_half __hip_float2half(const float h)
      return o;
 }
 
-__HIP_FP16_DECL_PREFIX__  __hip_half2 __hip_float2half2_rn(const float f)
+__HIP_FP16_DECL_PREFIX__ inline __hip_half2 __hip_float2half2_rn(const float f)
 {
     __hip_half h = __hip_float2half(f);
     __hip_half2 res = __hip_half2half2(h);
     return res;
 }
 
-__HIP_FP16_DECL_PREFIX__ __hip_half2 __hip_floats2half2_rn(const float f1, const float f2)
+__HIP_FP16_DECL_PREFIX__ inline __hip_half2 __hip_floats2half2_rn(const float f1, const float f2)
 {
     __hip_half low = __hip_float2half(f1);
     __hip_half high = __hip_float2half(f2);
@@ -219,7 +219,7 @@ __HIP_FP16_DECL_PREFIX__ __hip_half2 __hip_floats2half2_rn(const float f1, const
 
 __HIP_FP16_DECL_PREFIX__ float2 __hip_make_float2(float x, float y);
 
-__HIP_FP16_DECL_PREFIX__ float2 __hip_half22float2(const __hip_half2 l)
+__HIP_FP16_DECL_PREFIX__ inline float2 __hip_half22float2(const __hip_half2 l)
 {
     float hi_float = __hip_low2float(l);
     float low_float = __hip_high2float(l);
@@ -228,7 +228,7 @@ __HIP_FP16_DECL_PREFIX__ float2 __hip_half22float2(const __hip_half2 l)
     return res;
 }
 
-__HIP_FP16_DECL_PREFIX__ __hip_half __hip_shfl_xor(__hip_half var, int lanemask, int width=WARP_SIZE)
+__HIP_FP16_DECL_PREFIX__ inline __hip_half __hip_shfl_xor(__hip_half var, int lanemask, int width=WARP_SIZE)
 {
     __hip_half dummy = (unsigned short) 0x0000;
     __hip_half2 input = __hip_halves2half2(dummy, var);
@@ -237,24 +237,24 @@ __HIP_FP16_DECL_PREFIX__ __hip_half __hip_shfl_xor(__hip_half var, int lanemask,
     return ret;
 }
 
-__HIP_FP16_DECL_PREFIX__ __hip_half2 __hip_shfl_xor(__hip_half2 var, int lanemask, int width=WARP_SIZE)
+__HIP_FP16_DECL_PREFIX__ inline __hip_half2 __hip_shfl_xor(__hip_half2 var, int lanemask, int width=WARP_SIZE)
 {
     __hip_half2 ret = (unsigned int)(__shfl_xor((int)var.x, lanemask, width));
     return ret;
 }
 
-__HIP_FP16_DECL_PREFIX__ int __hip_shfl_xor(int var, int lanemask, int width=WARP_SIZE)
+__HIP_FP16_DECL_PREFIX__ inline int __hip_shfl_xor(int var, int lanemask, int width=WARP_SIZE)
 {
     return __shfl_xor(var, lanemask, width);
 }
 
-__HIP_FP16_DECL_PREFIX__ float __hip_shfl_xor(float var, int lanemask, int width=WARP_SIZE)
+__HIP_FP16_DECL_PREFIX__ inline float __hip_shfl_xor(float var, int lanemask, int width=WARP_SIZE)
 {
     return __shfl_xor(var, lanemask, width);
 }
 
 
-__HIP_FP16_DECL_PREFIX__ __hip_half __hip_shfl_down(__hip_half var, unsigned int lanemask, int width=WARP_SIZE)
+__HIP_FP16_DECL_PREFIX__ inline __hip_half __hip_shfl_down(__hip_half var, unsigned int lanemask, int width=WARP_SIZE)
 {
     __hip_half dummy = (unsigned short) 0x0000;
     __hip_half2 input = __hip_halves2half2(dummy, var);
@@ -263,18 +263,18 @@ __HIP_FP16_DECL_PREFIX__ __hip_half __hip_shfl_down(__hip_half var, unsigned int
     return ret;
 }
 
-__HIP_FP16_DECL_PREFIX__ __hip_half2 __hip_shfl_down(__hip_half2 var, unsigned int lanemask, int width=WARP_SIZE)
+__HIP_FP16_DECL_PREFIX__ inline __hip_half2 __hip_shfl_down(__hip_half2 var, unsigned int lanemask, int width=WARP_SIZE)
 {
     __hip_half2 ret = (unsigned int)(__shfl_down((int)var.x, lanemask, width));
     return ret;
 }
 
-__HIP_FP16_DECL_PREFIX__ int __hip_shfl_down(int var, unsigned int lanemask, int width=WARP_SIZE)
+__HIP_FP16_DECL_PREFIX__ inline int __hip_shfl_down(int var, unsigned int lanemask, int width=WARP_SIZE)
 {
     return __shfl_down(var, lanemask, width);
 }
 
-__HIP_FP16_DECL_PREFIX__ float __hip_shfl_down(float var, unsigned int lanemask, int width=WARP_SIZE)
+__HIP_FP16_DECL_PREFIX__ inline float __hip_shfl_down(float var, unsigned int lanemask, int width=WARP_SIZE)
 {
     return __shfl_down(var, lanemask, width);
 }
@@ -283,24 +283,24 @@ __HIP_FP16_DECL_PREFIX__ float __hip_shfl_down(float var, unsigned int lanemask,
 
 /*------------------HALF PRECISION ARITHMETIC INTRINSICS------------------*/
 
-__HIP_FP16_DECL_PREFIX__ __hip_half __hip_hadd(const __hip_half a, const __hip_half b)
+__HIP_FP16_DECL_PREFIX__ inline __hip_half __hip_hadd(const __hip_half a, const __hip_half b)
 {
     __hip_half res = a.x + b.x;
     return res;
 }
 
-__HIP_FP16_DECL_PREFIX__ __hip_half __hip_hsub(const __hip_half a, const __hip_half b)
+__HIP_FP16_DECL_PREFIX__ inline __hip_half __hip_hsub(const __hip_half a, const __hip_half b)
 {
     __hip_half res = a.x - b.x;
     return res;
 }
-__HIP_FP16_DECL_PREFIX__ __hip_half __hip_hmul(const __hip_half a, const __hip_half b)
+__HIP_FP16_DECL_PREFIX__ inline __hip_half __hip_hmul(const __hip_half a, const __hip_half b)
 {
     __hip_half res = a.x * b.x;
     return res;
 }
 
-__HIP_FP16_DECL_PREFIX__ __hip_half2 __hip_hadd2(const __hip_half2 a, const __hip_half2 b)
+__HIP_FP16_DECL_PREFIX__ inline __hip_half2 __hip_hadd2(const __hip_half2 a, const __hip_half2 b)
 {
     unsigned int in1_a = (unsigned int)(a.x & 0xFFFF);
     unsigned int in2_a = (unsigned int)((a.x >> 16) & 0xFFFF);
@@ -314,7 +314,7 @@ __HIP_FP16_DECL_PREFIX__ __hip_half2 __hip_hadd2(const __hip_half2 a, const __hi
     return res;
 }
 
-__HIP_FP16_DECL_PREFIX__ __hip_half2 __hip_hsub2(const __hip_half2 a, const __hip_half2 b)
+__HIP_FP16_DECL_PREFIX__ inline __hip_half2 __hip_hsub2(const __hip_half2 a, const __hip_half2 b)
 {
     unsigned int in1_a = (unsigned int)(a.x & 0xFFFF);
     unsigned int in2_a = (unsigned int)((a.x >> 16) & 0xFFFF);
@@ -328,7 +328,7 @@ __HIP_FP16_DECL_PREFIX__ __hip_half2 __hip_hsub2(const __hip_half2 a, const __hi
     return res;
 }
 
-__HIP_FP16_DECL_PREFIX__ __hip_half2 __hip_hmul2(const __hip_half2 a, const __hip_half2 b)
+__HIP_FP16_DECL_PREFIX__ inline __hip_half2 __hip_hmul2(const __hip_half2 a, const __hip_half2 b)
 {
     unsigned int in1_a = (unsigned int)(a.x & 0xFFFF);
     unsigned int in2_a = (unsigned int)((a.x >> 16) & 0xFFFF);
@@ -342,14 +342,14 @@ __HIP_FP16_DECL_PREFIX__ __hip_half2 __hip_hmul2(const __hip_half2 a, const __hi
     return res;
 }
 
-__HIP_FP16_DECL_PREFIX__ __hip_half __hip_hfma(const __hip_half a, const __hip_half b, const __hip_half c)
+__HIP_FP16_DECL_PREFIX__ inline __hip_half __hip_hfma(const __hip_half a, const __hip_half b, const __hip_half c)
 {
     unsigned int out = ((unsigned int)a.x * (unsigned int)b.x) + (unsigned int)c.x;
     __hip_half res = (unsigned short)(out & 0xFFFF);
     return res;
 }
 
-__HIP_FP16_DECL_PREFIX__ __hip_half2 __hip_hfma2(const __hip_half2 a, const __hip_half2 b, const __hip_half2 c)
+__HIP_FP16_DECL_PREFIX__ inline __hip_half2 __hip_hfma2(const __hip_half2 a, const __hip_half2 b, const __hip_half2 c)
 {
     unsigned int in1_a = (unsigned int)(a.x & 0xFFFF);
     unsigned int in2_a = (unsigned int)((a.x >> 16) & 0xFFFF);
@@ -365,13 +365,13 @@ __HIP_FP16_DECL_PREFIX__ __hip_half2 __hip_hfma2(const __hip_half2 a, const __hi
     return res;
 }
 
-__HIP_FP16_DECL_PREFIX__ __hip_half __hip_hneg(const __hip_half a)
+__HIP_FP16_DECL_PREFIX__ inline __hip_half __hip_hneg(const __hip_half a)
 {
     __hip_half zero = 0x0000;
     return __hip_hsub(zero, a);
 }
 
-__HIP_FP16_DECL_PREFIX__ __hip_half2 __hip_hneg2(const __hip_half2 a)
+__HIP_FP16_DECL_PREFIX__ inline __hip_half2 __hip_hneg2(const __hip_half2 a)
 {
     __hip_half2 zero = 0x0000;
     return __hip_hsub2(zero, a);
@@ -381,19 +381,19 @@ __HIP_FP16_DECL_PREFIX__ __hip_half2 __hip_hneg2(const __hip_half2 a)
 
 /*------------------HALF PRECISION COMPARISON INTRINSICS------------------*/
 
-__HIP_FP16_DECL_PREFIX__ bool __hip_hisnan(const __hip_half a)
+__HIP_FP16_DECL_PREFIX__ inline bool __hip_hisnan(const __hip_half a)
 {
     return (a.x == a.x) ? false : true;
 }
 
-__HIP_FP16_DECL_PREFIX__ int __hip_hisinf(const __hip_half a)
+__HIP_FP16_DECL_PREFIX__ inline int __hip_hisinf(const __hip_half a)
 {
     if (a.x == 0xFC00) return -1;
     if (a.x == 0x7C00) return 1;
     return 0;
 }
 
-__HIP_FP16_DECL_PREFIX__ bool __hip_heq(const __hip_half a, const __hip_half b)
+__HIP_FP16_DECL_PREFIX__ inline bool __hip_heq(const __hip_half a, const __hip_half b)
 {
     if (__hip_hisnan(a) || __hip_hisnan(b)) return false;
 
@@ -404,7 +404,7 @@ __HIP_FP16_DECL_PREFIX__ bool __hip_heq(const __hip_half a, const __hip_half b)
     return false;
 }
 
-__HIP_FP16_DECL_PREFIX__ bool __hip_hne(const __hip_half a, const __hip_half b)
+__HIP_FP16_DECL_PREFIX__ inline bool __hip_hne(const __hip_half a, const __hip_half b)
 {
     if (__hip_hisnan(a) || __hip_hisnan(b)) return false;
 
@@ -415,7 +415,7 @@ __HIP_FP16_DECL_PREFIX__ bool __hip_hne(const __hip_half a, const __hip_half b)
     return true;
 }
 
-__HIP_FP16_DECL_PREFIX__ bool __hip_hlt(const __hip_half a, const __hip_half b)
+__HIP_FP16_DECL_PREFIX__ inline bool __hip_hlt(const __hip_half a, const __hip_half b)
 {
     if (__hip_hisnan(a) || __hip_hisnan(b)) return false;
 
@@ -426,7 +426,7 @@ __HIP_FP16_DECL_PREFIX__ bool __hip_hlt(const __hip_half a, const __hip_half b)
     return true;
 }
 
-__HIP_FP16_DECL_PREFIX__ bool __hip_hle(const __hip_half a, const __hip_half b)
+__HIP_FP16_DECL_PREFIX__ inline bool __hip_hle(const __hip_half a, const __hip_half b)
 {
     if (__hip_hisnan(a) || __hip_hisnan(b)) return false;
 
@@ -437,7 +437,7 @@ __HIP_FP16_DECL_PREFIX__ bool __hip_hle(const __hip_half a, const __hip_half b)
     return false;
 }
 
-__HIP_FP16_DECL_PREFIX__ bool __hip_hgt(const __hip_half a, const __hip_half b)
+__HIP_FP16_DECL_PREFIX__ inline bool __hip_hgt(const __hip_half a, const __hip_half b)
 {
     if (__hip_hisnan(a) || __hip_hisnan(b)) return false;
 
@@ -448,7 +448,7 @@ __HIP_FP16_DECL_PREFIX__ bool __hip_hgt(const __hip_half a, const __hip_half b)
     return true;
 }
 
-__HIP_FP16_DECL_PREFIX__ bool __hip_hge(const __hip_half a, const __hip_half b)
+__HIP_FP16_DECL_PREFIX__ inline bool __hip_hge(const __hip_half a, const __hip_half b)
 {
     if (__hip_hisnan(a) || __hip_hisnan(b)) return false;
 
@@ -463,7 +463,7 @@ __HIP_FP16_DECL_PREFIX__ bool __hip_hge(const __hip_half a, const __hip_half b)
 
 /*--------------------BIT MANIPULATION INTRINSICS--------------------*/
 
-__HIP_FP16_DECL_PREFIX__ int __hip_clz(int x)
+__HIP_FP16_DECL_PREFIX__ inline int __hip_clz(int x)
 {
     int count = 0;
     int input = x;
@@ -476,7 +476,7 @@ __HIP_FP16_DECL_PREFIX__ int __hip_clz(int x)
     return count;
 }
 
-__HIP_FP16_DECL_PREFIX__ int __hip_clzll(long long x)
+__HIP_FP16_DECL_PREFIX__ inline int __hip_clzll(long long x)
 {
     int count = 0;
     long long input = x;
@@ -489,14 +489,14 @@ __HIP_FP16_DECL_PREFIX__ int __hip_clzll(long long x)
     return count;
 }
 
-__HIP_FP16_DECL_PREFIX__ unsigned int __hip_umulhi(unsigned int x, unsigned int y)
+__HIP_FP16_DECL_PREFIX__ inline unsigned int __hip_umulhi(unsigned int x, unsigned int y)
 {
     unsigned long out = ((unsigned long)x) * ((unsigned long)y);
     unsigned int res = (unsigned int)(out >> 32);
     return res;
 }
 
-__HIP_FP16_DECL_PREFIX__ unsigned long long __hip_umul64hi(unsigned long long x, unsigned long long y)
+__HIP_FP16_DECL_PREFIX__ inline unsigned long long __hip_umul64hi(unsigned long long x, unsigned long long y)
 {
     unsigned long long lo = 0x00000000FFFFFFFF;
     unsigned long long hi = 0xFFFFFFFF00000000;
