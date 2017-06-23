@@ -79,6 +79,8 @@ class TensorForcedEvalOp : public TensorBase<TensorForcedEvalOp<XprType, MakePoi
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE TensorForcedEvalOp(const XprType& expr)
       : m_xpr(expr) {}
 
+  EIGEN_DEVICE_FUNC ~TensorForcedEvalOp() {}
+
     EIGEN_DEVICE_FUNC
     const typename internal::remove_all<typename XprType::Nested>::type&
     expression() const { return m_xpr; }
