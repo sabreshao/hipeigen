@@ -232,13 +232,13 @@ struct EigenMetaKernelEval<Evaluator, Index, true> {
 };
 
 // FIXME - remove this once launch_bounds=1024 is working correctly.
-#define MAX_BLOCK_SIZE 256
+#define MAX_BLOCK_SIZE 512
 
 template <typename Evaluator, typename Index>
-__global__ void
 //FIXME: why add 1 here?
 //__launch_bounds__(1024, 1)
 __launch_bounds__(MAX_BLOCK_SIZE, 1)
+__global__ void
 EigenMetaKernel( Evaluator eval, Index size){
   const Index first_index = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
   const Index step_size = hipBlockDim_x * hipGridDim_x;
