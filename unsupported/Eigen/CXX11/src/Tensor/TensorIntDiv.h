@@ -14,6 +14,12 @@
 #include "Eigen/src/Core/arch/HIP/hcc/intrinsics.h"
 #endif
 
+// Custom serializers / deserializers for Eigen::array
+// with Eigen::internal::TensorIntDivisor as elements
+#ifdef __HCC__
+#include "../util/EmulateArray.h"
+#endif
+
 namespace Eigen {
 
 /** \internal
@@ -189,7 +195,9 @@ struct TensorIntDivisor {
     return (t1 + t) >> shift2;
   }
 
- private:
+
+  // In order to allow custom serializers push them to kernels on the host side,
+  // change these member variables be public.
   typedef typename DividerTraits<T>::type UnsignedType;
   UnsignedType multiplier;
   int32_t shift1;
@@ -272,5 +280,908 @@ static EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE T operator / (const T& numerator, c
 
 } // end namespace internal
 } // end namespace Eigen
+
+
+// Custom serializers / deserializers for Eigen::array
+// with Eigen::internal::TensorIntDivisor as elements
+#ifdef __HCC__
+namespace Eigen {
+
+// Specialize array for size 1 and T = Eigen::internal::TensorIntDivisor<long, false>
+template <>
+class array<Eigen::internal::TensorIntDivisor<long, false>, 1> {
+ public:
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE Eigen::internal::TensorIntDivisor<long, false>& operator[] (size_t index) { return values[index]; }
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE const Eigen::internal::TensorIntDivisor<long, false>& operator[] (size_t index) const { return values[index]; }
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE Eigen::internal::TensorIntDivisor<long, false>& front() { return values[0]; }
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE const Eigen::internal::TensorIntDivisor<long, false>& front() const { return values[0]; }
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE Eigen::internal::TensorIntDivisor<long, false>& back() { return values[0]; }
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE const Eigen::internal::TensorIntDivisor<long, false>& back() const { return values[0]; }
+
+  EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE
+  static std::size_t size() { return 1; }
+
+  Eigen::internal::TensorIntDivisor<long, false> values[1];
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE array() { }
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE ~array() { }
+
+#if EIGEN_HAS_VARIADIC_TEMPLATES
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE array(std::initializer_list<Eigen::internal::TensorIntDivisor<long, false> > l) {
+    eigen_assert(l.size() == 1);
+    internal::smart_copy(l.begin(), l.end(), values);
+  }
+#endif
+
+  __attribute__((annotate("user_deserialize")))
+  array(unsigned long divider) [[cpu]][[hc]] {
+    values[0] = Eigen::internal::TensorIntDivisor<long, false>(divider);
+  }
+  __attribute__((annotate("serialize")))
+  void __cxxamp_serialize(Kalmar::Serialize &s) const {
+    s.Append(sizeof(unsigned long), &values[0].multiplier);
+  }
+};
+
+// Specialize array for size 1 and T = Eigen::internal::TensorIntDivisor<int, false>
+template <>
+class array<Eigen::internal::TensorIntDivisor<int, false>, 1> {
+ public:
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE Eigen::internal::TensorIntDivisor<int, false>& operator[] (size_t index) { return values[index]; }
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE const Eigen::internal::TensorIntDivisor<int, false>& operator[] (size_t index) const { return values[index]; }
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE Eigen::internal::TensorIntDivisor<int, false>& front() { return values[0]; }
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE const Eigen::internal::TensorIntDivisor<int, false>& front() const { return values[0]; }
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE Eigen::internal::TensorIntDivisor<int, false>& back() { return values[0]; }
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE const Eigen::internal::TensorIntDivisor<int, false>& back() const { return values[0]; }
+
+  EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE
+  static std::size_t size() { return 1; }
+
+  Eigen::internal::TensorIntDivisor<int, false> values[1];
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE array() { }
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE ~array() { }
+
+#if EIGEN_HAS_VARIADIC_TEMPLATES
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE array(std::initializer_list<Eigen::internal::TensorIntDivisor<int, false> > l) {
+    eigen_assert(l.size() == 1);
+    internal::smart_copy(l.begin(), l.end(), values);
+  }
+#endif
+
+  __attribute__((annotate("user_deserialize")))
+  array(unsigned int divider) [[cpu]][[hc]] {
+    values[0] = Eigen::internal::TensorIntDivisor<int, false>(divider);
+  }
+  __attribute__((annotate("serialize")))
+  void __cxxamp_serialize(Kalmar::Serialize &s) const {
+    s.Append(sizeof(unsigned int), &values[0].multiplier);
+  }
+};
+
+// Specialize array for size 2 and T = Eigen::internal::TensorIntDivisor<long, false>
+template <>
+class array<Eigen::internal::TensorIntDivisor<long, false>, 2> {
+ public:
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE Eigen::internal::TensorIntDivisor<long, false>& operator[] (size_t index) { return values[index]; }
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE const Eigen::internal::TensorIntDivisor<long, false>& operator[] (size_t index) const { return values[index]; }
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE Eigen::internal::TensorIntDivisor<long, false>& front() { return values[0]; }
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE const Eigen::internal::TensorIntDivisor<long, false>& front() const { return values[0]; }
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE Eigen::internal::TensorIntDivisor<long, false>& back() { return values[1]; }
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE const Eigen::internal::TensorIntDivisor<long, false>& back() const { return values[1]; }
+
+  EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE
+  static std::size_t size() { return 2; }
+
+  Eigen::internal::TensorIntDivisor<long, false> values[2];
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE array() { }
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE ~array() { }
+
+#if EIGEN_HAS_VARIADIC_TEMPLATES
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE array(std::initializer_list<Eigen::internal::TensorIntDivisor<long, false>> l) {
+    eigen_assert(l.size() == 2);
+    internal::smart_copy(l.begin(), l.end(), values);
+  }
+#endif
+
+  __attribute__((annotate("user_deserialize")))
+  array(unsigned long v0, unsigned long v1) [[cpu]][[hc]] {
+    values[0] = Eigen::internal::TensorIntDivisor<long, false>(v0);
+    values[1] = Eigen::internal::TensorIntDivisor<long, false>(v1);
+  }
+
+  __attribute__((annotate("serialize")))
+  void __cxxamp_serialize(Kalmar::Serialize &s) const {
+    s.Append(sizeof(unsigned long), &values[0].multiplier);
+    s.Append(sizeof(unsigned long), &values[1].multiplier);
+  }
+};
+
+// Specialize array for size 2 and T = Eigen::internal::TensorIntDivisor<int, false>
+template <>
+class array<Eigen::internal::TensorIntDivisor<int, false>, 2> {
+ public:
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE Eigen::internal::TensorIntDivisor<int, false>& operator[] (size_t index) { return values[index]; }
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE const Eigen::internal::TensorIntDivisor<int, false>& operator[] (size_t index) const { return values[index]; }
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE Eigen::internal::TensorIntDivisor<int, false>& front() { return values[0]; }
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE const Eigen::internal::TensorIntDivisor<int, false>& front() const { return values[0]; }
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE Eigen::internal::TensorIntDivisor<int, false>& back() { return values[1]; }
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE const Eigen::internal::TensorIntDivisor<int, false>& back() const { return values[1]; }
+
+  EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE
+  static std::size_t size() { return 2; }
+
+  Eigen::internal::TensorIntDivisor<int, false> values[2];
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE array() { }
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE ~array() { }
+
+#if EIGEN_HAS_VARIADIC_TEMPLATES
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE array(std::initializer_list<Eigen::internal::TensorIntDivisor<int, false>> l) {
+    eigen_assert(l.size() == 2);
+    internal::smart_copy(l.begin(), l.end(), values);
+  }
+#endif
+
+  __attribute__((annotate("user_deserialize")))
+  array(unsigned int v0, unsigned int v1) [[cpu]][[hc]] {
+    values[0] = Eigen::internal::TensorIntDivisor<int, false>(v0);
+    values[1] = Eigen::internal::TensorIntDivisor<int, false>(v1);
+  }
+
+  __attribute__((annotate("serialize")))
+  void __cxxamp_serialize(Kalmar::Serialize &s) const {
+    s.Append(sizeof(unsigned int), &values[0].multiplier);
+    s.Append(sizeof(unsigned int), &values[1].multiplier);
+  }
+};
+
+// Specialize array for size 3 and T = Eigen::internal::TensorIntDivisor<long, false>
+template <>
+class array<Eigen::internal::TensorIntDivisor<long, false>, 3> {
+ public:
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE Eigen::internal::TensorIntDivisor<long, false>& operator[] (size_t index) { return values[index]; }
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE const Eigen::internal::TensorIntDivisor<long, false>& operator[] (size_t index) const { return values[index]; }
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE Eigen::internal::TensorIntDivisor<long, false>& front() { return values[0]; }
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE const Eigen::internal::TensorIntDivisor<long, false>& front() const { return values[0]; }
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE Eigen::internal::TensorIntDivisor<long, false>& back() { return values[2]; }
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE const Eigen::internal::TensorIntDivisor<long, false>& back() const { return values[2]; }
+
+  EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE
+  static std::size_t size() { return 3; }
+
+  Eigen::internal::TensorIntDivisor<long, false> values[3];
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE array() { }
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE ~array() { }
+
+#if EIGEN_HAS_VARIADIC_TEMPLATES
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE array(std::initializer_list<Eigen::internal::TensorIntDivisor<long, false> > l) {
+    eigen_assert(l.size() == 3);
+    internal::smart_copy(l.begin(), l.end(), values);
+  }
+#endif
+
+  __attribute__((annotate("user_deserialize")))
+  array(unsigned long v0, unsigned long v1, unsigned long v2) [[cpu]][[hc]] {
+    values[0] = Eigen::internal::TensorIntDivisor<long, false>(v0);
+    values[1] = Eigen::internal::TensorIntDivisor<long, false>(v1);
+    values[2] = Eigen::internal::TensorIntDivisor<long, false>(v2);
+  }
+
+  __attribute__((annotate("serialize")))
+  void __cxxamp_serialize(Kalmar::Serialize &s) const {
+    s.Append(sizeof(unsigned long), &values[0].multiplier);
+    s.Append(sizeof(unsigned long), &values[1].multiplier);
+    s.Append(sizeof(unsigned long), &values[2].multiplier);
+  }
+};
+
+// Specialize array for size 3 and T = Eigen::internal::TensorIntDivisor<int, false>
+template <>
+class array<Eigen::internal::TensorIntDivisor<int, false>, 3> {
+ public:
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE Eigen::internal::TensorIntDivisor<int, false>& operator[] (size_t index) { return values[index]; }
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE const Eigen::internal::TensorIntDivisor<int, false>& operator[] (size_t index) const { return values[index]; }
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE Eigen::internal::TensorIntDivisor<int, false>& front() { return values[0]; }
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE const Eigen::internal::TensorIntDivisor<int, false>& front() const { return values[0]; }
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE Eigen::internal::TensorIntDivisor<int, false>& back() { return values[2]; }
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE const Eigen::internal::TensorIntDivisor<int, false>& back() const { return values[2]; }
+
+  EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE
+  static std::size_t size() { return 3; }
+
+  Eigen::internal::TensorIntDivisor<int, false> values[3];
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE array() { }
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE ~array() { }
+
+#if EIGEN_HAS_VARIADIC_TEMPLATES
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE array(std::initializer_list<Eigen::internal::TensorIntDivisor<int, false> > l) {
+    eigen_assert(l.size() == 3);
+    internal::smart_copy(l.begin(), l.end(), values);
+  }
+#endif
+
+  __attribute__((annotate("user_deserialize")))
+  array(unsigned int v0, unsigned int v1, unsigned int v2) [[cpu]][[hc]] {
+    values[0] = Eigen::internal::TensorIntDivisor<int, false>(v0);
+    values[1] = Eigen::internal::TensorIntDivisor<int, false>(v1);
+    values[2] = Eigen::internal::TensorIntDivisor<int, false>(v2);
+  }
+
+  __attribute__((annotate("serialize")))
+  void __cxxamp_serialize(Kalmar::Serialize &s) const {
+    s.Append(sizeof(unsigned int), &values[0].multiplier);
+    s.Append(sizeof(unsigned int), &values[1].multiplier);
+    s.Append(sizeof(unsigned int), &values[2].multiplier);
+  }
+};
+
+// Specialize array for size 4 and T = Eigen::internal::TensorIntDivisor<long, false>
+template <>
+class array<Eigen::internal::TensorIntDivisor<long, false>, 4> {
+ public:
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE Eigen::internal::TensorIntDivisor<long, false>& operator[] (size_t index) { return values[index]; }
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE const Eigen::internal::TensorIntDivisor<long, false>& operator[] (size_t index) const { return values[index]; }
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE Eigen::internal::TensorIntDivisor<long, false>& front() { return values[0]; }
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE const Eigen::internal::TensorIntDivisor<long, false>& front() const { return values[0]; }
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE Eigen::internal::TensorIntDivisor<long, false>& back() { return values[3]; }
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE const Eigen::internal::TensorIntDivisor<long, false>& back() const { return values[3]; }
+
+  EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE
+  static std::size_t size() { return 4; }
+
+  Eigen::internal::TensorIntDivisor<long, false> values[4];
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE array() { }
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE ~array() { }
+
+#if EIGEN_HAS_VARIADIC_TEMPLATES
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE array(std::initializer_list<Eigen::internal::TensorIntDivisor<long, false> > l) {
+    eigen_assert(l.size() == 4);
+    internal::smart_copy(l.begin(), l.end(), values);
+  }
+#endif
+
+  __attribute__((annotate("user_deserialize")))
+  array(unsigned long v0, unsigned long v1, unsigned long v2, unsigned long v3) [[cpu]][[hc]] {
+    values[0] = Eigen::internal::TensorIntDivisor<long, false>(v0);
+    values[1] = Eigen::internal::TensorIntDivisor<long, false>(v1);
+    values[2] = Eigen::internal::TensorIntDivisor<long, false>(v2);
+    values[3] = Eigen::internal::TensorIntDivisor<long, false>(v3);
+  }
+
+  __attribute__((annotate("serialize")))
+  void __cxxamp_serialize(Kalmar::Serialize &s) const {
+    s.Append(sizeof(unsigned long), &values[0].multiplier);
+    s.Append(sizeof(unsigned long), &values[1].multiplier);
+    s.Append(sizeof(unsigned long), &values[2].multiplier);
+    s.Append(sizeof(unsigned long), &values[3].multiplier);
+  }
+};
+
+// Specialize array for size 4 and T = Eigen::internal::TensorIntDivisor<int, false>
+template <>
+class array<Eigen::internal::TensorIntDivisor<int, false>, 4> {
+ public:
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE Eigen::internal::TensorIntDivisor<int, false>& operator[] (size_t index) { return values[index]; }
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE const Eigen::internal::TensorIntDivisor<int, false>& operator[] (size_t index) const { return values[index]; }
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE Eigen::internal::TensorIntDivisor<int, false>& front() { return values[0]; }
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE const Eigen::internal::TensorIntDivisor<int, false>& front() const { return values[0]; }
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE Eigen::internal::TensorIntDivisor<int, false>& back() { return values[3]; }
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE const Eigen::internal::TensorIntDivisor<int, false>& back() const { return values[3]; }
+
+  EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE
+  static std::size_t size() { return 4; }
+
+  Eigen::internal::TensorIntDivisor<int, false> values[4];
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE array() { }
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE ~array() { }
+
+#if EIGEN_HAS_VARIADIC_TEMPLATES
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE array(std::initializer_list<Eigen::internal::TensorIntDivisor<int, false> > l) {
+    eigen_assert(l.size() == 4);
+    internal::smart_copy(l.begin(), l.end(), values);
+  }
+#endif
+
+  __attribute__((annotate("user_deserialize")))
+  array(unsigned int v0, unsigned int v1, unsigned int v2, unsigned int v3) [[cpu]][[hc]] {
+    values[0] = Eigen::internal::TensorIntDivisor<int, false>(v0);
+    values[1] = Eigen::internal::TensorIntDivisor<int, false>(v1);
+    values[2] = Eigen::internal::TensorIntDivisor<int, false>(v2);
+    values[3] = Eigen::internal::TensorIntDivisor<int, false>(v3);
+  }
+
+  __attribute__((annotate("serialize")))
+  void __cxxamp_serialize(Kalmar::Serialize &s) const {
+    s.Append(sizeof(unsigned int), &values[0].multiplier);
+    s.Append(sizeof(unsigned int), &values[1].multiplier);
+    s.Append(sizeof(unsigned int), &values[2].multiplier);
+    s.Append(sizeof(unsigned int), &values[3].multiplier);
+  }
+};
+
+// Specialize array for size 5 and T = Eigen::internal::TensorIntDivisor<long, false>
+template <>
+class array<Eigen::internal::TensorIntDivisor<long, false>, 5> {
+ public:
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE Eigen::internal::TensorIntDivisor<long, false>& operator[] (size_t index) { return values[index]; }
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE const Eigen::internal::TensorIntDivisor<long, false>& operator[] (size_t index) const { return values[index]; }
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE Eigen::internal::TensorIntDivisor<long, false>& front() { return values[0]; }
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE const Eigen::internal::TensorIntDivisor<long, false>& front() const { return values[0]; }
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE Eigen::internal::TensorIntDivisor<long, false>& back() { return values[4]; }
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE const Eigen::internal::TensorIntDivisor<long, false>& back() const { return values[4]; }
+
+  EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE
+  static std::size_t size() { return 5; }
+
+  Eigen::internal::TensorIntDivisor<long, false> values[5];
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE array() { }
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE ~array() { }
+
+#if EIGEN_HAS_VARIADIC_TEMPLATES
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE array(std::initializer_list<Eigen::internal::TensorIntDivisor<long, false>> l) {
+    eigen_assert(l.size() == 5);
+    internal::smart_copy(l.begin(), l.end(), values);
+  }
+#endif
+
+  __attribute__((annotate("user_deserialize")))
+  array(unsigned long v0, unsigned long v1, unsigned long v2, unsigned long v3, unsigned long v4) [[cpu]][[hc]] {
+    values[0] = Eigen::internal::TensorIntDivisor<long, false>(v0);
+    values[1] = Eigen::internal::TensorIntDivisor<long, false>(v1);
+    values[2] = Eigen::internal::TensorIntDivisor<long, false>(v2);
+    values[3] = Eigen::internal::TensorIntDivisor<long, false>(v3);
+    values[4] = Eigen::internal::TensorIntDivisor<long, false>(v4);
+  }
+
+  __attribute__((annotate("serialize")))
+  void __cxxamp_serialize(Kalmar::Serialize &s) const {
+    s.Append(sizeof(unsigned long), &values[0].multiplier);
+    s.Append(sizeof(unsigned long), &values[1].multiplier);
+    s.Append(sizeof(unsigned long), &values[2].multiplier);
+    s.Append(sizeof(unsigned long), &values[3].multiplier);
+    s.Append(sizeof(unsigned long), &values[4].multiplier);
+  }
+};
+
+// Specialize array for size 5 and T = Eigen::internal::TensorIntDivisor<int, false>
+template <>
+class array<Eigen::internal::TensorIntDivisor<int, false>, 5> {
+ public:
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE Eigen::internal::TensorIntDivisor<int, false>& operator[] (size_t index) { return values[index]; }
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE const Eigen::internal::TensorIntDivisor<int, false>& operator[] (size_t index) const { return values[index]; }
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE Eigen::internal::TensorIntDivisor<int, false>& front() { return values[0]; }
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE const Eigen::internal::TensorIntDivisor<int, false>& front() const { return values[0]; }
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE Eigen::internal::TensorIntDivisor<int, false>& back() { return values[4]; }
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE const Eigen::internal::TensorIntDivisor<int, false>& back() const { return values[4]; }
+
+  EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE
+  static std::size_t size() { return 5; }
+
+  Eigen::internal::TensorIntDivisor<int, false> values[5];
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE array() { }
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE ~array() { }
+
+#if EIGEN_HAS_VARIADIC_TEMPLATES
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE array(std::initializer_list<Eigen::internal::TensorIntDivisor<int, false>> l) {
+    eigen_assert(l.size() == 5);
+    internal::smart_copy(l.begin(), l.end(), values);
+  }
+#endif
+
+  __attribute__((annotate("user_deserialize")))
+  array(unsigned int v0, unsigned int v1, unsigned int v2, unsigned int v3, unsigned int v4) [[cpu]][[hc]] {
+    values[0] = Eigen::internal::TensorIntDivisor<int, false>(v0);
+    values[1] = Eigen::internal::TensorIntDivisor<int, false>(v1);
+    values[2] = Eigen::internal::TensorIntDivisor<int, false>(v2);
+    values[3] = Eigen::internal::TensorIntDivisor<int, false>(v3);
+    values[4] = Eigen::internal::TensorIntDivisor<int, false>(v4);
+  }
+
+  __attribute__((annotate("serialize")))
+  void __cxxamp_serialize(Kalmar::Serialize &s) const {
+    s.Append(sizeof(unsigned int), &values[0].multiplier);
+    s.Append(sizeof(unsigned int), &values[1].multiplier);
+    s.Append(sizeof(unsigned int), &values[2].multiplier);
+    s.Append(sizeof(unsigned int), &values[3].multiplier);
+    s.Append(sizeof(unsigned int), &values[4].multiplier);
+  }
+};
+
+// Specialize array for size 6 and T = Eigen::internal::TensorIntDivisor<long, false>
+template <>
+class array<Eigen::internal::TensorIntDivisor<long, false>, 6> {
+ public:
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE Eigen::internal::TensorIntDivisor<long, false>& operator[] (size_t index) { return values[index]; }
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE const Eigen::internal::TensorIntDivisor<long, false>& operator[] (size_t index) const { return values[index]; }
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE Eigen::internal::TensorIntDivisor<long, false>& front() { return values[0]; }
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE const Eigen::internal::TensorIntDivisor<long, false>& front() const { return values[0]; }
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE Eigen::internal::TensorIntDivisor<long, false>& back() { return values[5]; }
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE const Eigen::internal::TensorIntDivisor<long, false>& back() const { return values[5]; }
+
+  EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE
+  static std::size_t size() { return 6; }
+
+  Eigen::internal::TensorIntDivisor<long, false> values[6];
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE array() { }
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE ~array() { }
+
+#if EIGEN_HAS_VARIADIC_TEMPLATES
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE array(std::initializer_list<Eigen::internal::TensorIntDivisor<long, false>> l) {
+    eigen_assert(l.size() == 6);
+    internal::smart_copy(l.begin(), l.end(), values);
+  }
+#endif
+
+  __attribute__((annotate("user_deserialize")))
+  array(unsigned long v0, unsigned long v1, unsigned long v2, unsigned long v3, unsigned long v4, unsigned long v5) [[cpu]][[hc]] {
+    values[0] = Eigen::internal::TensorIntDivisor<long, false>(v0);
+    values[1] = Eigen::internal::TensorIntDivisor<long, false>(v1);
+    values[2] = Eigen::internal::TensorIntDivisor<long, false>(v2);
+    values[3] = Eigen::internal::TensorIntDivisor<long, false>(v3);
+    values[4] = Eigen::internal::TensorIntDivisor<long, false>(v4);
+    values[5] = Eigen::internal::TensorIntDivisor<long, false>(v5);
+  }
+
+  __attribute__((annotate("serialize")))
+  void __cxxamp_serialize(Kalmar::Serialize &s) const {
+    s.Append(sizeof(unsigned long), &values[0].multiplier);
+    s.Append(sizeof(unsigned long), &values[1].multiplier);
+    s.Append(sizeof(unsigned long), &values[2].multiplier);
+    s.Append(sizeof(unsigned long), &values[3].multiplier);
+    s.Append(sizeof(unsigned long), &values[4].multiplier);
+    s.Append(sizeof(unsigned long), &values[5].multiplier);
+  }
+};
+
+// Specialize array for size 6 and T = Eigen::internal::TensorIntDivisor<int, false>
+template <>
+class array<Eigen::internal::TensorIntDivisor<int, false>, 6> {
+ public:
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE Eigen::internal::TensorIntDivisor<int, false>& operator[] (size_t index) { return values[index]; }
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE const Eigen::internal::TensorIntDivisor<int, false>& operator[] (size_t index) const { return values[index]; }
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE Eigen::internal::TensorIntDivisor<int, false>& front() { return values[0]; }
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE const Eigen::internal::TensorIntDivisor<int, false>& front() const { return values[0]; }
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE Eigen::internal::TensorIntDivisor<int, false>& back() { return values[5]; }
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE const Eigen::internal::TensorIntDivisor<int, false>& back() const { return values[5]; }
+
+  EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE
+  static std::size_t size() { return 6; }
+
+  Eigen::internal::TensorIntDivisor<int, false> values[6];
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE array() { }
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE ~array() { }
+
+#if EIGEN_HAS_VARIADIC_TEMPLATES
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE array(std::initializer_list<Eigen::internal::TensorIntDivisor<int, false>> l) {
+    eigen_assert(l.size() == 6);
+    internal::smart_copy(l.begin(), l.end(), values);
+  }
+#endif
+
+  __attribute__((annotate("user_deserialize")))
+  array(unsigned int v0, unsigned int v1, unsigned int v2, unsigned int v3, unsigned int v4, unsigned int v5) [[cpu]][[hc]] {
+    values[0] = Eigen::internal::TensorIntDivisor<int, false>(v0);
+    values[1] = Eigen::internal::TensorIntDivisor<int, false>(v1);
+    values[2] = Eigen::internal::TensorIntDivisor<int, false>(v2);
+    values[3] = Eigen::internal::TensorIntDivisor<int, false>(v3);
+    values[4] = Eigen::internal::TensorIntDivisor<int, false>(v4);
+    values[5] = Eigen::internal::TensorIntDivisor<int, false>(v5);
+  }
+
+  __attribute__((annotate("serialize")))
+  void __cxxamp_serialize(Kalmar::Serialize &s) const {
+    s.Append(sizeof(unsigned int), &values[0].multiplier);
+    s.Append(sizeof(unsigned int), &values[1].multiplier);
+    s.Append(sizeof(unsigned int), &values[2].multiplier);
+    s.Append(sizeof(unsigned int), &values[3].multiplier);
+    s.Append(sizeof(unsigned int), &values[4].multiplier);
+    s.Append(sizeof(unsigned int), &values[5].multiplier);
+  }
+};
+
+// Specialize array for size 7 and T = Eigen::internal::TensorIntDivisor<long, false>
+template <>
+class array<Eigen::internal::TensorIntDivisor<long, false>, 7> {
+ public:
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE Eigen::internal::TensorIntDivisor<long, false>& operator[] (size_t index) { return values[index]; }
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE const Eigen::internal::TensorIntDivisor<long, false>& operator[] (size_t index) const { return values[index]; }
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE Eigen::internal::TensorIntDivisor<long, false>& front() { return values[0]; }
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE const Eigen::internal::TensorIntDivisor<long, false>& front() const { return values[0]; }
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE Eigen::internal::TensorIntDivisor<long, false>& back() { return values[6]; }
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE const Eigen::internal::TensorIntDivisor<long, false>& back() const { return values[6]; }
+
+  EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE
+  static std::size_t size() { return 7; }
+
+  Eigen::internal::TensorIntDivisor<long, false> values[7];
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE array() { }
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE ~array() { }
+
+#if EIGEN_HAS_VARIADIC_TEMPLATES
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE array(std::initializer_list<Eigen::internal::TensorIntDivisor<long, false>> l) {
+    eigen_assert(l.size() == 7);
+    internal::smart_copy(l.begin(), l.end(), values);
+  }
+#endif
+
+  __attribute__((annotate("user_deserialize")))
+  array(unsigned long v0, unsigned long v1, unsigned long v2, unsigned long v3, unsigned long v4, unsigned long v5, unsigned long v6) [[cpu]][[hc]] {
+    values[0] = Eigen::internal::TensorIntDivisor<long, false>(v0);
+    values[1] = Eigen::internal::TensorIntDivisor<long, false>(v1);
+    values[2] = Eigen::internal::TensorIntDivisor<long, false>(v2);
+    values[3] = Eigen::internal::TensorIntDivisor<long, false>(v3);
+    values[4] = Eigen::internal::TensorIntDivisor<long, false>(v4);
+    values[5] = Eigen::internal::TensorIntDivisor<long, false>(v5);
+    values[6] = Eigen::internal::TensorIntDivisor<long, false>(v6);
+  }
+
+  __attribute__((annotate("serialize")))
+  void __cxxamp_serialize(Kalmar::Serialize &s) const {
+    s.Append(sizeof(unsigned long), &values[0].multiplier);
+    s.Append(sizeof(unsigned long), &values[1].multiplier);
+    s.Append(sizeof(unsigned long), &values[2].multiplier);
+    s.Append(sizeof(unsigned long), &values[3].multiplier);
+    s.Append(sizeof(unsigned long), &values[4].multiplier);
+    s.Append(sizeof(unsigned long), &values[5].multiplier);
+    s.Append(sizeof(unsigned long), &values[6].multiplier);
+  }
+};
+
+// Specialize array for size 7 and T = Eigen::internal::TensorIntDivisor<int, false>
+template <>
+class array<Eigen::internal::TensorIntDivisor<int, false>, 7> {
+ public:
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE Eigen::internal::TensorIntDivisor<int, false>& operator[] (size_t index) { return values[index]; }
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE const Eigen::internal::TensorIntDivisor<int, false>& operator[] (size_t index) const { return values[index]; }
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE Eigen::internal::TensorIntDivisor<int, false>& front() { return values[0]; }
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE const Eigen::internal::TensorIntDivisor<int, false>& front() const { return values[0]; }
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE Eigen::internal::TensorIntDivisor<int, false>& back() { return values[6]; }
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE const Eigen::internal::TensorIntDivisor<int, false>& back() const { return values[6]; }
+
+  EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE
+  static std::size_t size() { return 7; }
+
+  Eigen::internal::TensorIntDivisor<int, false> values[7];
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE array() { }
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE ~array() { }
+
+#if EIGEN_HAS_VARIADIC_TEMPLATES
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE array(std::initializer_list<Eigen::internal::TensorIntDivisor<int, false>> l) {
+    eigen_assert(l.size() == 7);
+    internal::smart_copy(l.begin(), l.end(), values);
+  }
+#endif
+
+  __attribute__((annotate("user_deserialize")))
+  array(unsigned int v0, unsigned int v1, unsigned int v2, unsigned int v3, unsigned int v4, unsigned int v5, unsigned int v6) [[cpu]][[hc]] {
+    values[0] = Eigen::internal::TensorIntDivisor<int, false>(v0);
+    values[1] = Eigen::internal::TensorIntDivisor<int, false>(v1);
+    values[2] = Eigen::internal::TensorIntDivisor<int, false>(v2);
+    values[3] = Eigen::internal::TensorIntDivisor<int, false>(v3);
+    values[4] = Eigen::internal::TensorIntDivisor<int, false>(v4);
+    values[5] = Eigen::internal::TensorIntDivisor<int, false>(v5);
+    values[6] = Eigen::internal::TensorIntDivisor<int, false>(v6);
+  }
+
+  __attribute__((annotate("serialize")))
+  void __cxxamp_serialize(Kalmar::Serialize &s) const {
+    s.Append(sizeof(unsigned int), &values[0].multiplier);
+    s.Append(sizeof(unsigned int), &values[1].multiplier);
+    s.Append(sizeof(unsigned int), &values[2].multiplier);
+    s.Append(sizeof(unsigned int), &values[3].multiplier);
+    s.Append(sizeof(unsigned int), &values[4].multiplier);
+    s.Append(sizeof(unsigned int), &values[5].multiplier);
+    s.Append(sizeof(unsigned int), &values[6].multiplier);
+  }
+};
+
+// Specialize array for size 8 and T = Eigen::internal::TensorIntDivisor<long, false>
+template <>
+class array<Eigen::internal::TensorIntDivisor<long, false>, 8> {
+ public:
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE Eigen::internal::TensorIntDivisor<long, false>& operator[] (size_t index) { return values[index]; }
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE const Eigen::internal::TensorIntDivisor<long, false>& operator[] (size_t index) const { return values[index]; }
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE Eigen::internal::TensorIntDivisor<long, false>& front() { return values[0]; }
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE const Eigen::internal::TensorIntDivisor<long, false>& front() const { return values[0]; }
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE Eigen::internal::TensorIntDivisor<long, false>& back() { return values[7]; }
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE const Eigen::internal::TensorIntDivisor<long, false>& back() const { return values[7]; }
+
+  EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE
+  static std::size_t size() { return 8; }
+
+  Eigen::internal::TensorIntDivisor<long, false> values[8];
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE array() { }
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE ~array() { }
+
+#if EIGEN_HAS_VARIADIC_TEMPLATES
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE array(std::initializer_list<Eigen::internal::TensorIntDivisor<long, false>> l) {
+    eigen_assert(l.size() == 8);
+    internal::smart_copy(l.begin(), l.end(), values);
+  }
+#endif
+
+  __attribute__((annotate("user_deserialize")))
+  array(unsigned long v0, unsigned long v1, unsigned long v2, unsigned long v3, unsigned long v4, unsigned long v5, unsigned long v6, unsigned long v7) [[cpu]][[hc]] {
+    values[0] = Eigen::internal::TensorIntDivisor<long, false>(v0);
+    values[1] = Eigen::internal::TensorIntDivisor<long, false>(v1);
+    values[2] = Eigen::internal::TensorIntDivisor<long, false>(v2);
+    values[3] = Eigen::internal::TensorIntDivisor<long, false>(v3);
+    values[4] = Eigen::internal::TensorIntDivisor<long, false>(v4);
+    values[5] = Eigen::internal::TensorIntDivisor<long, false>(v5);
+    values[6] = Eigen::internal::TensorIntDivisor<long, false>(v6);
+    values[7] = Eigen::internal::TensorIntDivisor<long, false>(v7);
+  }
+
+  __attribute__((annotate("serialize")))
+  void __cxxamp_serialize(Kalmar::Serialize &s) const {
+    s.Append(sizeof(unsigned long), &values[0].multiplier);
+    s.Append(sizeof(unsigned long), &values[1].multiplier);
+    s.Append(sizeof(unsigned long), &values[2].multiplier);
+    s.Append(sizeof(unsigned long), &values[3].multiplier);
+    s.Append(sizeof(unsigned long), &values[4].multiplier);
+    s.Append(sizeof(unsigned long), &values[5].multiplier);
+    s.Append(sizeof(unsigned long), &values[6].multiplier);
+    s.Append(sizeof(unsigned long), &values[7].multiplier);
+  }
+};
+
+// Specialize array for size 8 and T = Eigen::internal::TensorIntDivisor<int, false>
+template <>
+class array<Eigen::internal::TensorIntDivisor<int, false>, 8> {
+ public:
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE Eigen::internal::TensorIntDivisor<int, false>& operator[] (size_t index) { return values[index]; }
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE const Eigen::internal::TensorIntDivisor<int, false>& operator[] (size_t index) const { return values[index]; }
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE Eigen::internal::TensorIntDivisor<int, false>& front() { return values[0]; }
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE const Eigen::internal::TensorIntDivisor<int, false>& front() const { return values[0]; }
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE Eigen::internal::TensorIntDivisor<int, false>& back() { return values[7]; }
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE const Eigen::internal::TensorIntDivisor<int, false>& back() const { return values[7]; }
+
+  EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE
+  static std::size_t size() { return 8; }
+
+  Eigen::internal::TensorIntDivisor<int, false> values[8];
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE array() { }
+
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE ~array() { }
+
+#if EIGEN_HAS_VARIADIC_TEMPLATES
+  EIGEN_DEVICE_FUNC
+  EIGEN_STRONG_INLINE array(std::initializer_list<Eigen::internal::TensorIntDivisor<int, false>> l) {
+    eigen_assert(l.size() == 8);
+    internal::smart_copy(l.begin(), l.end(), values);
+  }
+#endif
+
+  __attribute__((annotate("user_deserialize")))
+  array(unsigned int v0, unsigned int v1, unsigned int v2, unsigned int v3, unsigned int v4, unsigned int v5, unsigned int v6, unsigned int v7) [[cpu]][[hc]] {
+    values[0] = Eigen::internal::TensorIntDivisor<int, false>(v0);
+    values[1] = Eigen::internal::TensorIntDivisor<int, false>(v1);
+    values[2] = Eigen::internal::TensorIntDivisor<int, false>(v2);
+    values[3] = Eigen::internal::TensorIntDivisor<int, false>(v3);
+    values[4] = Eigen::internal::TensorIntDivisor<int, false>(v4);
+    values[5] = Eigen::internal::TensorIntDivisor<int, false>(v5);
+    values[6] = Eigen::internal::TensorIntDivisor<int, false>(v6);
+    values[7] = Eigen::internal::TensorIntDivisor<int, false>(v7);
+  }
+
+  __attribute__((annotate("serialize")))
+  void __cxxamp_serialize(Kalmar::Serialize &s) const {
+    s.Append(sizeof(unsigned int), &values[0].multiplier);
+    s.Append(sizeof(unsigned int), &values[1].multiplier);
+    s.Append(sizeof(unsigned int), &values[2].multiplier);
+    s.Append(sizeof(unsigned int), &values[3].multiplier);
+    s.Append(sizeof(unsigned int), &values[4].multiplier);
+    s.Append(sizeof(unsigned int), &values[5].multiplier);
+    s.Append(sizeof(unsigned int), &values[6].multiplier);
+    s.Append(sizeof(unsigned int), &values[7].multiplier);
+  }
+};
+
+} // end namespace Eigen
+#endif // #ifdef __HCC__
 
 #endif // EIGEN_CXX11_TENSOR_TENSOR_INTDIV_H
