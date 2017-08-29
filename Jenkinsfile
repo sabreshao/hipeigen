@@ -63,14 +63,16 @@ String checkout_and_version( String workspace_dir_abs )
       deleteDir( )
 
       // checkout hipeigen
-      checkout([
-          $class: 'GitSCM',
-          branches: scm.branches,
-          doGenerateSubmoduleConfigurations: scm.doGenerateSubmoduleConfigurations,
-          extensions: scm.extensions + [[$class: 'CloneOption', depth: 1, noTags: false, reference: '', shallow: true]],
-          submoduleCfg: [],
-          userRemoteConfigs: scm.userRemoteConfigs
-          ])
+      checkout scm
+
+      // checkout([
+      //     $class: 'GitSCM',
+      //     branches: scm.branches,
+      //     doGenerateSubmoduleConfigurations: scm.doGenerateSubmoduleConfigurations,
+      //     extensions: scm.extensions + [[$class: 'CloneOption', depth: 1, noTags: false, reference: '', shallow: true]],
+      //     submoduleCfg: [],
+      //     userRemoteConfigs: scm.userRemoteConfigs
+      //     ])
     }
   }
 

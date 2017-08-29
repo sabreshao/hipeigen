@@ -325,6 +325,8 @@ struct TensorContractionEvaluatorBase
     }
   }
 
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE ~TensorContractionEvaluatorBase() {}
+
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE const Dimensions& dimensions() const { return m_dimensions; }
 
   EIGEN_STRONG_INLINE bool evalSubExprsIfNeeded(Scalar* data) {
@@ -611,6 +613,8 @@ struct TensorEvaluator<const TensorContractionOp<Indices, LeftArgType, RightArgT
 
   EIGEN_DEVICE_FUNC TensorEvaluator(const XprType& op, const Device& device) :
       Base(op, device) { }
+ 
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE ~TensorEvaluator() {}
 
   template <bool lhs_inner_dim_contiguous, bool rhs_inner_dim_contiguous, bool rhs_inner_dim_reordered, int Alignment>
   void evalProduct(Scalar* buffer) const {

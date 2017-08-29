@@ -49,6 +49,8 @@ struct nested<TensorChippingOp<DimId, XprType>, 1, typename eval<TensorChippingO
 template <DenseIndex DimId>
 struct DimensionId
 {
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE DimensionId() {}
+
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE DimensionId(DenseIndex dim) {
     eigen_assert(dim == DimId);
   }
@@ -182,6 +184,8 @@ struct TensorEvaluator<const TensorChippingOp<DimId, ArgType>, Device>
     m_inputStride *= input_dims[m_dim.actualDim()];
     m_inputOffset = m_stride * op.offset();
   }
+ 
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE ~TensorEvaluator() {}
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE const Dimensions& dimensions() const { return m_dimensions; }
 
@@ -332,6 +336,8 @@ struct TensorEvaluator<TensorChippingOp<DimId, ArgType>, Device>
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE TensorEvaluator(const XprType& op, const Device& device)
     : Base(op, device)
     { }
+ 
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE ~TensorEvaluator() {}
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE CoeffReturnType& coeffRef(Index index)
   {

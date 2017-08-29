@@ -63,6 +63,8 @@ class TensorShufflingOp : public TensorBase<TensorShufflingOp<Shuffle, XprType> 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE TensorShufflingOp(const XprType& expr, const Shuffle& shuffle)
       : m_xpr(expr), m_shuffle(shuffle) {}
 
+  EIGEN_DEVICE_FUNC ~TensorShufflingOp() {}
+
     EIGEN_DEVICE_FUNC
     const Shuffle& shufflePermutation() const { return m_shuffle; }
 
@@ -147,6 +149,8 @@ struct TensorEvaluator<const TensorShufflingOp<Shuffle, ArgType>, Device>
       m_inputStrides[i] = inputStrides[shuffle[i]];
     }
   }
+ 
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE ~TensorEvaluator() {}
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE const Dimensions& dimensions() const { return m_dimensions; }
 
@@ -239,6 +243,8 @@ struct TensorEvaluator<TensorShufflingOp<Shuffle, ArgType>, Device>
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE TensorEvaluator(const XprType& op, const Device& device)
       : Base(op, device)
   { }
+ 
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE ~TensorEvaluator() {}
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE CoeffReturnType& coeffRef(Index index)
   {

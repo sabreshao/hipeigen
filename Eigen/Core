@@ -15,7 +15,7 @@
 #include "src/Core/util/DisableStupidWarnings.h"
 
 // Handle HIPCC/CUDA/SYCL
-#if defined(__HCC__) || defined(__NVCC__) || defined(__HIPCC__) || defined(__SYCL_DEVICE_ONLY__)
+#if defined(__HIPCC__) || defined(__SYCL_DEVICE_ONLY__)
   #include <hip/hip_runtime.h>
 
   // Do not try asserts on HIP!
@@ -51,7 +51,6 @@
   #endif
 #else
   #define EIGEN_DEVICE_FUNC
-
 #endif
 
 // When compiling HIP device code with HIPCC, pull in math functions from the

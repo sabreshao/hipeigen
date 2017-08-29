@@ -59,7 +59,6 @@ namespace Eigen {
 struct half;
 
 namespace half_impl {
-
 #if !defined(EIGEN_HAS_HIP_FP16)
 
 // Make our own __half definition that is similar to HIP's.

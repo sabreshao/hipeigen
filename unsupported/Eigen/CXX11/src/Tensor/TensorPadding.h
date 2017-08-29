@@ -132,6 +132,8 @@ struct TensorEvaluator<const TensorPaddingOp<PaddingDimensions, ArgType>, Device
       m_outputStrides[0] = m_outputStrides[1] * m_dimensions[0];
     }
   }
+ 
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE ~TensorEvaluator() {}
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE const Dimensions& dimensions() const { return m_dimensions; }
 
@@ -249,7 +251,7 @@ struct TensorEvaluator<const TensorPaddingOp<PaddingDimensions, ArgType>, Device
       cost += TensorOpCost(0, 0, 2 * TensorOpCost::AddCost<Index>() +
                                  2 * TensorOpCost::MulCost<Index>() +
                     reduction * (2 * TensorOpCost::MulCost<Index>() +
-                                 1 * TensorOpCost::DivCost<Index>()));
+                                 1 * TensorOpCost::DivCost<Index>()), 0);
     }
   }
 

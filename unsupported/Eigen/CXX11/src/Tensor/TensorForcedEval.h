@@ -79,6 +79,8 @@ class TensorForcedEvalOp : public TensorBase<TensorForcedEvalOp<XprType, MakePoi
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE TensorForcedEvalOp(const XprType& expr)
       : m_xpr(expr) {}
 
+  EIGEN_DEVICE_FUNC ~TensorForcedEvalOp() {}
+
     EIGEN_DEVICE_FUNC
     const typename internal::remove_all<typename XprType::Nested>::type&
     expression() const { return m_xpr; }
@@ -110,6 +112,8 @@ struct TensorEvaluator<const TensorForcedEvalOp<ArgType, MakePointer_>, Device>
 	/// op_ is used for sycl
       : m_impl(op.expression(), device), m_op(op.expression()), m_device(device), m_buffer(NULL)
   { }
+ 
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE ~TensorEvaluator() {}
 
   EIGEN_DEVICE_FUNC const Dimensions& dimensions() const { return m_impl.dimensions(); }
 

@@ -231,10 +231,14 @@ struct EigenMetaKernelEval<Evaluator, Index, true> {
   }
 };
 
+// FIXME - remove this once launch_bounds=1024 is working correctly.
+#define MAX_BLOCK_SIZE 512
+
 template <typename Evaluator, typename Index>
-__global__ void
 //FIXME: why add 1 here?
-__launch_bounds__(1024, 1)
+//__launch_bounds__(1024, 1)
+__launch_bounds__(MAX_BLOCK_SIZE, 1)
+__global__ void
 EigenMetaKernel( Evaluator eval, Index size){
   const Index first_index = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
   const Index step_size = hipBlockDim_x * hipGridDim_x;
@@ -250,7 +254,8 @@ inline void TensorExecutor<Expression, GpuDevice, Vectorizable>::run(
   TensorEvaluator<Expression, GpuDevice> evaluator(expr, device);
   const bool needs_assign = evaluator.evalSubExprsIfNeeded(NULL);
   if (needs_assign) {
-    const int block_size = device.maxHipThreadsPerBlock();
+    //const int block_size = device.maxHipThreadsPerBlock();
+    const int block_size = MAX_BLOCK_SIZE;
     const int max_blocks = device.getNumHipMultiProcessors() *
                            device.maxHipThreadsPerMultiProcessor() / block_size;
     const Index size = array_prod(evaluator.dimensions());

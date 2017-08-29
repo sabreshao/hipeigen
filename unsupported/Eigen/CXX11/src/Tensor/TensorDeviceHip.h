@@ -22,30 +22,25 @@ static const int kHipScratchSize = 1024;
 
 // This defines an interface that GPUDevice can take to use
 // HIP streams underneath.
-template<typename T> class StreamInterface {
+class StreamInterface {
  public:
-  ~StreamInterface() {
-    // FIXME: this lines seems to be quite dangerous
-#if 0
-    static_cast<T const *>(this)->~HipStreamDevice();
-#endif
-  }
+  virtual ~StreamInterface() {}
 
-  const hipStream_t& stream() const { return static_cast<T const *>(this)->stream(); }
-  const hipDeviceProp_t& deviceProperties() const { return static_cast<T const *>(this)->deviceProperties(); }
+  virtual const hipStream_t& stream() const = 0;
+  virtual const hipDeviceProp_t& deviceProperties() const = 0;
 
   // Allocate memory on the actual device where the computation will run
-  void* allocate(size_t num_bytes) const { return static_cast<T const *>(this)->allocate(num_bytes); }
-  void deallocate(void* buffer) const { return static_cast<T const *>(this)->deallocate(buffer); }
+  virtual void* allocate(size_t num_bytes) const = 0;
+  virtual void deallocate(void* buffer) const = 0;
 
   // Return a scratchpad buffer of size 1k
-  void* scratchpad() const { return static_cast<T const *>(this)->scratchpad(); }
+  virtual void* scratchpad() const = 0;
 
   // Return a semaphore. The semaphore is initially initialized to 0, and
   // each kernel using it is responsible for resetting to 0 upon completion
   // to maintain the invariant that the semaphore is always equal to 0 upon
   // each kernel start.
-  unsigned int* semaphore() const { return static_cast<T const *>(this)->semaphore(); }
+  virtual unsigned int* semaphore() const = 0;
 };
 
 static hipDeviceProp_t* m_deviceProperties;
@@ -107,7 +102,7 @@ static void initializeDeviceProp() {
 
 static const hipStream_t default_stream = 0x00;//TODO: Use hipStreamDefault instead of 0x00;
 
-class HipStreamDevice : public StreamInterface<HipStreamDevice> {
+class HipStreamDevice : public StreamInterface {
  public:
   // Use the default stream on the current device
   HipStreamDevice() : stream_(&default_stream), scratch_(NULL), semaphore_(NULL) {
@@ -137,7 +132,7 @@ class HipStreamDevice : public StreamInterface<HipStreamDevice> {
     initializeDeviceProp();
   }
 
-  ~HipStreamDevice() {
+  virtual ~HipStreamDevice() {
     if (scratch_) {
       deallocate(scratch_);
     }
@@ -147,7 +142,7 @@ class HipStreamDevice : public StreamInterface<HipStreamDevice> {
   const hipDeviceProp_t& deviceProperties() const {
     return m_deviceProperties[device_];
   }
-  void* allocate(size_t num_bytes) const {
+  virtual void* allocate(size_t num_bytes) const {
     hipError_t err = hipSetDevice(device_);
     EIGEN_UNUSED_VARIABLE(err)
     assert(err == hipSuccess);
@@ -157,7 +152,7 @@ class HipStreamDevice : public StreamInterface<HipStreamDevice> {
     assert(result != NULL);
     return result;
   }
-  void deallocate(void* buffer) const {
+  virtual void deallocate(void* buffer) const {
     hipError_t err = hipSetDevice(device_);
     EIGEN_UNUSED_VARIABLE(err)
     assert(err == hipSuccess);
@@ -166,14 +161,14 @@ class HipStreamDevice : public StreamInterface<HipStreamDevice> {
     assert(err == hipSuccess);
   }
 
-  void* scratchpad() const {
+  virtual void* scratchpad() const {
     if (scratch_ == NULL) {
       scratch_ = allocate(kHipScratchSize + sizeof(unsigned int));
     }
     return scratch_;
   }
 
-  unsigned int* semaphore() const {
+  virtual unsigned int* semaphore() const {
     if (semaphore_ == NULL) {
       char* scratch = static_cast<char*>(scratchpad()) + kHipScratchSize;
       semaphore_ = reinterpret_cast<unsigned int*>(scratch);
@@ -195,10 +190,10 @@ class HipStreamDevice : public StreamInterface<HipStreamDevice> {
 struct GpuDevice {
   // The StreamInterface is not owned: the caller is
   // responsible for its initialization and eventual destruction.
-  explicit GpuDevice(const HipStreamDevice::StreamInterface* stream) : stream_(stream), max_blocks_(INT_MAX) {
+  explicit GpuDevice(const StreamInterface* stream) : stream_(stream), max_blocks_(INT_MAX) {
     eigen_assert(stream);
   }
-  explicit GpuDevice(const HipStreamDevice::StreamInterface* stream, int num_blocks) : stream_(stream), max_blocks_(num_blocks) {
+  explicit GpuDevice(const StreamInterface* stream, int num_blocks) : stream_(stream), max_blocks_(num_blocks) {
     eigen_assert(stream);
   }
   // TODO(bsteiner): This is an internal API, we should not expose it.
@@ -330,7 +325,7 @@ struct GpuDevice {
   }
 
  private:
-  const HipStreamDevice::StreamInterface* stream_;
+  const StreamInterface* stream_;
   int max_blocks_;
 };
 

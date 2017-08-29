@@ -59,7 +59,6 @@ namespace Eigen {
 struct half;
 
 namespace half_impl {
-
 #if !defined(EIGEN_HAS_HIP_FP16)
 
 // Make our own __hip_half definition that is similar to HIP's.
@@ -402,6 +401,9 @@ EIGEN_STRONG_INLINE EIGEN_DEVICE_FUNC half abs(const half& a) {
 }
 EIGEN_STRONG_INLINE EIGEN_DEVICE_FUNC half exp(const half& a) {
   return half(::expf(float(a)));
+}
+EIGEN_STRONG_INLINE EIGEN_DEVICE_FUNC half expm1(const half& a) {
+  return half(numext::expm1(float(a)));
 }
 EIGEN_STRONG_INLINE EIGEN_DEVICE_FUNC half log(const half& a) {
 #if defined(EIGEN_HAS_HIP_FP16) && defined(__HIP_ARCH_HAS_HALF_PRECISION_SUPPORT__)

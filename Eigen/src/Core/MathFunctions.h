@@ -558,7 +558,7 @@ namespace std_fallback {
 
 template<typename Scalar>
 struct log1p_impl {
-  static inline Scalar run(const Scalar& x)
+  EIGEN_DEVICE_FUNC static inline Scalar run(const Scalar& x)
   {
     EIGEN_STATIC_ASSERT_NON_INTEGER(Scalar)
     #if EIGEN_HAS_CXX11_MATH
@@ -883,7 +883,7 @@ template<typename T> T generic_fast_tanh_float(const T& a_x);
 
 namespace numext {
 
-#ifndef __HIP_DEVICE_COMPILE__ 
+#if !defined(__HIP_DEVICE_COMPILE__) 
 template<typename T>
 EIGEN_DEVICE_FUNC
 EIGEN_ALWAYS_INLINE T mini(const T& x, const T& y)
@@ -1168,7 +1168,7 @@ EIGEN_ALWAYS_INLINE float   expm1(float x) { return cl::sycl::expm1(x); }
 EIGEN_ALWAYS_INLINE double  expm1(double x) { return cl::sycl::expm1(x); }
 #endif // defined(__SYCL_DEVICE_ONLY__)
 
-#ifdef __CUDACC__
+#ifdef __HIPCC__
 template<> EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE
 float expm1(const float &x) { return ::expm1f(x); }
 
