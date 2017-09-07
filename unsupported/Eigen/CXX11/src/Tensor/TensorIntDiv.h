@@ -202,6 +202,12 @@ struct TensorIntDivisor {
   UnsignedType multiplier;
   int32_t shift1;
   int32_t shift2;
+
+  // HCC-specific ctor used to contruct TensorIntDivisor on GPU side without
+  // all unnecessary calculations which were done on host
+#ifdef __HCC__
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE TensorIntDivisor(UnsignedType m, int32_t s1, int32_t s2) : multiplier(m), shift1(s1), shift2(s2) {}
+#endif
 };
 
 
@@ -326,12 +332,14 @@ class array<Eigen::internal::TensorIntDivisor<long, false>, 1> {
 #endif
 
   __attribute__((annotate("user_deserialize")))
-  array(unsigned long divider) [[cpu]][[hc]] {
-    values[0] = Eigen::internal::TensorIntDivisor<long, false>(divider);
+  array(unsigned long v0, int32_t s00, int32_t s01) [[cpu]][[hc]] {
+    values[0] = Eigen::internal::TensorIntDivisor<long, false>(v0, s00, s01);
   }
   __attribute__((annotate("serialize")))
   void __cxxamp_serialize(Kalmar::Serialize &s) const {
     s.Append(sizeof(unsigned long), &values[0].multiplier);
+    s.Append(sizeof(int32_t), &values[0].shift1);
+    s.Append(sizeof(int32_t), &values[0].shift2);
   }
 };
 
@@ -374,12 +382,14 @@ class array<Eigen::internal::TensorIntDivisor<int, false>, 1> {
 #endif
 
   __attribute__((annotate("user_deserialize")))
-  array(unsigned int divider) [[cpu]][[hc]] {
-    values[0] = Eigen::internal::TensorIntDivisor<int, false>(divider);
+  array(unsigned int v0, int32_t s00, int32_t s01) [[cpu]][[hc]] {
+    values[0] = Eigen::internal::TensorIntDivisor<int, false>(v0, s00, s01);
   }
   __attribute__((annotate("serialize")))
   void __cxxamp_serialize(Kalmar::Serialize &s) const {
     s.Append(sizeof(unsigned int), &values[0].multiplier);
+    s.Append(sizeof(int32_t), &values[0].shift1);
+    s.Append(sizeof(int32_t), &values[0].shift2);
   }
 };
 
@@ -422,15 +432,21 @@ class array<Eigen::internal::TensorIntDivisor<long, false>, 2> {
 #endif
 
   __attribute__((annotate("user_deserialize")))
-  array(unsigned long v0, unsigned long v1) [[cpu]][[hc]] {
-    values[0] = Eigen::internal::TensorIntDivisor<long, false>(v0);
-    values[1] = Eigen::internal::TensorIntDivisor<long, false>(v1);
+  array(unsigned long v0, int32_t s00, int32_t s01,
+        unsigned long v1, int32_t s10, int32_t s11) [[cpu]][[hc]] {
+    values[0] = Eigen::internal::TensorIntDivisor<long, false>(v0, s00, s01);
+    values[1] = Eigen::internal::TensorIntDivisor<long, false>(v1, s10, s11);
   }
 
   __attribute__((annotate("serialize")))
   void __cxxamp_serialize(Kalmar::Serialize &s) const {
     s.Append(sizeof(unsigned long), &values[0].multiplier);
+    s.Append(sizeof(int32_t), &values[0].shift1);
+    s.Append(sizeof(int32_t), &values[0].shift2);
+
     s.Append(sizeof(unsigned long), &values[1].multiplier);
+    s.Append(sizeof(int32_t), &values[1].shift1);
+    s.Append(sizeof(int32_t), &values[1].shift2);
   }
 };
 
@@ -473,15 +489,21 @@ class array<Eigen::internal::TensorIntDivisor<int, false>, 2> {
 #endif
 
   __attribute__((annotate("user_deserialize")))
-  array(unsigned int v0, unsigned int v1) [[cpu]][[hc]] {
-    values[0] = Eigen::internal::TensorIntDivisor<int, false>(v0);
-    values[1] = Eigen::internal::TensorIntDivisor<int, false>(v1);
+  array(unsigned int v0, int32_t s00, int32_t s01,
+        unsigned int v1, int32_t s10, int32_t s11) [[cpu]][[hc]] {
+    values[0] = Eigen::internal::TensorIntDivisor<int, false>(v0, s00, s01);
+    values[1] = Eigen::internal::TensorIntDivisor<int, false>(v1, s10, s11);
   }
 
   __attribute__((annotate("serialize")))
   void __cxxamp_serialize(Kalmar::Serialize &s) const {
     s.Append(sizeof(unsigned int), &values[0].multiplier);
+    s.Append(sizeof(int32_t), &values[0].shift1);
+    s.Append(sizeof(int32_t), &values[0].shift2);
+
     s.Append(sizeof(unsigned int), &values[1].multiplier);
+    s.Append(sizeof(int32_t), &values[1].shift1);
+    s.Append(sizeof(int32_t), &values[1].shift2);
   }
 };
 
@@ -524,17 +546,27 @@ class array<Eigen::internal::TensorIntDivisor<long, false>, 3> {
 #endif
 
   __attribute__((annotate("user_deserialize")))
-  array(unsigned long v0, unsigned long v1, unsigned long v2) [[cpu]][[hc]] {
-    values[0] = Eigen::internal::TensorIntDivisor<long, false>(v0);
-    values[1] = Eigen::internal::TensorIntDivisor<long, false>(v1);
-    values[2] = Eigen::internal::TensorIntDivisor<long, false>(v2);
+  array(unsigned long v0, int32_t s00, int32_t s01,
+        unsigned long v1, int32_t s10, int32_t s11,
+        unsigned long v2, int32_t s20, int32_t s21) [[cpu]][[hc]] {
+    values[0] = Eigen::internal::TensorIntDivisor<long, false>(v0, s00, s01);
+    values[1] = Eigen::internal::TensorIntDivisor<long, false>(v1, s10, s11);
+    values[2] = Eigen::internal::TensorIntDivisor<long, false>(v2, s20, s21);
   }
 
   __attribute__((annotate("serialize")))
   void __cxxamp_serialize(Kalmar::Serialize &s) const {
     s.Append(sizeof(unsigned long), &values[0].multiplier);
+    s.Append(sizeof(int32_t), &values[0].shift1);
+    s.Append(sizeof(int32_t), &values[0].shift2);
+
     s.Append(sizeof(unsigned long), &values[1].multiplier);
+    s.Append(sizeof(int32_t), &values[1].shift1);
+    s.Append(sizeof(int32_t), &values[1].shift2);
+
     s.Append(sizeof(unsigned long), &values[2].multiplier);
+    s.Append(sizeof(int32_t), &values[2].shift1);
+    s.Append(sizeof(int32_t), &values[2].shift2);
   }
 };
 
@@ -577,17 +609,27 @@ class array<Eigen::internal::TensorIntDivisor<int, false>, 3> {
 #endif
 
   __attribute__((annotate("user_deserialize")))
-  array(unsigned int v0, unsigned int v1, unsigned int v2) [[cpu]][[hc]] {
-    values[0] = Eigen::internal::TensorIntDivisor<int, false>(v0);
-    values[1] = Eigen::internal::TensorIntDivisor<int, false>(v1);
-    values[2] = Eigen::internal::TensorIntDivisor<int, false>(v2);
+  array(unsigned int v0, int32_t s00, int32_t s01,
+        unsigned int v1, int32_t s10, int32_t s11,
+        unsigned int v2, int32_t s20, int32_t s21) [[cpu]][[hc]] {
+    values[0] = Eigen::internal::TensorIntDivisor<int, false>(v0, s00, s01);
+    values[1] = Eigen::internal::TensorIntDivisor<int, false>(v1, s10, s11);
+    values[2] = Eigen::internal::TensorIntDivisor<int, false>(v2, s20, s21);
   }
 
   __attribute__((annotate("serialize")))
   void __cxxamp_serialize(Kalmar::Serialize &s) const {
     s.Append(sizeof(unsigned int), &values[0].multiplier);
+    s.Append(sizeof(int32_t), &values[0].shift1);
+    s.Append(sizeof(int32_t), &values[0].shift2);
+
     s.Append(sizeof(unsigned int), &values[1].multiplier);
+    s.Append(sizeof(int32_t), &values[1].shift1);
+    s.Append(sizeof(int32_t), &values[1].shift2);
+
     s.Append(sizeof(unsigned int), &values[2].multiplier);
+    s.Append(sizeof(int32_t), &values[2].shift1);
+    s.Append(sizeof(int32_t), &values[2].shift2);
   }
 };
 
@@ -630,19 +672,33 @@ class array<Eigen::internal::TensorIntDivisor<long, false>, 4> {
 #endif
 
   __attribute__((annotate("user_deserialize")))
-  array(unsigned long v0, unsigned long v1, unsigned long v2, unsigned long v3) [[cpu]][[hc]] {
-    values[0] = Eigen::internal::TensorIntDivisor<long, false>(v0);
-    values[1] = Eigen::internal::TensorIntDivisor<long, false>(v1);
-    values[2] = Eigen::internal::TensorIntDivisor<long, false>(v2);
-    values[3] = Eigen::internal::TensorIntDivisor<long, false>(v3);
+  array(unsigned long v0, int32_t s00, int32_t s01,
+        unsigned long v1, int32_t s10, int32_t s11,
+        unsigned long v2, int32_t s20, int32_t s21,
+        unsigned long v3, int32_t s30, int32_t s31) [[cpu]][[hc]] {
+    values[0] = Eigen::internal::TensorIntDivisor<long, false>(v0, s00, s01);
+    values[1] = Eigen::internal::TensorIntDivisor<long, false>(v1, s10, s11);
+    values[2] = Eigen::internal::TensorIntDivisor<long, false>(v2, s20, s21);
+    values[3] = Eigen::internal::TensorIntDivisor<long, false>(v3, s30, s31);
   }
 
   __attribute__((annotate("serialize")))
   void __cxxamp_serialize(Kalmar::Serialize &s) const {
     s.Append(sizeof(unsigned long), &values[0].multiplier);
+    s.Append(sizeof(int32_t), &values[0].shift1);
+    s.Append(sizeof(int32_t), &values[0].shift2);
+
     s.Append(sizeof(unsigned long), &values[1].multiplier);
+    s.Append(sizeof(int32_t), &values[1].shift1);
+    s.Append(sizeof(int32_t), &values[1].shift2);
+
     s.Append(sizeof(unsigned long), &values[2].multiplier);
+    s.Append(sizeof(int32_t), &values[2].shift1);
+    s.Append(sizeof(int32_t), &values[2].shift2);
+
     s.Append(sizeof(unsigned long), &values[3].multiplier);
+    s.Append(sizeof(int32_t), &values[3].shift1);
+    s.Append(sizeof(int32_t), &values[3].shift2);
   }
 };
 
@@ -685,19 +741,33 @@ class array<Eigen::internal::TensorIntDivisor<int, false>, 4> {
 #endif
 
   __attribute__((annotate("user_deserialize")))
-  array(unsigned int v0, unsigned int v1, unsigned int v2, unsigned int v3) [[cpu]][[hc]] {
-    values[0] = Eigen::internal::TensorIntDivisor<int, false>(v0);
-    values[1] = Eigen::internal::TensorIntDivisor<int, false>(v1);
-    values[2] = Eigen::internal::TensorIntDivisor<int, false>(v2);
-    values[3] = Eigen::internal::TensorIntDivisor<int, false>(v3);
+  array(unsigned int v0, int32_t s00, int32_t s01,
+        unsigned int v1, int32_t s10, int32_t s11,
+        unsigned int v2, int32_t s20, int32_t s21,
+        unsigned int v3, int32_t s30, int32_t s31) [[cpu]][[hc]] {
+    values[0] = Eigen::internal::TensorIntDivisor<int, false>(v0, s00, s01);
+    values[1] = Eigen::internal::TensorIntDivisor<int, false>(v1, s10, s11);
+    values[2] = Eigen::internal::TensorIntDivisor<int, false>(v2, s20, s21);
+    values[3] = Eigen::internal::TensorIntDivisor<int, false>(v3, s30, s31);
   }
 
   __attribute__((annotate("serialize")))
   void __cxxamp_serialize(Kalmar::Serialize &s) const {
     s.Append(sizeof(unsigned int), &values[0].multiplier);
+    s.Append(sizeof(int32_t), &values[0].shift1);
+    s.Append(sizeof(int32_t), &values[0].shift2);
+
     s.Append(sizeof(unsigned int), &values[1].multiplier);
+    s.Append(sizeof(int32_t), &values[1].shift1);
+    s.Append(sizeof(int32_t), &values[1].shift2);
+
     s.Append(sizeof(unsigned int), &values[2].multiplier);
+    s.Append(sizeof(int32_t), &values[2].shift1);
+    s.Append(sizeof(int32_t), &values[2].shift2);
+
     s.Append(sizeof(unsigned int), &values[3].multiplier);
+    s.Append(sizeof(int32_t), &values[3].shift1);
+    s.Append(sizeof(int32_t), &values[3].shift2);
   }
 };
 
@@ -740,21 +810,39 @@ class array<Eigen::internal::TensorIntDivisor<long, false>, 5> {
 #endif
 
   __attribute__((annotate("user_deserialize")))
-  array(unsigned long v0, unsigned long v1, unsigned long v2, unsigned long v3, unsigned long v4) [[cpu]][[hc]] {
-    values[0] = Eigen::internal::TensorIntDivisor<long, false>(v0);
-    values[1] = Eigen::internal::TensorIntDivisor<long, false>(v1);
-    values[2] = Eigen::internal::TensorIntDivisor<long, false>(v2);
-    values[3] = Eigen::internal::TensorIntDivisor<long, false>(v3);
-    values[4] = Eigen::internal::TensorIntDivisor<long, false>(v4);
+  array(unsigned long v0, int32_t s00, int32_t s01,
+        unsigned long v1, int32_t s10, int32_t s11,
+        unsigned long v2, int32_t s20, int32_t s21,
+        unsigned long v3, int32_t s30, int32_t s31,
+        unsigned long v4, int32_t s40, int32_t s41) [[cpu]][[hc]] {
+    values[0] = Eigen::internal::TensorIntDivisor<long, false>(v0, s00, s01);
+    values[1] = Eigen::internal::TensorIntDivisor<long, false>(v1, s10, s11);
+    values[2] = Eigen::internal::TensorIntDivisor<long, false>(v2, s20, s21);
+    values[3] = Eigen::internal::TensorIntDivisor<long, false>(v3, s30, s31);
+    values[4] = Eigen::internal::TensorIntDivisor<long, false>(v4, s40, s41);
   }
 
   __attribute__((annotate("serialize")))
   void __cxxamp_serialize(Kalmar::Serialize &s) const {
     s.Append(sizeof(unsigned long), &values[0].multiplier);
+    s.Append(sizeof(int32_t), &values[0].shift1);
+    s.Append(sizeof(int32_t), &values[0].shift2);
+
     s.Append(sizeof(unsigned long), &values[1].multiplier);
+    s.Append(sizeof(int32_t), &values[1].shift1);
+    s.Append(sizeof(int32_t), &values[1].shift2);
+
     s.Append(sizeof(unsigned long), &values[2].multiplier);
+    s.Append(sizeof(int32_t), &values[2].shift1);
+    s.Append(sizeof(int32_t), &values[2].shift2);
+
     s.Append(sizeof(unsigned long), &values[3].multiplier);
+    s.Append(sizeof(int32_t), &values[3].shift1);
+    s.Append(sizeof(int32_t), &values[3].shift2);
+
     s.Append(sizeof(unsigned long), &values[4].multiplier);
+    s.Append(sizeof(int32_t), &values[4].shift1);
+    s.Append(sizeof(int32_t), &values[4].shift2);
   }
 };
 
@@ -797,21 +885,39 @@ class array<Eigen::internal::TensorIntDivisor<int, false>, 5> {
 #endif
 
   __attribute__((annotate("user_deserialize")))
-  array(unsigned int v0, unsigned int v1, unsigned int v2, unsigned int v3, unsigned int v4) [[cpu]][[hc]] {
-    values[0] = Eigen::internal::TensorIntDivisor<int, false>(v0);
-    values[1] = Eigen::internal::TensorIntDivisor<int, false>(v1);
-    values[2] = Eigen::internal::TensorIntDivisor<int, false>(v2);
-    values[3] = Eigen::internal::TensorIntDivisor<int, false>(v3);
-    values[4] = Eigen::internal::TensorIntDivisor<int, false>(v4);
+  array(unsigned int v0, int32_t s00, int32_t s01,
+        unsigned int v1, int32_t s10, int32_t s11,
+        unsigned int v2, int32_t s20, int32_t s21,
+        unsigned int v3, int32_t s30, int32_t s31,
+        unsigned int v4, int32_t s40, int32_t s41) [[cpu]][[hc]] {
+    values[0] = Eigen::internal::TensorIntDivisor<int, false>(v0, s00, s01);
+    values[1] = Eigen::internal::TensorIntDivisor<int, false>(v1, s10, s11);
+    values[2] = Eigen::internal::TensorIntDivisor<int, false>(v2, s20, s21);
+    values[3] = Eigen::internal::TensorIntDivisor<int, false>(v3, s30, s31);
+    values[4] = Eigen::internal::TensorIntDivisor<int, false>(v4, s40, s41);
   }
 
   __attribute__((annotate("serialize")))
   void __cxxamp_serialize(Kalmar::Serialize &s) const {
     s.Append(sizeof(unsigned int), &values[0].multiplier);
+    s.Append(sizeof(int32_t), &values[0].shift1);
+    s.Append(sizeof(int32_t), &values[0].shift2);
+
     s.Append(sizeof(unsigned int), &values[1].multiplier);
+    s.Append(sizeof(int32_t), &values[1].shift1);
+    s.Append(sizeof(int32_t), &values[1].shift2);
+
     s.Append(sizeof(unsigned int), &values[2].multiplier);
+    s.Append(sizeof(int32_t), &values[2].shift1);
+    s.Append(sizeof(int32_t), &values[2].shift2);
+
     s.Append(sizeof(unsigned int), &values[3].multiplier);
+    s.Append(sizeof(int32_t), &values[3].shift1);
+    s.Append(sizeof(int32_t), &values[3].shift2);
+
     s.Append(sizeof(unsigned int), &values[4].multiplier);
+    s.Append(sizeof(int32_t), &values[4].shift1);
+    s.Append(sizeof(int32_t), &values[4].shift2);
   }
 };
 
@@ -854,23 +960,45 @@ class array<Eigen::internal::TensorIntDivisor<long, false>, 6> {
 #endif
 
   __attribute__((annotate("user_deserialize")))
-  array(unsigned long v0, unsigned long v1, unsigned long v2, unsigned long v3, unsigned long v4, unsigned long v5) [[cpu]][[hc]] {
-    values[0] = Eigen::internal::TensorIntDivisor<long, false>(v0);
-    values[1] = Eigen::internal::TensorIntDivisor<long, false>(v1);
-    values[2] = Eigen::internal::TensorIntDivisor<long, false>(v2);
-    values[3] = Eigen::internal::TensorIntDivisor<long, false>(v3);
-    values[4] = Eigen::internal::TensorIntDivisor<long, false>(v4);
-    values[5] = Eigen::internal::TensorIntDivisor<long, false>(v5);
+  array(unsigned long v0, int32_t s00, int32_t s01,
+        unsigned long v1, int32_t s10, int32_t s11,
+        unsigned long v2, int32_t s20, int32_t s21,
+        unsigned long v3, int32_t s30, int32_t s31,
+        unsigned long v4, int32_t s40, int32_t s41,
+        unsigned long v5, int32_t s50, int32_t s51) [[cpu]][[hc]] {
+    values[0] = Eigen::internal::TensorIntDivisor<long, false>(v0, s00, s01);
+    values[1] = Eigen::internal::TensorIntDivisor<long, false>(v1, s10, s11);
+    values[2] = Eigen::internal::TensorIntDivisor<long, false>(v2, s20, s21);
+    values[3] = Eigen::internal::TensorIntDivisor<long, false>(v3, s30, s31);
+    values[4] = Eigen::internal::TensorIntDivisor<long, false>(v4, s40, s41);
+    values[5] = Eigen::internal::TensorIntDivisor<long, false>(v5, s50, s51);
   }
 
   __attribute__((annotate("serialize")))
   void __cxxamp_serialize(Kalmar::Serialize &s) const {
     s.Append(sizeof(unsigned long), &values[0].multiplier);
+    s.Append(sizeof(int32_t), &values[0].shift1);
+    s.Append(sizeof(int32_t), &values[0].shift2);
+
     s.Append(sizeof(unsigned long), &values[1].multiplier);
+    s.Append(sizeof(int32_t), &values[1].shift1);
+    s.Append(sizeof(int32_t), &values[1].shift2);
+
     s.Append(sizeof(unsigned long), &values[2].multiplier);
+    s.Append(sizeof(int32_t), &values[2].shift1);
+    s.Append(sizeof(int32_t), &values[2].shift2);
+
     s.Append(sizeof(unsigned long), &values[3].multiplier);
+    s.Append(sizeof(int32_t), &values[3].shift1);
+    s.Append(sizeof(int32_t), &values[3].shift2);
+
     s.Append(sizeof(unsigned long), &values[4].multiplier);
+    s.Append(sizeof(int32_t), &values[4].shift1);
+    s.Append(sizeof(int32_t), &values[4].shift2);
+
     s.Append(sizeof(unsigned long), &values[5].multiplier);
+    s.Append(sizeof(int32_t), &values[5].shift1);
+    s.Append(sizeof(int32_t), &values[5].shift2);
   }
 };
 
@@ -913,23 +1041,45 @@ class array<Eigen::internal::TensorIntDivisor<int, false>, 6> {
 #endif
 
   __attribute__((annotate("user_deserialize")))
-  array(unsigned int v0, unsigned int v1, unsigned int v2, unsigned int v3, unsigned int v4, unsigned int v5) [[cpu]][[hc]] {
-    values[0] = Eigen::internal::TensorIntDivisor<int, false>(v0);
-    values[1] = Eigen::internal::TensorIntDivisor<int, false>(v1);
-    values[2] = Eigen::internal::TensorIntDivisor<int, false>(v2);
-    values[3] = Eigen::internal::TensorIntDivisor<int, false>(v3);
-    values[4] = Eigen::internal::TensorIntDivisor<int, false>(v4);
-    values[5] = Eigen::internal::TensorIntDivisor<int, false>(v5);
+  array(unsigned int v0, int32_t s00, int32_t s01,
+        unsigned int v1, int32_t s10, int32_t s11,
+        unsigned int v2, int32_t s20, int32_t s21,
+        unsigned int v3, int32_t s30, int32_t s31,
+        unsigned int v4, int32_t s40, int32_t s41,
+        unsigned int v5, int32_t s50, int32_t s51) [[cpu]][[hc]] {
+    values[0] = Eigen::internal::TensorIntDivisor<int, false>(v0, s00, s01);
+    values[1] = Eigen::internal::TensorIntDivisor<int, false>(v1, s10, s11);
+    values[2] = Eigen::internal::TensorIntDivisor<int, false>(v2, s20, s21);
+    values[3] = Eigen::internal::TensorIntDivisor<int, false>(v3, s30, s31);
+    values[4] = Eigen::internal::TensorIntDivisor<int, false>(v4, s40, s41);
+    values[5] = Eigen::internal::TensorIntDivisor<int, false>(v5, s50, s51);
   }
 
   __attribute__((annotate("serialize")))
   void __cxxamp_serialize(Kalmar::Serialize &s) const {
     s.Append(sizeof(unsigned int), &values[0].multiplier);
+    s.Append(sizeof(int32_t), &values[0].shift1);
+    s.Append(sizeof(int32_t), &values[0].shift2);
+
     s.Append(sizeof(unsigned int), &values[1].multiplier);
+    s.Append(sizeof(int32_t), &values[1].shift1);
+    s.Append(sizeof(int32_t), &values[1].shift2);
+
     s.Append(sizeof(unsigned int), &values[2].multiplier);
+    s.Append(sizeof(int32_t), &values[2].shift1);
+    s.Append(sizeof(int32_t), &values[2].shift2);
+
     s.Append(sizeof(unsigned int), &values[3].multiplier);
+    s.Append(sizeof(int32_t), &values[3].shift1);
+    s.Append(sizeof(int32_t), &values[3].shift2);
+
     s.Append(sizeof(unsigned int), &values[4].multiplier);
+    s.Append(sizeof(int32_t), &values[4].shift1);
+    s.Append(sizeof(int32_t), &values[4].shift2);
+
     s.Append(sizeof(unsigned int), &values[5].multiplier);
+    s.Append(sizeof(int32_t), &values[5].shift1);
+    s.Append(sizeof(int32_t), &values[5].shift2);
   }
 };
 
@@ -972,25 +1122,51 @@ class array<Eigen::internal::TensorIntDivisor<long, false>, 7> {
 #endif
 
   __attribute__((annotate("user_deserialize")))
-  array(unsigned long v0, unsigned long v1, unsigned long v2, unsigned long v3, unsigned long v4, unsigned long v5, unsigned long v6) [[cpu]][[hc]] {
-    values[0] = Eigen::internal::TensorIntDivisor<long, false>(v0);
-    values[1] = Eigen::internal::TensorIntDivisor<long, false>(v1);
-    values[2] = Eigen::internal::TensorIntDivisor<long, false>(v2);
-    values[3] = Eigen::internal::TensorIntDivisor<long, false>(v3);
-    values[4] = Eigen::internal::TensorIntDivisor<long, false>(v4);
-    values[5] = Eigen::internal::TensorIntDivisor<long, false>(v5);
-    values[6] = Eigen::internal::TensorIntDivisor<long, false>(v6);
+  array(unsigned long v0, int32_t s00, int32_t s01,
+        unsigned long v1, int32_t s10, int32_t s11,
+        unsigned long v2, int32_t s20, int32_t s21,
+        unsigned long v3, int32_t s30, int32_t s31,
+        unsigned long v4, int32_t s40, int32_t s41,
+        unsigned long v5, int32_t s50, int32_t s51,
+        unsigned long v6, int32_t s60, int32_t s61) [[cpu]][[hc]] {
+    values[0] = Eigen::internal::TensorIntDivisor<long, false>(v0, s00, s01);
+    values[1] = Eigen::internal::TensorIntDivisor<long, false>(v1, s10, s11);
+    values[2] = Eigen::internal::TensorIntDivisor<long, false>(v2, s20, s21);
+    values[3] = Eigen::internal::TensorIntDivisor<long, false>(v3, s30, s31);
+    values[4] = Eigen::internal::TensorIntDivisor<long, false>(v4, s40, s41);
+    values[5] = Eigen::internal::TensorIntDivisor<long, false>(v5, s50, s51);
+    values[6] = Eigen::internal::TensorIntDivisor<long, false>(v6, s60, s61);
   }
 
   __attribute__((annotate("serialize")))
   void __cxxamp_serialize(Kalmar::Serialize &s) const {
     s.Append(sizeof(unsigned long), &values[0].multiplier);
+    s.Append(sizeof(int32_t), &values[0].shift1);
+    s.Append(sizeof(int32_t), &values[0].shift2);
+
     s.Append(sizeof(unsigned long), &values[1].multiplier);
+    s.Append(sizeof(int32_t), &values[1].shift1);
+    s.Append(sizeof(int32_t), &values[1].shift2);
+
     s.Append(sizeof(unsigned long), &values[2].multiplier);
+    s.Append(sizeof(int32_t), &values[2].shift1);
+    s.Append(sizeof(int32_t), &values[2].shift2);
+
     s.Append(sizeof(unsigned long), &values[3].multiplier);
+    s.Append(sizeof(int32_t), &values[3].shift1);
+    s.Append(sizeof(int32_t), &values[3].shift2);
+
     s.Append(sizeof(unsigned long), &values[4].multiplier);
+    s.Append(sizeof(int32_t), &values[4].shift1);
+    s.Append(sizeof(int32_t), &values[4].shift2);
+
     s.Append(sizeof(unsigned long), &values[5].multiplier);
+    s.Append(sizeof(int32_t), &values[5].shift1);
+    s.Append(sizeof(int32_t), &values[5].shift2);
+
     s.Append(sizeof(unsigned long), &values[6].multiplier);
+    s.Append(sizeof(int32_t), &values[6].shift1);
+    s.Append(sizeof(int32_t), &values[6].shift2);
   }
 };
 
@@ -1033,25 +1209,51 @@ class array<Eigen::internal::TensorIntDivisor<int, false>, 7> {
 #endif
 
   __attribute__((annotate("user_deserialize")))
-  array(unsigned int v0, unsigned int v1, unsigned int v2, unsigned int v3, unsigned int v4, unsigned int v5, unsigned int v6) [[cpu]][[hc]] {
-    values[0] = Eigen::internal::TensorIntDivisor<int, false>(v0);
-    values[1] = Eigen::internal::TensorIntDivisor<int, false>(v1);
-    values[2] = Eigen::internal::TensorIntDivisor<int, false>(v2);
-    values[3] = Eigen::internal::TensorIntDivisor<int, false>(v3);
-    values[4] = Eigen::internal::TensorIntDivisor<int, false>(v4);
-    values[5] = Eigen::internal::TensorIntDivisor<int, false>(v5);
-    values[6] = Eigen::internal::TensorIntDivisor<int, false>(v6);
+  array(unsigned int v0, int32_t s00, int32_t s01,
+        unsigned int v1, int32_t s10, int32_t s11,
+        unsigned int v2, int32_t s20, int32_t s21,
+        unsigned int v3, int32_t s30, int32_t s31,
+        unsigned int v4, int32_t s40, int32_t s41,
+        unsigned int v5, int32_t s50, int32_t s51,
+        unsigned int v6, int32_t s60, int32_t s61) [[cpu]][[hc]] {
+    values[0] = Eigen::internal::TensorIntDivisor<int, false>(v0, s00, s01);
+    values[1] = Eigen::internal::TensorIntDivisor<int, false>(v1, s10, s11);
+    values[2] = Eigen::internal::TensorIntDivisor<int, false>(v2, s20, s21);
+    values[3] = Eigen::internal::TensorIntDivisor<int, false>(v3, s30, s31);
+    values[4] = Eigen::internal::TensorIntDivisor<int, false>(v4, s40, s41);
+    values[5] = Eigen::internal::TensorIntDivisor<int, false>(v5, s50, s51);
+    values[6] = Eigen::internal::TensorIntDivisor<int, false>(v6, s60, s61);
   }
 
   __attribute__((annotate("serialize")))
   void __cxxamp_serialize(Kalmar::Serialize &s) const {
     s.Append(sizeof(unsigned int), &values[0].multiplier);
+    s.Append(sizeof(int32_t), &values[0].shift1);
+    s.Append(sizeof(int32_t), &values[0].shift2);
+
     s.Append(sizeof(unsigned int), &values[1].multiplier);
+    s.Append(sizeof(int32_t), &values[1].shift1);
+    s.Append(sizeof(int32_t), &values[1].shift2);
+
     s.Append(sizeof(unsigned int), &values[2].multiplier);
+    s.Append(sizeof(int32_t), &values[2].shift1);
+    s.Append(sizeof(int32_t), &values[2].shift2);
+
     s.Append(sizeof(unsigned int), &values[3].multiplier);
+    s.Append(sizeof(int32_t), &values[3].shift1);
+    s.Append(sizeof(int32_t), &values[3].shift2);
+
     s.Append(sizeof(unsigned int), &values[4].multiplier);
+    s.Append(sizeof(int32_t), &values[4].shift1);
+    s.Append(sizeof(int32_t), &values[4].shift2);
+
     s.Append(sizeof(unsigned int), &values[5].multiplier);
+    s.Append(sizeof(int32_t), &values[5].shift1);
+    s.Append(sizeof(int32_t), &values[5].shift2);
+
     s.Append(sizeof(unsigned int), &values[6].multiplier);
+    s.Append(sizeof(int32_t), &values[6].shift1);
+    s.Append(sizeof(int32_t), &values[6].shift2);
   }
 };
 
@@ -1094,27 +1296,57 @@ class array<Eigen::internal::TensorIntDivisor<long, false>, 8> {
 #endif
 
   __attribute__((annotate("user_deserialize")))
-  array(unsigned long v0, unsigned long v1, unsigned long v2, unsigned long v3, unsigned long v4, unsigned long v5, unsigned long v6, unsigned long v7) [[cpu]][[hc]] {
-    values[0] = Eigen::internal::TensorIntDivisor<long, false>(v0);
-    values[1] = Eigen::internal::TensorIntDivisor<long, false>(v1);
-    values[2] = Eigen::internal::TensorIntDivisor<long, false>(v2);
-    values[3] = Eigen::internal::TensorIntDivisor<long, false>(v3);
-    values[4] = Eigen::internal::TensorIntDivisor<long, false>(v4);
-    values[5] = Eigen::internal::TensorIntDivisor<long, false>(v5);
-    values[6] = Eigen::internal::TensorIntDivisor<long, false>(v6);
-    values[7] = Eigen::internal::TensorIntDivisor<long, false>(v7);
+  array(unsigned long v0, int32_t s00, int32_t s01,
+        unsigned long v1, int32_t s10, int32_t s11,
+        unsigned long v2, int32_t s20, int32_t s21,
+        unsigned long v3, int32_t s30, int32_t s31,
+        unsigned long v4, int32_t s40, int32_t s41,
+        unsigned long v5, int32_t s50, int32_t s51,
+        unsigned long v6, int32_t s60, int32_t s61,
+        unsigned long v7, int32_t s70, int32_t s71) [[cpu]][[hc]] {
+    values[0] = Eigen::internal::TensorIntDivisor<long, false>(v0, s00, s01);
+    values[1] = Eigen::internal::TensorIntDivisor<long, false>(v1, s10, s11);
+    values[2] = Eigen::internal::TensorIntDivisor<long, false>(v2, s20, s21);
+    values[3] = Eigen::internal::TensorIntDivisor<long, false>(v3, s30, s31);
+    values[4] = Eigen::internal::TensorIntDivisor<long, false>(v4, s40, s41);
+    values[5] = Eigen::internal::TensorIntDivisor<long, false>(v5, s50, s51);
+    values[6] = Eigen::internal::TensorIntDivisor<long, false>(v6, s60, s61);
+    values[7] = Eigen::internal::TensorIntDivisor<long, false>(v7, s70, s71);
   }
 
   __attribute__((annotate("serialize")))
   void __cxxamp_serialize(Kalmar::Serialize &s) const {
     s.Append(sizeof(unsigned long), &values[0].multiplier);
+    s.Append(sizeof(int32_t), &values[0].shift1);
+    s.Append(sizeof(int32_t), &values[0].shift2);
+
     s.Append(sizeof(unsigned long), &values[1].multiplier);
+    s.Append(sizeof(int32_t), &values[1].shift1);
+    s.Append(sizeof(int32_t), &values[1].shift2);
+
     s.Append(sizeof(unsigned long), &values[2].multiplier);
+    s.Append(sizeof(int32_t), &values[2].shift1);
+    s.Append(sizeof(int32_t), &values[2].shift2);
+
     s.Append(sizeof(unsigned long), &values[3].multiplier);
+    s.Append(sizeof(int32_t), &values[3].shift1);
+    s.Append(sizeof(int32_t), &values[3].shift2);
+
     s.Append(sizeof(unsigned long), &values[4].multiplier);
+    s.Append(sizeof(int32_t), &values[4].shift1);
+    s.Append(sizeof(int32_t), &values[4].shift2);
+
     s.Append(sizeof(unsigned long), &values[5].multiplier);
+    s.Append(sizeof(int32_t), &values[5].shift1);
+    s.Append(sizeof(int32_t), &values[5].shift2);
+
     s.Append(sizeof(unsigned long), &values[6].multiplier);
+    s.Append(sizeof(int32_t), &values[6].shift1);
+    s.Append(sizeof(int32_t), &values[6].shift2);
+
     s.Append(sizeof(unsigned long), &values[7].multiplier);
+    s.Append(sizeof(int32_t), &values[7].shift1);
+    s.Append(sizeof(int32_t), &values[7].shift2);
   }
 };
 
@@ -1157,27 +1389,57 @@ class array<Eigen::internal::TensorIntDivisor<int, false>, 8> {
 #endif
 
   __attribute__((annotate("user_deserialize")))
-  array(unsigned int v0, unsigned int v1, unsigned int v2, unsigned int v3, unsigned int v4, unsigned int v5, unsigned int v6, unsigned int v7) [[cpu]][[hc]] {
-    values[0] = Eigen::internal::TensorIntDivisor<int, false>(v0);
-    values[1] = Eigen::internal::TensorIntDivisor<int, false>(v1);
-    values[2] = Eigen::internal::TensorIntDivisor<int, false>(v2);
-    values[3] = Eigen::internal::TensorIntDivisor<int, false>(v3);
-    values[4] = Eigen::internal::TensorIntDivisor<int, false>(v4);
-    values[5] = Eigen::internal::TensorIntDivisor<int, false>(v5);
-    values[6] = Eigen::internal::TensorIntDivisor<int, false>(v6);
-    values[7] = Eigen::internal::TensorIntDivisor<int, false>(v7);
+  array(unsigned int v0, int32_t s00, int32_t s01,
+        unsigned int v1, int32_t s10, int32_t s11,
+        unsigned int v2, int32_t s20, int32_t s21,
+        unsigned int v3, int32_t s30, int32_t s31,
+        unsigned int v4, int32_t s40, int32_t s41,
+        unsigned int v5, int32_t s50, int32_t s51,
+        unsigned int v6, int32_t s60, int32_t s61,
+        unsigned int v7, int32_t s70, int32_t s71) [[cpu]][[hc]] {
+    values[0] = Eigen::internal::TensorIntDivisor<int, false>(v0, s00, s01);
+    values[1] = Eigen::internal::TensorIntDivisor<int, false>(v1, s10, s11);
+    values[2] = Eigen::internal::TensorIntDivisor<int, false>(v2, s20, s21);
+    values[3] = Eigen::internal::TensorIntDivisor<int, false>(v3, s30, s31);
+    values[4] = Eigen::internal::TensorIntDivisor<int, false>(v4, s40, s41);
+    values[5] = Eigen::internal::TensorIntDivisor<int, false>(v5, s50, s51);
+    values[6] = Eigen::internal::TensorIntDivisor<int, false>(v6, s60, s61);
+    values[7] = Eigen::internal::TensorIntDivisor<int, false>(v7, s70, s71);
   }
 
   __attribute__((annotate("serialize")))
   void __cxxamp_serialize(Kalmar::Serialize &s) const {
     s.Append(sizeof(unsigned int), &values[0].multiplier);
+    s.Append(sizeof(int32_t), &values[0].shift1);
+    s.Append(sizeof(int32_t), &values[0].shift2);
+
     s.Append(sizeof(unsigned int), &values[1].multiplier);
+    s.Append(sizeof(int32_t), &values[1].shift1);
+    s.Append(sizeof(int32_t), &values[1].shift2);
+
     s.Append(sizeof(unsigned int), &values[2].multiplier);
+    s.Append(sizeof(int32_t), &values[2].shift1);
+    s.Append(sizeof(int32_t), &values[2].shift2);
+
     s.Append(sizeof(unsigned int), &values[3].multiplier);
+    s.Append(sizeof(int32_t), &values[3].shift1);
+    s.Append(sizeof(int32_t), &values[3].shift2);
+
     s.Append(sizeof(unsigned int), &values[4].multiplier);
+    s.Append(sizeof(int32_t), &values[4].shift1);
+    s.Append(sizeof(int32_t), &values[4].shift2);
+
     s.Append(sizeof(unsigned int), &values[5].multiplier);
+    s.Append(sizeof(int32_t), &values[5].shift1);
+    s.Append(sizeof(int32_t), &values[5].shift2);
+
     s.Append(sizeof(unsigned int), &values[6].multiplier);
+    s.Append(sizeof(int32_t), &values[6].shift1);
+    s.Append(sizeof(int32_t), &values[6].shift2);
+
     s.Append(sizeof(unsigned int), &values[7].multiplier);
+    s.Append(sizeof(int32_t), &values[7].shift1);
+    s.Append(sizeof(int32_t), &values[7].shift2);
   }
 };
 
