@@ -487,11 +487,12 @@ struct TensorEvaluator<const TensorReductionOp<Op, Dims, ArgType, MakePointer_>,
   EIGEN_STRONG_INLINE bool evalSubExprsIfNeeded(CoeffReturnType* data) {
     m_impl.evalSubExprsIfNeeded(NULL);
 
+    // XXX disable FullReducer for now
     // Use the FullReducer if possible.
     if ((RunningFullReduction && RunningOnSycl) ||(RunningFullReduction &&
         internal::FullReducer<Self, Op, Device>::HasOptimizedImplementation &&
         ((RunningOnGPU && (m_device.majorDeviceVersion() >= 3)) ||
-         !RunningOnGPU))) {
+         !RunningOnGPU)) && false) {
       bool need_assign = false;
       if (!data) {
         m_result = static_cast<CoeffReturnType*>(m_device.allocate(sizeof(CoeffReturnType)));
