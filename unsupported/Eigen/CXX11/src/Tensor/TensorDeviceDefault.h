@@ -25,61 +25,53 @@ struct DefaultDevice {
     ::memcpy(dst, src, n);
   }
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void memcpyHostToDevice(void* dst, const void* src, size_t n) const {
-    ::memcpy(dst, src, n);
+    memcpy(dst, src, n);
   }
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void memcpyDeviceToHost(void* dst, const void* src, size_t n) const {
-    ::memcpy(dst, src, n);
+    memcpy(dst, src, n);
   }
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void memset(void* buffer, int c, size_t n) const {
     ::memset(buffer, c, n);
   }
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE size_t numThreads() const {
-#if !defined(__HIP_DEVICE_COMPILE__) 
+#ifndef EIGEN_CUDA_ARCH
     // Running on the host CPU
     return 1;
 #else
-    // Running on a HIP device
-    #ifdef __NVCC__
-        return 32;
-    #else
-        return 64;
-    #endif
+    // Running on a CUDA device
+    return 32;
 #endif
   }
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE size_t firstLevelCacheSize() const {
-#if !defined(__HIP_DEVICE_COMPILE__) 
+#if !defined(EIGEN_CUDA_ARCH) && !defined(__SYCL_DEVICE_ONLY__)
     // Running on the host CPU
     return l1CacheSize();
 #else
-    // Running on a HIP device, return the amount of shared memory available.
+    // Running on a CUDA device, return the amount of shared memory available.
     return 48*1024;
 #endif
   }
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE size_t lastLevelCacheSize() const {
-#if !defined(__HIP_DEVICE_COMPILE__) 
+#if !defined(EIGEN_CUDA_ARCH) && !defined(__SYCL_DEVICE_ONLY__)
     // Running single threaded on the host CPU
     return l3CacheSize();
 #else
-    // Running on a HIP device
+    // Running on a CUDA device
     return firstLevelCacheSize();
 #endif
   }
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE int majorDeviceVersion() const {
-#if !defined(__HIP_DEVICE_COMPILE__) 
+#ifndef EIGEN_CUDA_ARCH
     // Running single threaded on the host CPU
     // Should return an enum that encodes the ISA supported by the CPU
     return 1;
 #else
-    // Running on a HIP device
-    #ifdef __NVCC__
-        return __CUDA_ARCH__ / 100; //this is to return the major version of NVCC compiler
-    #else
-        return 1;          // FIXME : Return 1 as major for hcc backend
-    #endif
+    // Running on a CUDA device
+    return EIGEN_CUDA_ARCH / 100;
 #endif
   }
 };

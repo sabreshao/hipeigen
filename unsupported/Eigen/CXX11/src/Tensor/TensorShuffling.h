@@ -31,6 +31,7 @@ struct traits<TensorShufflingOp<Shuffle, XprType> > : public traits<XprType>
   typedef typename remove_reference<Nested>::type _Nested;
   static const int NumDimensions = XprTraits::NumDimensions;
   static const int Layout = XprTraits::Layout;
+  typedef typename XprTraits::PointerType PointerType;
 };
 
 template<typename Shuffle, typename XprType>
@@ -62,8 +63,6 @@ class TensorShufflingOp : public TensorBase<TensorShufflingOp<Shuffle, XprType> 
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE TensorShufflingOp(const XprType& expr, const Shuffle& shuffle)
       : m_xpr(expr), m_shuffle(shuffle) {}
-
-  EIGEN_DEVICE_FUNC ~TensorShufflingOp() {}
 
     EIGEN_DEVICE_FUNC
     const Shuffle& shufflePermutation() const { return m_shuffle; }
@@ -119,7 +118,7 @@ struct TensorEvaluator<const TensorShufflingOp<Shuffle, ArgType>, Device>
   };
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE TensorEvaluator(const XprType& op, const Device& device)
-      : m_impl(op.expression(), device)
+      : m_impl(op.expression(), device), m_shuffle(op.shufflePermutation())
   {
     const typename TensorEvaluator<ArgType, Device>::Dimensions& input_dims = m_impl.dimensions();
     const Shuffle& shuffle = op.shufflePermutation();
@@ -149,8 +148,6 @@ struct TensorEvaluator<const TensorShufflingOp<Shuffle, ArgType>, Device>
       m_inputStrides[i] = inputStrides[shuffle[i]];
     }
   }
- 
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE ~TensorEvaluator() {}
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE const Dimensions& dimensions() const { return m_dimensions; }
 
@@ -189,7 +186,12 @@ struct TensorEvaluator<const TensorShufflingOp<Shuffle, ArgType>, Device>
            TensorOpCost(0, 0, compute_cost, false /* vectorized */, PacketSize);
   }
 
-  EIGEN_DEVICE_FUNC Scalar* data() const { return NULL; }
+  EIGEN_DEVICE_FUNC typename Eigen::internal::traits<XprType>::PointerType data() const { return NULL; }
+
+  // required by sycl
+  EIGEN_STRONG_INLINE const Shuffle& shufflePermutation() const {return m_shuffle;}
+  // required by sycl
+  EIGEN_STRONG_INLINE const TensorEvaluator<ArgType, Device>& impl() const {return m_impl;}
 
  protected:
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE Index srcCoeff(Index index) const {
@@ -210,11 +212,12 @@ struct TensorEvaluator<const TensorShufflingOp<Shuffle, ArgType>, Device>
       return inputIndex + index * m_inputStrides[NumDims - 1];
     }
   }
-
   Dimensions m_dimensions;
   array<Index, NumDims> m_outputStrides;
   array<Index, NumDims> m_inputStrides;
   TensorEvaluator<ArgType, Device> m_impl;
+  /// required by sycl
+  Shuffle m_shuffle;
 };
 
 
@@ -243,8 +246,6 @@ struct TensorEvaluator<TensorShufflingOp<Shuffle, ArgType>, Device>
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE TensorEvaluator(const XprType& op, const Device& device)
       : Base(op, device)
   { }
- 
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE ~TensorEvaluator() {}
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE CoeffReturnType& coeffRef(Index index)
   {

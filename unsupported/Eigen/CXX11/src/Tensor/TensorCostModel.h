@@ -53,21 +53,8 @@ class TensorOpCost {
 
   EIGEN_DEVICE_FUNC
   TensorOpCost() : bytes_loaded_(0), bytes_stored_(0), compute_cycles_(0) {}
-  
- EIGEN_DEVICE_FUNC
-  TensorOpCost(int bytes_loaded, int bytes_stored, double compute_cycles)
-      : bytes_loaded_(bytes_loaded),
-        bytes_stored_(bytes_stored),
-        compute_cycles_(compute_cycles) {}
-
   EIGEN_DEVICE_FUNC
   TensorOpCost(double bytes_loaded, double bytes_stored, double compute_cycles)
-      : bytes_loaded_(bytes_loaded),
-        bytes_stored_(bytes_stored),
-        compute_cycles_(compute_cycles) {}
-
-  EIGEN_DEVICE_FUNC
-  TensorOpCost(double bytes_loaded, double bytes_stored, double compute_cycles, int dummy)
       : bytes_loaded_(bytes_loaded),
         bytes_stored_(bytes_stored),
         compute_cycles_(compute_cycles) {}
@@ -112,7 +99,7 @@ class TensorOpCost {
     double bytes_loaded = numext::mini(bytes_loaded_, rhs.bytes_loaded());
     double bytes_stored = numext::mini(bytes_stored_, rhs.bytes_stored());
     double compute_cycles = numext::mini(compute_cycles_, rhs.compute_cycles());
-    return TensorOpCost(bytes_loaded, bytes_stored, compute_cycles, 0);
+    return TensorOpCost(bytes_loaded, bytes_stored, compute_cycles);
   }
 
   // TODO(rmlarsen): Define max in terms of total cost, not elementwise.
@@ -121,7 +108,7 @@ class TensorOpCost {
     double bytes_loaded = numext::maxi(bytes_loaded_, rhs.bytes_loaded());
     double bytes_stored = numext::maxi(bytes_stored_, rhs.bytes_stored());
     double compute_cycles = numext::maxi(compute_cycles_, rhs.compute_cycles());
-    return TensorOpCost(bytes_loaded, bytes_stored, compute_cycles, 0);
+    return TensorOpCost(bytes_loaded, bytes_stored, compute_cycles);
   }
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE TensorOpCost& operator+=(
@@ -187,8 +174,10 @@ class TensorCostModel {
   static EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE int numThreads(
       double output_size, const TensorOpCost& cost_per_coeff, int max_threads) {
     double cost = totalCost(output_size, cost_per_coeff);
-    int threads = (cost - kStartupCycles) / kPerThreadCycles + 0.9;
-    return numext::mini(max_threads, numext::maxi(1, threads));
+    double threads = (cost - kStartupCycles) / kPerThreadCycles + 0.9;
+    // Make sure we don't invoke undefined behavior when we convert to an int.
+    threads = numext::mini<double>(threads, GenericNumTraits<int>::highest());
+    return numext::mini(max_threads, numext::maxi<int>(1, threads));
   }
 
   // taskSize assesses parallel task size.

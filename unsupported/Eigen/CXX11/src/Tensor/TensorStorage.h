@@ -31,17 +31,12 @@ namespace Eigen {
   *
   * \sa Tensor
   */
-//FIXME:: Make it suitable for both NV and AMD stack
-#ifdef __HCC__
-template<typename T, typename Dimensions, int Options_, void* = nullptr> class TensorStorage;
-#else
-template<typename T, typename Dimensions, int Options_> class TensorStorage;
-#endif
+template<typename T, typename Dimensions, int Options> class TensorStorage;
 
 
 // Pure fixed-size storage
-template<typename T, int Options_, typename FixedDimensions>
-class TensorStorage<T, FixedDimensions, Options_>
+template<typename T, typename FixedDimensions, int Options_>
+class TensorStorage
 {
  private:
   static const std::size_t Size = FixedDimensions::total_size;
@@ -71,7 +66,7 @@ class TensorStorage<T, FixedDimensions, Options_>
 
 
 // pure dynamic
-template<typename T, int Options_, typename IndexType, int NumIndices_>
+template<typename T, typename IndexType, int NumIndices_, int Options_>
 class TensorStorage<T, DSizes<IndexType, NumIndices_>, Options_>
 {
   public:

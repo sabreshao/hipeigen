@@ -38,7 +38,7 @@ struct traits<TensorCwiseNullaryOp<NullaryOp, XprType> >
   typedef typename remove_reference<XprTypeNested>::type _XprTypeNested;
   static const int NumDimensions = XprTraits::NumDimensions;
   static const int Layout = XprTraits::Layout;
-
+  typedef typename XprTraits::PointerType PointerType;
   enum {
     Flags = 0
   };
@@ -61,8 +61,6 @@ class TensorCwiseNullaryOp : public TensorBase<TensorCwiseNullaryOp<NullaryOp, X
 
     EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE TensorCwiseNullaryOp(const XprType& xpr, const NullaryOp& func = NullaryOp())
         : m_xpr(xpr), m_functor(func) {}
-
-    EIGEN_DEVICE_FUNC ~TensorCwiseNullaryOp() {}
 
     EIGEN_DEVICE_FUNC
     const typename internal::remove_all<typename XprType::Nested>::type&
@@ -91,6 +89,7 @@ struct traits<TensorCwiseUnaryOp<UnaryOp, XprType> >
   typedef typename remove_reference<XprTypeNested>::type _XprTypeNested;
   static const int NumDimensions = XprTraits::NumDimensions;
   static const int Layout = XprTraits::Layout;
+  typedef typename TypeConversion<Scalar, typename XprTraits::PointerType>::type PointerType;
 };
 
 template<typename UnaryOp, typename XprType>
@@ -124,8 +123,6 @@ class TensorCwiseUnaryOp : public TensorBase<TensorCwiseUnaryOp<UnaryOp, XprType
 
     EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE TensorCwiseUnaryOp(const XprType& xpr, const UnaryOp& func = UnaryOp())
       : m_xpr(xpr), m_functor(func) {}
-
-    EIGEN_DEVICE_FUNC ~TensorCwiseUnaryOp() {}
 
     EIGEN_DEVICE_FUNC
     const UnaryOp& functor() const { return m_functor; }
@@ -165,7 +162,11 @@ struct traits<TensorCwiseBinaryOp<BinaryOp, LhsXprType, RhsXprType> >
   typedef typename remove_reference<RhsNested>::type _RhsNested;
   static const int NumDimensions = XprTraits::NumDimensions;
   static const int Layout = XprTraits::Layout;
-
+  typedef typename TypeConversion<Scalar,
+                                  typename conditional<Pointer_type_promotion<typename LhsXprType::Scalar, Scalar>::val,
+                                  typename traits<LhsXprType>::PointerType,
+                                  typename traits<RhsXprType>::PointerType>::type
+                                  >::type PointerType;
   enum {
     Flags = 0
   };
@@ -202,8 +203,6 @@ class TensorCwiseBinaryOp : public TensorBase<TensorCwiseBinaryOp<BinaryOp, LhsX
 
     EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE TensorCwiseBinaryOp(const LhsXprType& lhs, const RhsXprType& rhs, const BinaryOp& func = BinaryOp())
         : m_lhs_xpr(lhs), m_rhs_xpr(rhs), m_functor(func) {}
-
-    EIGEN_DEVICE_FUNC ~TensorCwiseBinaryOp() {}
 
     EIGEN_DEVICE_FUNC
     const BinaryOp& functor() const { return m_functor; }
@@ -244,7 +243,11 @@ struct traits<TensorCwiseTernaryOp<TernaryOp, Arg1XprType, Arg2XprType, Arg3XprT
   typedef typename remove_reference<Arg3Nested>::type _Arg3Nested;
   static const int NumDimensions = XprTraits::NumDimensions;
   static const int Layout = XprTraits::Layout;
-
+  typedef typename TypeConversion<Scalar,
+                                  typename conditional<Pointer_type_promotion<typename Arg2XprType::Scalar, Scalar>::val,
+                                  typename traits<Arg2XprType>::PointerType,
+                                  typename traits<Arg3XprType>::PointerType>::type
+                                  >::type PointerType;
   enum {
     Flags = 0
   };
@@ -279,8 +282,6 @@ class TensorCwiseTernaryOp : public TensorBase<TensorCwiseTernaryOp<TernaryOp, A
 
     EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE TensorCwiseTernaryOp(const Arg1XprType& arg1, const Arg2XprType& arg2, const Arg3XprType& arg3, const TernaryOp& func = TernaryOp())
         : m_arg1_xpr(arg1), m_arg2_xpr(arg2), m_arg3_xpr(arg3), m_functor(func) {}
-
-    EIGEN_DEVICE_FUNC ~TensorCwiseTernaryOp() {}
 
     EIGEN_DEVICE_FUNC
     const TernaryOp& functor() const { return m_functor; }
@@ -322,6 +323,9 @@ struct traits<TensorSelectOp<IfXprType, ThenXprType, ElseXprType> >
   typedef typename ElseXprType::Nested ElseNested;
   static const int NumDimensions = XprTraits::NumDimensions;
   static const int Layout = XprTraits::Layout;
+  typedef typename conditional<Pointer_type_promotion<typename ThenXprType::Scalar, Scalar>::val,
+                               typename traits<ThenXprType>::PointerType,
+                               typename traits<ElseXprType>::PointerType>::type PointerType;
 };
 
 template<typename IfXprType, typename ThenXprType, typename ElseXprType>
@@ -357,8 +361,6 @@ class TensorSelectOp : public TensorBase<TensorSelectOp<IfXprType, ThenXprType, 
                    const ElseXprType& a_else)
       : m_condition(a_condition), m_then(a_then), m_else(a_else)
     { }
-
-    EIGEN_DEVICE_FUNC ~TensorSelectOp() {}
 
     EIGEN_DEVICE_FUNC
     const IfXprType& ifExpression() const { return m_condition; }

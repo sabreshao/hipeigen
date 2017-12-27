@@ -399,8 +399,7 @@ EIGEN_DEVICE_FUNC
 SelfAdjointEigenSolver<MatrixType>& SelfAdjointEigenSolver<MatrixType>
 ::compute(const EigenBase<InputType>& a_matrix, int options)
 {
-  //check_template_parameters();
-  EIGEN_STATIC_ASSERT_NON_INTEGER(Scalar);
+  check_template_parameters();
   
   const InputType &matrix(a_matrix.derived());
   
@@ -757,7 +756,7 @@ struct direct_selfadjoint_eigenvalues<SolverType,2,false>
     // compute the eigen vectors
     if(computeEigenvectors)
     {
-      if((eivals(1)-eivals(0))<=numext::abs(eivals(1))*Eigen::NumTraits<Scalar>::epsilon())
+      if((eivals(1)-eivals(0))<=abs(eivals(1))*Eigen::NumTraits<Scalar>::epsilon())
       {
         eivecs.setIdentity();
       }

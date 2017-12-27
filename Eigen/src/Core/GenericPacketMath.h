@@ -231,7 +231,7 @@ pload1(const typename unpacket_traits<Packet>::type  *a) { return pset1<Packet>(
   * duplicated to form: {from[0],from[0],from[1],from[1],from[2],from[2],from[3],from[3]}
   * Currently, this function is only used for scalar * complex products.
   */
-template<typename Packet> EIGEN_DEVICE_FUNC inline Packet
+template<typename Packet> EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE Packet
 ploaddup(const typename unpacket_traits<Packet>::type* from) { return *from; }
 
 /** \internal \returns a packet with elements of \a *from quadrupled.
@@ -279,7 +279,7 @@ inline void pbroadcast2(const typename unpacket_traits<Packet>::type *a,
 }
 
 /** \internal \brief Returns a packet with coefficients (a,a+1,...,a+packet_size-1). */
-template<typename Packet> inline Packet
+template<typename Packet> EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE Packet
 plset(const typename unpacket_traits<Packet>::type& a) { return a; }
 
 /** \internal copy the packet \a from to \a *to, \a to must be 16 bytes aligned */
@@ -299,15 +299,13 @@ template<typename Scalar, typename Packet> EIGEN_DEVICE_FUNC inline void pstoreu
 /** \internal tries to do cache prefetching of \a addr */
 template<typename Scalar> EIGEN_DEVICE_FUNC inline void prefetch(const Scalar* addr)
 {
-#if defined(__HIP_DEVICE_COMPILE__)
+#ifdef EIGEN_CUDA_ARCH
 #if defined(__LP64__)
   // 64-bit pointer operand constraint for inlined asm
-  //TODO:@Neel/Guru get HIP equivalent for asm operations
-  //asm(" prefetch.L1 [ %1 ];" : "=l"(addr) : "l"(addr));
+  asm(" prefetch.L1 [ %1 ];" : "=l"(addr) : "l"(addr));
 #else
   // 32-bit pointer operand constraint for inlined asm
-  //TODO:@Neel/Guru get HIP equivalent for asm operations
-  //asm(" prefetch.L1 [ %1 ];" : "=r"(addr) : "r"(addr));
+  asm(" prefetch.L1 [ %1 ];" : "=r"(addr) : "r"(addr));
 #endif
 #elif (!EIGEN_COMP_MSVC) && (EIGEN_COMP_GNUC || EIGEN_COMP_CLANG || EIGEN_COMP_ICC)
   __builtin_prefetch(addr);
@@ -527,8 +525,8 @@ inline void palign(PacketType& first, const PacketType& second)
 * Fast complex products (GCC generates a function call which is very slow)
 ***************************************************************************/
 
-// Eigen+HIP does not support complexes.
-#ifndef __HIPCC__
+// Eigen+CUDA does not support complexes.
+#ifndef EIGEN_CUDACC
 
 template<> inline std::complex<float> pmul(const std::complex<float>& a, const std::complex<float>& b)
 { return std::complex<float>(real(a)*real(b) - imag(a)*imag(b), imag(a)*real(b) + real(a)*imag(b)); }

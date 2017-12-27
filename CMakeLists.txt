@@ -26,13 +26,9 @@ if(    NOT cmake_build_type_tolower STREQUAL "debug"
   message(FATAL_ERROR "Unknown build type \"${CMAKE_BUILD_TYPE}\". Allowed values are Debug, Release, RelWithDebInfo (case-insensitive).")
 endif()
 
-# Set default install path to /opt/rocm
-if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-    set(CMAKE_INSTALL_PREFIX "/opt/rocm/hipeigen")
-endif()
 
 #############################################################################
-# retrieve version infomation                                               #
+# retrieve version information                                               #
 #############################################################################
 
 # automatically parse the version number
@@ -420,16 +416,15 @@ add_subdirectory(Eigen)
 
 add_subdirectory(doc EXCLUDE_FROM_ALL)
 
-include(EigenConfigureTesting)
+option(BUILD_TESTING "Enable creation of Eigen tests." ON)
+if(BUILD_TESTING)
+  include(EigenConfigureTesting)
 
-# fixme, not sure this line is still needed:
-enable_testing() # must be called from the root CMakeLists, see man page
-
-
-if(EIGEN_LEAVE_TEST_IN_ALL_TARGET)
-  add_subdirectory(test) # can't do EXCLUDE_FROM_ALL here, breaks CTest
-else()
-  add_subdirectory(test EXCLUDE_FROM_ALL)
+  if(EIGEN_LEAVE_TEST_IN_ALL_TARGET)
+    add_subdirectory(test) # can't do EXCLUDE_FROM_ALL here, breaks CTest
+  else()
+    add_subdirectory(test EXCLUDE_FROM_ALL)
+  endif()
 endif()
 
 if(EIGEN_LEAVE_TEST_IN_ALL_TARGET)
@@ -442,10 +437,17 @@ endif()
 
 # add SYCL
 option(EIGEN_TEST_SYCL "Add Sycl support." OFF)
+option(EIGEN_SYCL_TRISYCL "Use the triSYCL Sycl implementation (ComputeCPP by default)." OFF)
 if(EIGEN_TEST_SYCL)
   set (CMAKE_MODULE_PATH "${CMAKE_ROOT}/Modules" "cmake/Modules/" "${CMAKE_MODULE_PATH}")
-  include(FindComputeCpp)
-endif()
+  if(EIGEN_SYCL_TRISYCL)
+    message(STATUS "Using triSYCL")
+    include(FindTriSYCL)
+  else(EIGEN_SYCL_TRISYCL)
+    message(STATUS "Using ComputeCPP SYCL")
+    include(FindComputeCpp)
+  endif(EIGEN_SYCL_TRISYCL)
+endif(EIGEN_TEST_SYCL)
 
 add_subdirectory(unsupported)
 
@@ -465,7 +467,9 @@ endif(NOT WIN32)
 
 configure_file(scripts/cdashtesting.cmake.in cdashtesting.cmake @ONLY)
 
-ei_testing_print_summary()
+if(BUILD_TESTING)
+  ei_testing_print_summary()
+endif()
 
 message(STATUS "")
 message(STATUS "Configured Eigen ${EIGEN_VERSION_NUMBER}")

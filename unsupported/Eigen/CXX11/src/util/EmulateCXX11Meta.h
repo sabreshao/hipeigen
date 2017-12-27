@@ -19,7 +19,7 @@ namespace internal {
 /** \internal
   * \file CXX11/util/EmulateCXX11Meta.h
   * This file emulates a subset of the functionality provided by CXXMeta.h for
-  * compilers that don't yet support cxx11 such as hipcc.
+  * compilers that don't yet support cxx11 such as nvcc.
   */
 
 struct empty_list { static const std::size_t count = 0; };

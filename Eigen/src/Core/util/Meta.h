@@ -11,23 +11,13 @@
 #ifndef EIGEN_META_H
 #define EIGEN_META_H
 
-#if defined(__HIP_DEVICE_COMPILE__)
-  #ifdef __NVCC__
-    #include <cfloat>
-    #include <math_constants.h>
-    #define HIPRT_MAX_NORMAL_F CUDART_MAX_NORMAL_F
-    #define HIPRT_INF_F CUDART_INF_F
-    #define HIPRT_NAN_F CUDART_NAN_F
-    #define HIPRT_INF CUDART_INF
-    #define HIPRT_NAN CUDART_NAN
-  #elif __HCC__
-    #include <cfloat>
-    #include "Eigen/src/Core/arch/HIP/hcc/intrinsics.h"
-  #endif
+#if defined(EIGEN_CUDA_ARCH)
+#include <cfloat>
+#include <math_constants.h>
 #endif
 
 #if EIGEN_COMP_ICC>=1600 &&  __cplusplus >= 201103L
-  #include <cstdint>
+#include <cstdint>
 #endif
 
 namespace Eigen {
@@ -107,17 +97,22 @@ template<> struct is_arithmetic<unsigned int>  { enum { value = true }; };
 template<> struct is_arithmetic<signed long>   { enum { value = true }; };
 template<> struct is_arithmetic<unsigned long> { enum { value = true }; };
 
-template<typename T> struct is_integral        { enum { value = false }; };
-template<> struct is_integral<bool>            { enum { value = true }; };
-template<> struct is_integral<char>            { enum { value = true }; };
-template<> struct is_integral<signed char>     { enum { value = true }; };
-template<> struct is_integral<unsigned char>   { enum { value = true }; };
-template<> struct is_integral<signed short>    { enum { value = true }; };
-template<> struct is_integral<unsigned short>  { enum { value = true }; };
-template<> struct is_integral<signed int>      { enum { value = true }; };
-template<> struct is_integral<unsigned int>    { enum { value = true }; };
-template<> struct is_integral<signed long>     { enum { value = true }; };
-template<> struct is_integral<unsigned long>   { enum { value = true }; };
+#if EIGEN_HAS_CXX11
+using std::is_integral;
+#else
+template<typename T> struct is_integral               { enum { value = false }; };
+template<> struct is_integral<bool>                   { enum { value = true }; };
+template<> struct is_integral<char>                   { enum { value = true }; };
+template<> struct is_integral<signed char>            { enum { value = true }; };
+template<> struct is_integral<unsigned char>          { enum { value = true }; };
+template<> struct is_integral<signed short>           { enum { value = true }; };
+template<> struct is_integral<unsigned short>         { enum { value = true }; };
+template<> struct is_integral<signed int>             { enum { value = true }; };
+template<> struct is_integral<unsigned int>           { enum { value = true }; };
+template<> struct is_integral<signed long>            { enum { value = true }; };
+template<> struct is_integral<unsigned long>          { enum { value = true }; };
+#endif
+
 
 template <typename T> struct add_const { typedef const T type; };
 template <typename T> struct add_const<T&> { typedef T& type; };
@@ -174,7 +169,7 @@ template<bool Condition, typename T=void> struct enable_if;
 template<typename T> struct enable_if<true,T>
 { typedef T type; };
 
-#if defined(__HIP_DEVICE_COMPILE__) 
+#if defined(EIGEN_CUDA_ARCH)
 #if !defined(__FLT_EPSILON__)
 #define __FLT_EPSILON__ FLT_EPSILON
 #define __DBL_EPSILON__ DBL_EPSILON
@@ -189,22 +184,20 @@ template<typename T> struct numeric_limits
   static T (max)() { assert(false && "Highest not supported for this type"); }
   static T (min)() { assert(false && "Lowest not supported for this type"); }
   static T infinity() { assert(false && "Infinity not supported for this type"); }
-  EIGEN_DEVICE_FUNC
-  static T quiet_NaN() { return 0; }
+  static T quiet_NaN() { assert(false && "quiet_NaN not supported for this type"); }
 };
-//TODO: Use appropriate alternates for HIPRT predefined numbers
 template<> struct numeric_limits<float>
 {
   EIGEN_DEVICE_FUNC
   static float epsilon() { return __FLT_EPSILON__; }
   EIGEN_DEVICE_FUNC
-  static float (max)() { return HIPRT_MAX_NORMAL_F; }
+  static float (max)() { return CUDART_MAX_NORMAL_F; }
   EIGEN_DEVICE_FUNC
   static float (min)() { return FLT_MIN; }
   EIGEN_DEVICE_FUNC
-  static float infinity() { return HIPRT_INF_F; }
+  static float infinity() { return CUDART_INF_F; }
   EIGEN_DEVICE_FUNC
-  static float quiet_NaN() { return HIPRT_NAN_F; }
+  static float quiet_NaN() { return CUDART_NAN_F; }
 };
 template<> struct numeric_limits<double>
 {
@@ -215,9 +208,9 @@ template<> struct numeric_limits<double>
   EIGEN_DEVICE_FUNC
   static double (min)() { return DBL_MIN; }
   EIGEN_DEVICE_FUNC
-  static double infinity() { return HIPRT_INF; }
+  static double infinity() { return CUDART_INF; }
   EIGEN_DEVICE_FUNC
-  static double quiet_NaN() { return HIPRT_NAN; }
+  static double quiet_NaN() { return CUDART_NAN; }
 };
 template<> struct numeric_limits<int>
 {
@@ -291,6 +284,59 @@ protected:
 };
 
 /** \internal
+  * Provides access to the number of elements in the object of as a compile-time constant expression.
+  * It "returns" Eigen::Dynamic if the size cannot be resolved at compile-time (default).
+  *
+  * Similar to std::tuple_size, but more general.
+  *
+  * It currently supports:
+  *  - any types T defining T::SizeAtCompileTime
+  *  - plain C arrays as T[N]
+  *  - std::array (c++11)
+  *  - some internal types such as SingleRange and AllRange
+  *
+  * The second template parameter eases SFINAE-based specializations.
+  */
+template<typename T, typename EnableIf = void> struct array_size {
+  enum { value = Dynamic };
+};
+
+template<typename T> struct array_size<T,typename internal::enable_if<((T::SizeAtCompileTime&0)==0)>::type> {
+  enum { value = T::SizeAtCompileTime };
+};
+
+template<typename T, int N> struct array_size<const T (&)[N]> {
+  enum { value = N };
+};
+template<typename T, int N> struct array_size<T (&)[N]> {
+  enum { value = N };
+};
+
+#if EIGEN_HAS_CXX11
+template<typename T, std::size_t N> struct array_size<const std::array<T,N> > {
+  enum { value = N };
+};
+template<typename T, std::size_t N> struct array_size<std::array<T,N> > {
+  enum { value = N };
+};
+#endif
+
+/** \internal
+  * Analogue of the std::size free function.
+  * It returns the size of the container or view \a x of type \c T
+  *
+  * It currently supports:
+  *  - any types T defining a member T::size() const
+  *  - plain C arrays as T[N]
+  *
+  */
+template<typename T>
+Index size(const T& x) { return x.size(); }
+
+template<typename T,std::size_t N>
+Index size(const T (&) [N]) { return N; }
+
+/** \internal
   * Convenient struct to get the result type of a unary or binary functor.
   *
   * It supports both the current STL mechanism (using the result_type member) as well as
@@ -321,9 +367,9 @@ struct unary_result_of_select<Func, ArgType, sizeof(has_tr1_result)> {typedef ty
 template<typename Func, typename ArgType>
 struct result_of<Func(ArgType)> {
     template<typename T>
-    EIGEN_DEVICE_FUNC static has_std_result_type    testFunctor(T const *, typename T::result_type const * = 0);
+    static has_std_result_type    testFunctor(T const *, typename T::result_type const * = 0);
     template<typename T>
-    EIGEN_DEVICE_FUNC static has_tr1_result         testFunctor(T const *, typename T::template result<T(ArgType)>::type const * = 0);
+    static has_tr1_result         testFunctor(T const *, typename T::template result<T(ArgType)>::type const * = 0);
     static has_none               testFunctor(...);
 
     // note that the following indirection is needed for gcc-3.3
@@ -345,9 +391,9 @@ struct binary_result_of_select<Func, ArgType0, ArgType1, sizeof(has_tr1_result)>
 template<typename Func, typename ArgType0, typename ArgType1>
 struct result_of<Func(ArgType0,ArgType1)> {
     template<typename T>
-    EIGEN_DEVICE_FUNC static has_std_result_type    testFunctor(T const *, typename T::result_type const * = 0);
+    static has_std_result_type    testFunctor(T const *, typename T::result_type const * = 0);
     template<typename T>
-    EIGEN_DEVICE_FUNC static has_tr1_result         testFunctor(T const *, typename T::template result<T(ArgType0,ArgType1)>::type const * = 0);
+    static has_tr1_result         testFunctor(T const *, typename T::template result<T(ArgType0,ArgType1)>::type const * = 0);
     static has_none               testFunctor(...);
 
     // note that the following indirection is needed for gcc-3.3
@@ -369,9 +415,9 @@ struct ternary_result_of_select<Func, ArgType0, ArgType1, ArgType2, sizeof(has_t
 template<typename Func, typename ArgType0, typename ArgType1, typename ArgType2>
 struct result_of<Func(ArgType0,ArgType1,ArgType2)> {
     template<typename T>
-    EIGEN_DEVICE_FUNC static has_std_result_type    testFunctor(T const *, typename T::result_type const * = 0);
+    static has_std_result_type    testFunctor(T const *, typename T::result_type const * = 0);
     template<typename T>
-    EIGEN_DEVICE_FUNC static has_tr1_result         testFunctor(T const *, typename T::template result<T(ArgType0,ArgType1,ArgType2)>::type const * = 0);
+    static has_tr1_result         testFunctor(T const *, typename T::template result<T(ArgType0,ArgType1,ArgType2)>::type const * = 0);
     static has_none               testFunctor(...);
 
     // note that the following indirection is needed for gcc-3.3
@@ -387,19 +433,18 @@ struct meta_no  { char a[2]; };
 template <typename T>
 struct has_ReturnType
 {
-  template <typename C> EIGEN_DEVICE_FUNC static meta_yes testFunctor(typename C::ReturnType const *);
-  template <typename C> static meta_no testFunctor(...);
+  template <typename C> static meta_yes testFunctor(C const *, typename C::ReturnType const * = 0);
+  template <typename C> static meta_no  testFunctor(...);
 
-  enum { value = sizeof(testFunctor<T>(0)) == sizeof(meta_yes) };
+  enum { value = sizeof(testFunctor<T>(static_cast<T*>(0))) == sizeof(meta_yes) };
 };
 
-//FIXME: why add EIGEN_DEVICE_FUNC here??
-template<typename T> EIGEN_DEVICE_FUNC const T& return_ref();
+template<typename T> const T* return_ptr();
 
 template <typename T, typename IndexType=Index>
 struct has_nullary_operator
 {
-  template <typename C> EIGEN_DEVICE_FUNC  static meta_yes testFunctor(C const *,typename enable_if<(sizeof(return_ref<C>().operator()())>0)>::type * = 0);
+  template <typename C> static meta_yes testFunctor(C const *,typename enable_if<(sizeof(return_ptr<C>()->operator()())>0)>::type * = 0);
   static meta_no testFunctor(...);
 
   enum { value = sizeof(testFunctor(static_cast<T*>(0))) == sizeof(meta_yes) };
@@ -408,7 +453,7 @@ struct has_nullary_operator
 template <typename T, typename IndexType=Index>
 struct has_unary_operator
 {
-  template <typename C> EIGEN_DEVICE_FUNC static meta_yes testFunctor(C const *,typename enable_if<(sizeof(return_ref<C>().operator()(IndexType(0)))>0)>::type * = 0);
+  template <typename C> static meta_yes testFunctor(C const *,typename enable_if<(sizeof(return_ptr<C>()->operator()(IndexType(0)))>0)>::type * = 0);
   static meta_no testFunctor(...);
 
   enum { value = sizeof(testFunctor(static_cast<T*>(0))) == sizeof(meta_yes) };
@@ -417,7 +462,7 @@ struct has_unary_operator
 template <typename T, typename IndexType=Index>
 struct has_binary_operator
 {
-  template <typename C> EIGEN_DEVICE_FUNC static meta_yes testFunctor(C const *,typename enable_if<(sizeof(return_ref<C>().operator()(IndexType(0),IndexType(0)))>0)>::type * = 0);
+  template <typename C> static meta_yes testFunctor(C const *,typename enable_if<(sizeof(return_ptr<C>()->operator()(IndexType(0),IndexType(0)))>0)>::type * = 0);
   static meta_no testFunctor(...);
 
   enum { value = sizeof(testFunctor(static_cast<T*>(0))) == sizeof(meta_yes) };
@@ -477,14 +522,14 @@ template<typename T, typename U> struct scalar_product_traits
 } // end namespace internal
 
 namespace numext {
-
-#if defined(__HIP_DEVICE_COMPILE__) 
+  
+#if defined(EIGEN_CUDA_ARCH)
 template<typename T> EIGEN_DEVICE_FUNC   void swap(T &a, T &b) { T tmp = b; b = a; a = tmp; }
 #else
 template<typename T> EIGEN_STRONG_INLINE void swap(T &a, T &b) { std::swap(a,b); }
 #endif
 
-#if defined(__HIP_DEVICE_COMPILE__) 
+#if defined(EIGEN_CUDA_ARCH)
 using internal::device::numeric_limits;
 #else
 using std::numeric_limits;
@@ -493,7 +538,7 @@ using std::numeric_limits;
 // Integer division with rounding up.
 // T is assumed to be an integer type with a>=0, and b>0
 template<typename T>
-EIGEN_DEVICE_FUNC T div_ceil(const T &a, const T &b)
+T div_ceil(const T &a, const T &b)
 {
   return (a+b-1) / b;
 }

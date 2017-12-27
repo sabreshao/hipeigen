@@ -128,10 +128,9 @@ DenseBase<Derived>::Random()
   * \sa class CwiseNullaryOp, setRandom(Index), setRandom(Index,Index)
   */
 template<typename Derived>
-inline Derived& DenseBase<Derived>::setRandom()
+EIGEN_DEVICE_FUNC inline Derived& DenseBase<Derived>::setRandom()
 {
-  //return *this = Random(rows(), cols());
-  return *this = NullaryExpr(rows(), cols(), internal::scalar_random_op<Scalar>());
+  return *this = Random(rows(), cols());
 }
 
 /** Resizes to the given \a newSize, and sets all coefficients in this expression to random values.

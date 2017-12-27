@@ -1,4 +1,3 @@
-//#include "hip/hip_runtime.h"
 // This file is part of Eigen, a lightweight C++ template library
 // for linear algebra.
 //
@@ -10,13 +9,6 @@
 
 #ifndef EIGEN_CXX11_TENSOR_TENSOR_SCAN_H
 #define EIGEN_CXX11_TENSOR_TENSOR_SCAN_H
-
-#if defined(__HIPCC__) || defined(__HCC__) || defined(__NVCC__)
-#if defined(EIGEN_DEVICE_FUNC)
-#undef EIGEN_DEVICE_FUNC
-#endif
-#define EIGEN_DEVICE_FUNC __device__ __host__
-#endif
 
 namespace Eigen {
 
@@ -32,6 +24,7 @@ struct traits<TensorScanOp<Op, XprType> >
   typedef typename remove_reference<Nested>::type _Nested;
   static const int NumDimensions = XprTraits::NumDimensions;
   static const int Layout = XprTraits::Layout;
+  typedef typename XprTraits::PointerType PointerType;
 };
 
 template<typename Op, typename XprType>
@@ -135,8 +128,6 @@ struct TensorEvaluator<const TensorScanOp<Op, ArgType>, Device> {
       }
     }
   }
- 
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE ~TensorEvaluator() {}
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE const Dimensions& dimensions() const {
     return m_impl.dimensions();
@@ -185,7 +176,7 @@ struct TensorEvaluator<const TensorScanOp<Op, ArgType>, Device> {
     return internal::ploadt<PacketReturnType, LoadMode>(m_output + index);
   }
 
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE CoeffReturnType* data() const
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE typename Eigen::internal::traits<XprType>::PointerType data() const
   {
     return m_output;
   }
@@ -196,7 +187,7 @@ struct TensorEvaluator<const TensorScanOp<Op, ArgType>, Device> {
   }
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE TensorOpCost costPerCoeff(bool) const {
-    return TensorOpCost(sizeof(CoeffReturnType), 0, 0, 0);
+    return TensorOpCost(sizeof(CoeffReturnType), 0, 0);
   }
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void cleanup() {
@@ -251,7 +242,7 @@ struct ScanLauncher {
   }
 };
 
-#if defined(EIGEN_USE_GPU) && defined(__HIPCC__)
+#if defined(EIGEN_USE_GPU) && defined(EIGEN_CUDACC)
 
 // GPU implementation of scan
 // TODO(ibab) This placeholder implementation performs multiple scans in
@@ -260,7 +251,7 @@ struct ScanLauncher {
 template <typename Self, typename Reducer>
 __global__ void ScanKernel(Self self, Index total_size, typename Self::CoeffReturnType* data) {
   // Compute offset as in the CPU version
-  Index val = hipThreadIdx_x + hipBlockIdx_x * hipBlockDim_x;
+  Index val = threadIdx.x + blockIdx.x * blockDim.x;
   Index offset = (val / self.stride()) * self.stride() * self.size() + val % self.stride();
 
   if (offset + (self.size() - 1) * self.stride() < total_size) {
@@ -287,11 +278,10 @@ struct ScanLauncher<Self, Reducer, GpuDevice> {
      Index total_size = internal::array_prod(self.dimensions());
      Index num_blocks = (total_size / self.size() + 63) / 64;
      Index block_size = 64;
-
-     hipLaunchKernelGGL(HIP_KERNEL_NAME(ScanKernel<Self, Reducer>), dim3(num_blocks), dim3(block_size), 0, self.device().stream(), self, total_size, data);
+     LAUNCH_CUDA_KERNEL((ScanKernel<Self, Reducer>), num_blocks, block_size, 0, self.device(), self, total_size, data);
   }
 };
-#endif  // EIGEN_USE_GPU && __HIPCC__
+#endif  // EIGEN_USE_GPU && EIGEN_CUDACC
 
 }  // end namespace Eigen
 

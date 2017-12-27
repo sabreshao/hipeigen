@@ -50,25 +50,32 @@
 #endif
 #endif
 
+// Same for cuda_fp16.h
+#if defined(__CUDACC_VER_MAJOR__) && (__CUDACC_VER_MAJOR__ >= 9)
+#define EIGEN_TEST_CUDACC_VER  ((__CUDACC_VER_MAJOR__ * 10000) + (__CUDACC_VER_MINOR__ * 100))
+#elif defined(__CUDACC_VER__)
+#define EIGEN_TEST_CUDACC_VER __CUDACC_VER__
+#else
+#define EIGEN_TEST_CUDACC_VER 0
+#endif
+
+#if EIGEN_TEST_CUDACC_VER >= 70500
+#include <cuda_fp16.h>
+#endif
+
 // To test that all calls from Eigen code to std::min() and std::max() are
 // protected by parenthesis against macro expansion, the min()/max() macros
 // are defined here and any not-parenthesized min/max call will cause a
 // compiler error.
-#ifdef __NVCC__
 #define min(A,B) please_protect_your_min_with_parentheses
 #define max(A,B) please_protect_your_max_with_parentheses
 #define isnan(X) please_protect_your_isnan_with_parentheses
 #define isinf(X) please_protect_your_isinf_with_parentheses
 #define isfinite(X) please_protect_your_isfinite_with_parentheses
-#endif
-
-// XXX really have no idea what this is about...
-#ifndef __HCC__
 #ifdef M_PI
 #undef M_PI
 #endif
 #define M_PI please_use_EIGEN_PI_instead_of_M_PI
-#endif
 
 #define FORBIDDEN_IDENTIFIER (this_identifier_is_forbidden_to_avoid_clashes) this_identifier_is_forbidden_to_avoid_clashes
 // B0 is defined in POSIX header termios.h
@@ -147,8 +154,7 @@ namespace Eigen
 
 #define EIGEN_DEFAULT_IO_FORMAT IOFormat(4, 0, "  ", "\n", "", "", "", "")
 
-#if (defined(_CPPUNWIND) || defined(__EXCEPTIONS)) && \
-    !defined(__HIP_DEVICE_COMPILE__)
+#if (defined(_CPPUNWIND) || defined(__EXCEPTIONS)) && !defined(__CUDA_ARCH__)
   #define EIGEN_EXCEPTIONS
 #endif
 
@@ -221,8 +227,7 @@ namespace Eigen
       }
     #endif //EIGEN_EXCEPTIONS
 
-  //#elif !defined(__HIP_DEVICE_COMPILE__) // EIGEN_DEBUG_ASSERTS
-  #elif !defined(__HIPCC__)// EIGEN_DEBUG_ASSERTS
+  #elif !defined(__CUDACC__) // EIGEN_DEBUG_ASSERTS
     // see bug 89. The copy_bool here is working around a bug in gcc <= 4.3
     #define eigen_assert(a) \
       if( (!Eigen::internal::copy_bool(a)) && (!no_more_assert) )\
@@ -252,7 +257,7 @@ namespace Eigen
     std::cout << "Can't VERIFY_RAISES_ASSERT( " #a " ) with exceptions disabled\n";
 #endif
     
-  #if !defined(__HIPCC__)
+  #if !defined(__CUDACC__)
   #define EIGEN_USE_CUSTOM_ASSERT
   #endif
 
@@ -317,6 +322,17 @@ template<> inline long double test_precision<long double>() { return 1e-6l; }
 template<> inline float test_precision<std::complex<float> >() { return test_precision<float>(); }
 template<> inline double test_precision<std::complex<double> >() { return test_precision<double>(); }
 template<> inline long double test_precision<std::complex<long double> >() { return test_precision<long double>(); }
+
+inline bool test_isApprox(const short& a, const short& b)
+{ return internal::isApprox(a, b, test_precision<short>()); }
+inline bool test_isApprox(const unsigned short& a, const unsigned short& b)
+{ return internal::isApprox(a, b, test_precision<unsigned long>()); }
+inline bool test_isApprox(const unsigned int& a, const unsigned int& b)
+{ return internal::isApprox(a, b, test_precision<unsigned int>()); }
+inline bool test_isApprox(const long& a, const long& b)
+{ return internal::isApprox(a, b, test_precision<long>()); }
+inline bool test_isApprox(const unsigned long& a, const unsigned long& b)
+{ return internal::isApprox(a, b, test_precision<unsigned long>()); }
 
 inline bool test_isApprox(const int& a, const int& b)
 { return internal::isApprox(a, b, test_precision<int>()); }

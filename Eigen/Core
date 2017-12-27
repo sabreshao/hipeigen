@@ -14,11 +14,26 @@
 // first thing Eigen does: stop the compiler from committing suicide
 #include "src/Core/util/DisableStupidWarnings.h"
 
-// Handle HIPCC/CUDA/SYCL
-#if defined(__HIPCC__) || defined(__SYCL_DEVICE_ONLY__)
-  #include <hip/hip_runtime.h>
+#if defined(__CUDACC__) && !defined(EIGEN_NO_CUDA)
+  #define EIGEN_CUDACC __CUDACC__
+#endif
 
-  // Do not try asserts on HIP!
+#if defined(__CUDA_ARCH__) && !defined(EIGEN_NO_CUDA)
+  #define EIGEN_CUDA_ARCH __CUDA_ARCH__
+#endif
+
+// Starting with CUDA 9 the composite __CUDACC_VER__ is not available.
+#if defined(__CUDACC_VER_MAJOR__) && (__CUDACC_VER_MAJOR__ >= 9)
+#define EIGEN_CUDACC_VER  ((__CUDACC_VER_MAJOR__ * 10000) + (__CUDACC_VER_MINOR__ * 100))
+#elif defined(__CUDACC_VER__)
+#define EIGEN_CUDACC_VER __CUDACC_VER__
+#else
+#define EIGEN_CUDACC_VER 0
+#endif
+
+// Handle NVCC/CUDA/SYCL
+#if defined(EIGEN_CUDACC) || defined(__SYCL_DEVICE_ONLY__)
+  // Do not try asserts on CUDA and SYCL!
   #ifndef EIGEN_NO_DEBUG
   #define EIGEN_NO_DEBUG
   #endif
@@ -27,42 +42,42 @@
   #undef EIGEN_INTERNAL_DEBUGGING
   #endif
 
-  // Do not try to vectorize on HIP!
-  #ifndef EIGEN_DONT_VECTORIZE
-  #define EIGEN_DONT_VECTORIZE
-  #endif
-
   #ifdef EIGEN_EXCEPTIONS
   #undef EIGEN_EXCEPTIONS
   #endif
 
-  // All functions callable from HIP code must be qualified with __device__
-  #if defined (__NVCC__)
-    #define EIGEN_DEVICE_FUNC __device__ __host__
+  // All functions callable from CUDA code must be qualified with __device__
+  #ifdef EIGEN_CUDACC
+    // Do not try to vectorize on CUDA and SYCL!
+    #ifndef EIGEN_DONT_VECTORIZE
+    #define EIGEN_DONT_VECTORIZE
+    #endif
+
+    #define EIGEN_DEVICE_FUNC __host__ __device__
     // We need math_functions.hpp to ensure that that EIGEN_USING_STD_MATH macro
     // works properly on the device side
     #include <math_functions.hpp>
-  #endif
-  #if defined (__HCC__)
-    #define EIGEN_DEVICE_FUNC __device__ __host__
-    // We need math_functions.hpp to ensure that that EIGEN_USING_STD_MATH macro
-    // works properly on the device side
-    #include <hip/math_functions.h>
+  #else
+    #define EIGEN_DEVICE_FUNC
   #endif
 #else
   #define EIGEN_DEVICE_FUNC
 #endif
 
-// When compiling HIP device code with HIPCC, pull in math functions from the
+#ifdef __NVCC__
+#define EIGEN_DONT_VECTORIZE
+#endif
+
+// When compiling CUDA device code with NVCC, pull in math functions from the
 // global namespace.  In host mode, and when device doee with clang, use the
 // std versions.
-#if defined(__HIP_DEVICE_COMPILE__) && defined(__HIPCC__)
+#if defined(EIGEN_CUDA_ARCH) && defined(__NVCC__)
   #define EIGEN_USING_STD_MATH(FUNC) using ::FUNC;
 #else
   #define EIGEN_USING_STD_MATH(FUNC) using std::FUNC;
 #endif
 
-#if (defined(_CPPUNWIND) || defined(__EXCEPTIONS)) && !defined(__HIP_DEVICE_COMPILE__) && !defined(EIGEN_EXCEPTIONS) && !defined(EIGEN_USE_SYCL)
+#if (defined(_CPPUNWIND) || defined(__EXCEPTIONS)) && !defined(EIGEN_CUDA_ARCH) && !defined(EIGEN_EXCEPTIONS) && !defined(EIGEN_USE_SYCL)
   #define EIGEN_EXCEPTIONS
 #endif
 
@@ -147,15 +162,24 @@
     #endif
     #ifdef __AVX2__
       #define EIGEN_VECTORIZE_AVX2
+      #define EIGEN_VECTORIZE_AVX
+      #define EIGEN_VECTORIZE_SSE3
+      #define EIGEN_VECTORIZE_SSSE3
+      #define EIGEN_VECTORIZE_SSE4_1
+      #define EIGEN_VECTORIZE_SSE4_2
     #endif
     #ifdef __FMA__
       #define EIGEN_VECTORIZE_FMA
     #endif
-    #if defined(__AVX512F__) && defined(EIGEN_ENABLE_AVX512)
+    #if defined(__AVX512F__)
       #define EIGEN_VECTORIZE_AVX512
       #define EIGEN_VECTORIZE_AVX2
       #define EIGEN_VECTORIZE_AVX
       #define EIGEN_VECTORIZE_FMA
+      #define EIGEN_VECTORIZE_SSE3
+      #define EIGEN_VECTORIZE_SSSE3
+      #define EIGEN_VECTORIZE_SSE4_1
+      #define EIGEN_VECTORIZE_SSE4_2
       #ifdef __AVX512DQ__
         #define EIGEN_VECTORIZE_AVX512DQ
       #endif
@@ -230,23 +254,17 @@
   #define EIGEN_HAS_FP16_C
 #endif
 
-#if defined __HIPCC__
+#if defined EIGEN_CUDACC
   #define EIGEN_VECTORIZE_CUDA
-  #define EIGEN_VECTORIZE_HIP
-  #ifdef __NVCC__
-    #include <vector_types.h>
-    #if defined __CUDACC_VER__ && __CUDACC_VER__ >= 70500
-      #define EIGEN_HAS_CUDA_FP16
-      #define EIGEN_HAS_HIP_FP16
-    #endif
+  #include <vector_types.h>
+  #if EIGEN_CUDACC_VER >= 70500
+    #define EIGEN_HAS_CUDA_FP16
   #endif
 #endif
 
-#if defined(EIGEN_HAS_CUDA_FP16) || defined(EIGEN_HAS_HIP_FP16)
-  #ifdef __NVCC__
-    #include <host_defines.h>
-    #include <cuda_fp16.h>
-  #endif
+#if defined EIGEN_HAS_CUDA_FP16
+  #include <host_defines.h>
+  #include <cuda_fp16.h>
 #endif
 
 #if (defined _OPENMP) && (!defined EIGEN_DONT_PARALLELIZE)
@@ -291,6 +309,15 @@
 // required for __cpuid, needs to be included after cmath
 #if EIGEN_COMP_MSVC && EIGEN_ARCH_i386_OR_x86_64 && !EIGEN_OS_WINCE
   #include <intrin.h>
+#endif
+
+#if defined(__SYCL_DEVICE_ONLY__)
+  #undef min
+  #undef max
+  #undef isnan
+  #undef isinf
+  #undef isfinite
+  #include <SYCL/sycl.hpp>
 #endif
 
 /** \brief Namespace containing all symbols from the %Eigen library. */
@@ -357,16 +384,22 @@ using std::ptrdiff_t;
 #include "src/Core/util/StaticAssert.h"
 #include "src/Core/util/XprHelper.h"
 #include "src/Core/util/Memory.h"
+#include "src/Core/util/IntegralConstant.h"
+#include "src/Core/util/SymbolicIndex.h"
+
 
 #include "src/Core/NumTraits.h"
 #include "src/Core/MathFunctions.h"
 #include "src/Core/GenericPacketMath.h"
 #include "src/Core/MathFunctionsImpl.h"
+#include "src/Core/arch/Default/ConjHelper.h"
 
 #if defined EIGEN_VECTORIZE_AVX512
   #include "src/Core/arch/SSE/PacketMath.h"
   #include "src/Core/arch/AVX/PacketMath.h"
   #include "src/Core/arch/AVX512/PacketMath.h"
+  #include "src/Core/arch/SSE/MathFunctions.h"
+  #include "src/Core/arch/AVX/MathFunctions.h"
   #include "src/Core/arch/AVX512/MathFunctions.h"
 #elif defined EIGEN_VECTORIZE_AVX
   // Use AVX for floats and doubles, SSE for integers
@@ -397,24 +430,13 @@ using std::ptrdiff_t;
 #endif
 
 // Half float support
-#ifdef __NVCC__
-  #include "src/Core/arch/HIP/nvcc/Half.h"
-  #include "src/Core/arch/HIP/nvcc/PacketMathHalf.h"
-  #include "src/Core/arch/HIP/nvcc/TypeCasting.h"
-#else
-  #include "src/Core/arch/HIP/hcc/Half.h"
-  #include "src/Core/arch/HIP/hcc/PacketMathHalf.h"
-  #include "src/Core/arch/HIP/hcc/TypeCasting.h"
-#endif
+#include "src/Core/arch/CUDA/Half.h"
+#include "src/Core/arch/CUDA/PacketMathHalf.h"
+#include "src/Core/arch/CUDA/TypeCasting.h"
 
-#if defined(EIGEN_VECTORIZE_CUDA) || defined(EIGEN_VECTORIZE_HIP)
-  #ifdef __NVCC__
-    #include "src/Core/arch/HIP/nvcc/PacketMath.h"
-    #include "src/Core/arch/HIP/nvcc/MathFunctions.h"
-  #else
-    #include "src/Core/arch/HIP/hcc/PacketMath.h"
-    #include "src/Core/arch/HIP/hcc/MathFunctions.h"
-  #endif
+#if defined EIGEN_VECTORIZE_CUDA
+  #include "src/Core/arch/CUDA/PacketMath.h"
+  #include "src/Core/arch/CUDA/MathFunctions.h"
 #endif
 
 #include "src/Core/arch/Default/Settings.h"
@@ -430,6 +452,8 @@ using std::ptrdiff_t;
 // on CUDA devices
 #include "src/Core/arch/CUDA/Complex.h"
 
+#include "src/Core/util/IndexedViewHelper.h"
+#include "src/Core/ArithmeticSequence.h"
 #include "src/Core/IO.h"
 #include "src/Core/DenseCoeffsBase.h"
 #include "src/Core/DenseBase.h"
@@ -471,6 +495,7 @@ using std::ptrdiff_t;
 #include "src/Core/Ref.h"
 #include "src/Core/Block.h"
 #include "src/Core/VectorBlock.h"
+#include "src/Core/IndexedView.h"
 #include "src/Core/Transpose.h"
 #include "src/Core/DiagonalMatrix.h"
 #include "src/Core/Diagonal.h"

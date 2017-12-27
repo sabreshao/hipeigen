@@ -13,9 +13,6 @@ if(NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/split_test_helper.h)
   endforeach()
 endif()
 
-# Set CMAKE MOUDLE PATH to check for the FindHIP.cmake file
-SET(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake ${CMAKE_MODULE_PATH} "${HIP_PATH}/cmake" "/opt/rocm/hip/cmake")
-
 # check if we have a Fortran compiler
 include("../cmake/language_support.cmake")
 
@@ -30,7 +27,7 @@ endif()
 
 if(NOT EIGEN_Fortran_COMPILER_WORKS)
   # search for a default Lapack library to complete Eigen's one
-  find_package(LAPACK)
+  find_package(LAPACK QUIET)
 endif()
 
 # configure blas/lapack (use Eigen's ones)
@@ -83,23 +80,30 @@ else()
 endif()
 
 
-find_package(Pastix)
-find_package(Scotch)
-find_package(Metis 5.0 REQUIRED)
-if(PASTIX_FOUND)
+find_package(PASTIX QUIET COMPONENTS METIS SCOTCH)
+# check that the PASTIX found is a version without MPI
+find_path(PASTIX_pastix_nompi.h_INCLUDE_DIRS
+  NAMES pastix_nompi.h
+  HINTS ${PASTIX_INCLUDE_DIRS}
+)
+if (NOT PASTIX_pastix_nompi.h_INCLUDE_DIRS)
+  message(STATUS "A version of Pastix has been found but pastix_nompi.h does not exist in the include directory."
+                 " Because Eigen tests require a version without MPI, we disable the Pastix backend.")
+endif()
+if(PASTIX_FOUND AND PASTIX_pastix_nompi.h_INCLUDE_DIRS)
   add_definitions("-DEIGEN_PASTIX_SUPPORT")
-  include_directories(${PASTIX_INCLUDES})
+  include_directories(${PASTIX_INCLUDE_DIRS_DEP})
   if(SCOTCH_FOUND)
-    include_directories(${SCOTCH_INCLUDES})
+    include_directories(${SCOTCH_INCLUDE_DIRS})
     set(PASTIX_LIBRARIES ${PASTIX_LIBRARIES} ${SCOTCH_LIBRARIES})
   elseif(METIS_FOUND)
-    include_directories(${METIS_INCLUDES})
+    include_directories(${METIS_INCLUDE_DIRS})
     set(PASTIX_LIBRARIES ${PASTIX_LIBRARIES} ${METIS_LIBRARIES})
   else(SCOTCH_FOUND)
     ei_add_property(EIGEN_MISSING_BACKENDS  "PaStiX, ")
   endif(SCOTCH_FOUND)
-  set(SPARSE_LIBS ${SPARSE_LIBS} ${PASTIX_LIBRARIES} ${ORDERING_LIBRARIES} ${EIGEN_BLAS_LIBRARIES})
-  set(PASTIX_ALL_LIBS ${PASTIX_LIBRARIES} ${EIGEN_BLAS_LIBRARIES})
+  set(SPARSE_LIBS ${SPARSE_LIBS} ${PASTIX_LIBRARIES_DEP} ${ORDERING_LIBRARIES})
+  set(PASTIX_ALL_LIBS ${PASTIX_LIBRARIES_DEP})
   ei_add_property(EIGEN_TESTED_BACKENDS  "PaStiX, ")
 else()
   ei_add_property(EIGEN_MISSING_BACKENDS  "PaStiX, ")
@@ -107,7 +111,7 @@ endif()
 
 if(METIS_FOUND)
   add_definitions("-DEIGEN_METIS_SUPPORT")
-  include_directories(${METIS_INCLUDES})
+  include_directories(${METIS_INCLUDE_DIRS})
   ei_add_property(EIGEN_TESTED_BACKENDS "METIS, ")
 else()
   ei_add_property(EIGEN_MISSING_BACKENDS "METIS, ")
@@ -142,9 +146,9 @@ endif(TEST_LIB)
 set_property(GLOBAL PROPERTY EIGEN_CURRENT_SUBPROJECT "Official")
 add_custom_target(BuildOfficial)
 
-IF(FALSE)
 ei_add_test(rand)
 ei_add_test(meta)
+ei_add_test(numext)
 ei_add_test(sizeof)
 ei_add_test(dynalloc)
 ei_add_test(nomalloc)
@@ -166,6 +170,8 @@ ei_add_test(redux)
 ei_add_test(visitor)
 ei_add_test(block)
 ei_add_test(corners)
+ei_add_test(symbolic_index)
+ei_add_test(indexed_view)
 ei_add_test(swap)
 ei_add_test(resize)
 ei_add_test(conservative_resize)
@@ -267,7 +273,6 @@ ei_add_test(inplace_decomposition)
 ei_add_test(half_float)
 ei_add_test(array_of_string)
 
-
 add_executable(bug1213 bug1213.cpp bug1213_main.cpp)
 
 check_cxx_compiler_flag("-ffast-math" COMPILER_SUPPORT_FASTMATH)
@@ -345,71 +350,41 @@ else()
   ei_add_property(EIGEN_MISSING_BACKENDS "Boost.Multiprecision, ")
 endif()
 
-ENDIF(FALSE)
 
-# HIP unit tests
-option(EIGEN_TEST_HIP "Enable HIP support in unit tests" ON)
-option(EIGEN_TEST_HIP_CLANG "Use clang instead of hipcc to compile the HIP tests" OFF)
+# CUDA unit tests
+option(EIGEN_TEST_CUDA "Enable CUDA support in unit tests" OFF)
+option(EIGEN_TEST_CUDA_CLANG "Use clang instead of nvcc to compile the CUDA tests" OFF)
 
-if(EIGEN_TEST_HIP_CLANG AND NOT CMAKE_CXX_COMPILER MATCHES "clang")
-  message(WARNING "EIGEN_TEST_HIP_CLANG is set, but CMAKE_CXX_COMPILER does not appear to be clang.")
+if(EIGEN_TEST_CUDA_CLANG AND NOT CMAKE_CXX_COMPILER MATCHES "clang")
+  message(WARNING "EIGEN_TEST_CUDA_CLANG is set, but CMAKE_CXX_COMPILER does not appear to be clang.")
 endif()
 
-# HIP PATH
-if(EIGEN_TEST_HIP)
-  find_package(HIP REQUIRED)
-  if(HIP_FOUND)
-    set(HIP_PATH $ENV{HIP_PATH})
-    if(NOT DEFINED HIP_PATH)
-      message(WARNING "HIP_PATH env variable not set. Using default path /opt/rocm/hip/")
-      set(HIP_PATH "/opt/rocm/hip/")
-    endif()
+if(EIGEN_TEST_CUDA)
 
-    if(DEFINED HIP_PATH)
-      execute_process(COMMAND ${HIP_PATH}/bin/hipconfig --platform OUTPUT_VARIABLE HIP_PLATFORM)
-      message("HIP_PATH=" ${HIP_PATH})
-
-      if(${HIP_PLATFORM} STREQUAL "hcc")
-        message("HIP_PLATFORM=hcc")
-        include_directories(${CMAKE_CURRENT_BINARY_DIR})
-        include_directories(${HIP_PATH}/include)
-        include_directories(/usr/local/include/eigen3/Eigen/src/Core/arch/HIP/)
-        set(EIGEN_ADD_TEST_FILENAME_EXTENSION  "cu")
-        ei_add_test(hip_basic)
-        unset(EIGEN_ADD_TEST_FILENAME_EXTENSION)
-      elseif(${HIP_PLATFORM} STREQUAL "nvcc")
-        message("HIP_PLATFORM=nvcc")
-
-        set(CMAKE_SHARED_LIBRARY_LINK_CXX_FLAGS)
-        set(CMAKE_SHARED_LIBRARY_LINK_C_FLAGS)
-
-        set(HIPCC ${HIP_PATH}/bin/hipcc)
-
-        set(HIP_PROPAGATE_HOST_FLAGS OFF)
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -gencode arch=compute_35,code=sm_35")
-
-        include_directories(${CMAKE_CURRENT_BINARY_DIR})
-        include_directories(${HIP_PATH}/include)
-        include_directories(/usr/local/cuda/targets/x86_64-linux/include)
-
-        set(EIGEN_ADD_TEST_FILENAME_EXTENSION  "cu")
-        ei_add_test(hip_basic)
-        unset(EIGEN_ADD_TEST_FILENAME_EXTENSION)
-      else()
-        message(FATAL_ERROR "UNKNOWN HIP_PLATFORM=" ${HIP_PLATFORM})
-      endif()
-  else()
-   MESSAGE(STATUS "***********************************HIP_PATH NOT FOUND****************************")
+find_package(CUDA 5.0)
+if(CUDA_FOUND)
+  
+  set(CUDA_PROPAGATE_HOST_FLAGS OFF)
+  if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang") 
+    set(CUDA_NVCC_FLAGS "-ccbin ${CMAKE_C_COMPILER}" CACHE STRING "nvcc flags" FORCE)
   endif()
-else()
-   MESSAGE(STATUS "***********************************HIP Not Found****************************")
-endif()
+  if(EIGEN_TEST_CUDA_CLANG)
+   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 --cuda-gpu-arch=sm_30")
+  endif()
+  cuda_include_directories(${CMAKE_CURRENT_BINARY_DIR})
+  set(EIGEN_ADD_TEST_FILENAME_EXTENSION  "cu")
+  
+  ei_add_test(cuda_basic)
+  
+  unset(EIGEN_ADD_TEST_FILENAME_EXTENSION)
 
-endif(EIGEN_TEST_HIP)
+endif(CUDA_FOUND)
+
+endif(EIGEN_TEST_CUDA)
 
 
-#file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/failtests)
-#add_test(NAME failtests WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/failtests COMMAND ${CMAKE_COMMAND} ${Eigen_SOURCE_DIR} -G "${CMAKE_GENERATOR}" -DEIGEN_FAILTEST=ON)
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/failtests)    
+add_test(NAME failtests WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/failtests COMMAND ${CMAKE_COMMAND} ${Eigen_SOURCE_DIR} -G "${CMAKE_GENERATOR}" -DEIGEN_FAILTEST=ON)
 
 option(EIGEN_TEST_BUILD_DOCUMENTATION "Test building the doxygen documentation" OFF)
 IF(EIGEN_TEST_BUILD_DOCUMENTATION)

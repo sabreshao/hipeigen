@@ -31,6 +31,7 @@ struct traits<TensorBroadcastingOp<Broadcast, XprType> > : public traits<XprType
   typedef typename remove_reference<Nested>::type _Nested;
   static const int NumDimensions = XprTraits::NumDimensions;
   static const int Layout = XprTraits::Layout;
+  typedef typename XprTraits::PointerType PointerType;
 };
 
 template<typename Broadcast, typename XprType>
@@ -54,7 +55,7 @@ struct is_input_scalar<Sizes<> > {
   static const bool value = true;
 };
 #ifndef EIGEN_EMULATE_CXX11_META_H
-template <typename std::size_t... Indices>
+template <typename std::ptrdiff_t... Indices>
 struct is_input_scalar<Sizes<Indices...> > {
   static const bool value = (Sizes<Indices...>::total_size == 1);
 };
@@ -77,8 +78,6 @@ class TensorBroadcastingOp : public TensorBase<TensorBroadcastingOp<Broadcast, X
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE TensorBroadcastingOp(const XprType& expr, const Broadcast& broadcast)
       : m_xpr(expr), m_broadcast(broadcast) {}
-
-  EIGEN_DEVICE_FUNC ~TensorBroadcastingOp() {}
 
     EIGEN_DEVICE_FUNC
     const Broadcast& broadcast() const { return m_broadcast; }
@@ -144,9 +143,7 @@ struct TensorEvaluator<const TensorBroadcastingOp<Broadcast, ArgType>, Device>
       }
     }
   }
- 
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE ~TensorEvaluator() {}
-  
+
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE const Dimensions& dimensions() const { return m_dimensions; }
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE bool evalSubExprsIfNeeded(Scalar* /*data*/) {
@@ -376,7 +373,7 @@ struct TensorEvaluator<const TensorBroadcastingOp<Broadcast, ArgType>, Device>
            TensorOpCost(0, 0, compute_cost, vectorized, PacketSize);
   }
 
-  EIGEN_DEVICE_FUNC Scalar* data() const { return NULL; }
+  EIGEN_DEVICE_FUNC typename Eigen::internal::traits<XprType>::PointerType data() const { return NULL; }
 
   const TensorEvaluator<ArgType, Device>& impl() const { return m_impl; }
 

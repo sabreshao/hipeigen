@@ -13,8 +13,6 @@ if(NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/split_test_helper.h)
   endforeach()
 endif()
 
-# Set CMAKE MOUDLE PATH to check for the FindHIP.cmake file
-SET(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake ${CMAKE_MODULE_PATH} "${HIP_PATH}/cmake" "/opt/rocm/hip/cmake")
 set_property(GLOBAL PROPERTY EIGEN_CURRENT_SUBPROJECT "Unsupported")
 add_custom_target(BuildUnsupported)
 
@@ -22,6 +20,17 @@ include_directories(../../test ../../unsupported ../../Eigen
                     ${CMAKE_CURRENT_BINARY_DIR}/../../test)
 
 find_package (Threads)
+
+find_package(Xsmm)
+if(XSMM_FOUND)
+  add_definitions("-DEIGEN_USE_LIBXSMM")
+  include_directories(${XSMM_INCLUDES})
+  link_directories(${XSMM_LIBRARIES})
+  set(EXTERNAL_LIBS ${EXTERNAL_LIBS} xsmm)
+  ei_add_property(EIGEN_TESTED_BACKENDS  "Xsmm, ")
+else(XSMM_FOUND)
+  ei_add_property(EIGEN_MISSING_BACKENDS  "Xsmm, ")
+endif(XSMM_FOUND)
 
 find_package(GoogleHash)
 if(GOOGLEHASH_FOUND)
@@ -134,9 +143,7 @@ ei_add_test(cxx11_tensor_empty)
 ei_add_test(cxx11_tensor_sugar)
 ei_add_test(cxx11_tensor_roundings)
 ei_add_test(cxx11_tensor_layout_swap)
-if (FALSE)
 ei_add_test(cxx11_tensor_io)
-endif (FALSE)
 if("${CMAKE_SIZEOF_VOID_P}" EQUAL "8")
   # This test requires __uint128_t which is only available on 64bit systems
   ei_add_test(cxx11_tensor_uint128)
@@ -145,15 +152,40 @@ endif()
 
 if(EIGEN_TEST_CXX11)
   if(EIGEN_TEST_SYCL)
-    ei_add_test_sycl(cxx11_tensor_sycl "-std=c++11")
-    ei_add_test_sycl(cxx11_tensor_forced_eval_sycl "-std=c++11")
-    ei_add_test_sycl(cxx11_tensor_broadcast_sycl "-std=c++11")
-    ei_add_test_sycl(cxx11_tensor_device_sycl "-std=c++11")
-    ei_add_test_sycl(cxx11_tensor_reduction_sycl "-std=c++11")
+    if(EIGEN_SYCL_TRISYCL)
+      set(CMAKE_CXX_STANDARD 14)
+      set(STD_CXX_FLAG "-std=c++1z")
+    else(EIGEN_SYCL_TRISYCL)
+      # It should be safe to always run these tests as there is some fallback code for
+      # older compiler that don't support cxx11.
+      set(CMAKE_CXX_STANDARD 11)
+      set(STD_CXX_FLAG "-std=c++11")
+    endif(EIGEN_SYCL_TRISYCL)
+
+    ei_add_test_sycl(cxx11_tensor_sycl ${STD_CXX_FLAG})
+    ei_add_test_sycl(cxx11_tensor_forced_eval_sycl ${STD_CXX_FLAG})
+    ei_add_test_sycl(cxx11_tensor_broadcast_sycl ${STD_CXX_FLAG})
+    ei_add_test_sycl(cxx11_tensor_device_sycl ${STD_CXX_FLAG})
+    ei_add_test_sycl(cxx11_tensor_reduction_sycl ${STD_CXX_FLAG})
+    ei_add_test_sycl(cxx11_tensor_morphing_sycl ${STD_CXX_FLAG})
+    ei_add_test_sycl(cxx11_tensor_shuffling_sycl ${STD_CXX_FLAG})
+    ei_add_test_sycl(cxx11_tensor_padding_sycl ${STD_CXX_FLAG})
+    ei_add_test_sycl(cxx11_tensor_builtins_sycl ${STD_CXX_FLAG})
+    ei_add_test_sycl(cxx11_tensor_contract_sycl ${STD_CXX_FLAG})
+    ei_add_test_sycl(cxx11_tensor_concatenation_sycl ${STD_CXX_FLAG})
+    ei_add_test_sycl(cxx11_tensor_reverse_sycl ${STD_CXX_FLAG})
+    ei_add_test_sycl(cxx11_tensor_convolution_sycl ${STD_CXX_FLAG})
+    ei_add_test_sycl(cxx11_tensor_striding_sycl ${STD_CXX_FLAG})
+    ei_add_test_sycl(cxx11_tensor_chipping_sycl ${STD_CXX_FLAG})
+    ei_add_test_sycl(cxx11_tensor_layout_swap_sycl ${STD_CXX_FLAG})
+    ei_add_test_sycl(cxx11_tensor_inflation_sycl ${STD_CXX_FLAG})
+    ei_add_test_sycl(cxx11_tensor_generator_sycl ${STD_CXX_FLAG})
+    ei_add_test_sycl(cxx11_tensor_patch_sycl ${STD_CXX_FLAG})
+    ei_add_test_sycl(cxx11_tensor_image_patch_sycl ${STD_CXX_FLAG})
+    ei_add_test_sycl(cxx11_tensor_volume_patch_sycl ${STD_CXX_FLAG})
+    ei_add_test_sycl(cxx11_tensor_argmax_sycl ${STD_CXX_FLAG})
+    ei_add_test_sycl(cxx11_tensor_custom_op_sycl ${STD_CXX_FLAG})
   endif(EIGEN_TEST_SYCL)
-  # It should be safe to always run these tests as there is some fallback code for
-  # older compiler that don't support cxx11.
-  set(CMAKE_CXX_STANDARD 11)
 
   ei_add_test(cxx11_eventcount "-pthread" "${CMAKE_THREAD_LIBS_INIT}")
   ei_add_test(cxx11_runqueue "-pthread" "${CMAKE_THREAD_LIBS_INIT}")
@@ -195,124 +227,68 @@ if(EIGEN_TEST_CXX11)
   ei_add_test(cxx11_tensor_fft)
   ei_add_test(cxx11_tensor_ifft)
   ei_add_test(cxx11_tensor_scan)
+  ei_add_test(cxx11_tensor_trace)
 
 endif()
 
-# These tests needs hipcc
-if(EIGEN_TEST_HIP)
-  find_package(HIP REQUIRED)
-  if(HIP_FOUND)
-    set(HIP_PATH $ENV{HIP_PATH})
-    if(NOT DEFINED HIP_PATH)
-      MESSAGE(WARNING "HIP_PATH env variable not set. Using default path /opt/rocm/hip/")
-      set(HIP_PATH "/opt/rocm/hip/")
-    endif()
-    if(DEFINED HIP_PATH)
-      #store the original g++ settings before changing the compiler to hipcc
-      set(CPU_CMAKE_COMPILER_SETTINGS ${CMAKE_CXX_COMPILER})
-      set(CPU_CMAKE_FLAGS ${CMAKE_CXX_FLAGS})
+# These tests needs nvcc
+find_package(CUDA 7.0)
+if(CUDA_FOUND AND EIGEN_TEST_CUDA)
+  # Make sure to compile without the -pedantic, -Wundef, -Wnon-virtual-dtor
+  # and -fno-check-new flags since they trigger thousands of compilation warnings
+  # in the CUDA runtime
+  # Also remove -ansi that is incompatible with std=c++11.
+  string(REPLACE "-pedantic" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+  string(REPLACE "-Wundef" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+  string(REPLACE "-Wnon-virtual-dtor" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+  string(REPLACE "-fno-check-new" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+  string(REPLACE "-ansi" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 
-      # Make sure to compile without the -pedantic, -Wundef, -Wnon-virtual-dtor
-      # and -fno-check-new flags since they trigger thousands of compilation warnings
-      # in the HIP runtime
-      # Also remove -ansi that is incompatible with std=c++11.
-      string(REPLACE "-pedantic" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
-      string(REPLACE "-Wundef" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
-      string(REPLACE "-Wnon-virtual-dtor" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
-      string(REPLACE "-fno-check-new" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
-      string(REPLACE "-ansi" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+  message(STATUS "Flags used to compile cuda code: " ${CMAKE_CXX_FLAGS})
 
-      message(STATUS "Flags used to compile HIP code: " ${CMAKE_CXX_FLAGS})
-
-      #if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-      #  set(CUDA_NVCC_FLAGS "-ccbin /usr/bin/clang" CACHE STRING "nvcc flags" FORCE)
-      #endif()
-      #if(EIGEN_TEST_CUDA_CLANG)
-      # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 --cuda-gpu-arch=sm_${EIGEN_CUDA_COMPUTE_ARCH}")
-      #endif()
-
-      #set(EIGEN_CUDA_RELAXED_CONSTEXPR "--expt-relaxed-constexpr")
-      #if (${CUDA_VERSION} STREQUAL "7.0")
-      #  set(EIGEN_CUDA_RELAXED_CONSTEXPR "--relaxed-constexpr")
-      #endif()
-
-      execute_process(COMMAND ${HIP_PATH}/bin/hipconfig --platform OUTPUT_VARIABLE HIP_PLATFORM)
-      message("HIP_PATH=" ${HIP_PATH})
-
-      if( (NOT EIGEN_TEST_CXX11) OR (CMAKE_VERSION VERSION_LESS 3.3))
-        set(EIGEN_HIP_CXX11_FLAG "-std=c++11")
-      else()
-        # otherwise the flag has already been added because of the above set(CMAKE_CXX_STANDARD 11)
-        set(EIGEN_HIP_CXX11_FLAG "")
-      endif()
-
-      if(${HIP_PLATFORM} STREQUAL "hcc")
-        message("HIP_PLATFORM=hcc")
-
-        include_directories(${CMAKE_CURRENT_BINARY_DIR})
-        include_directories(${HIP_PATH}/include)
-
-        set(EIGEN_ADD_TEST_FILENAME_EXTENSION  "cu")
-
-        ei_add_test(cxx11_tensor_device)
-        ei_add_test(cxx11_tensor_hip)
-        ei_add_test(cxx11_tensor_contract_hip)
-        ei_add_test(cxx11_tensor_reduction_hip)
-        ei_add_test(cxx11_tensor_argmax_hip)
-        ei_add_test(cxx11_tensor_cast_float16_hip)
-        ei_add_test(cxx11_tensor_scan_hip)
-
-        # The random number generation code requires arch 3.5 or greater.
-        #if (${EIGEN_CUDA_COMPUTE_ARCH} GREATER 34)
-          #ei_add_test(cxx11_tensor_random_hip)
-        #endif()
-        ei_add_test(cxx11_tensor_of_float16_hip)
-
-        unset(EIGEN_ADD_TEST_FILENAME_EXTENSION)
-      elseif(${HIP_PLATFORM} STREQUAL "nvcc")
-        message("HIP_PLATFORM=nvcc")
-
-        set(CMAKE_SHARED_LIBRARY_LINK_CXX_FLAGS)
-        set(CMAKE_SHARED_LIBRARY_LINK_C_FLAGS)
-
-        set(HIPCC ${HIP_PATH}/bin/hipcc)
-
-        set(HIP_PROPAGATE_HOST_FLAGS OFF)
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -gencode arch=compute_52,code=sm_52")
-
-        include_directories(${CMAKE_CURRENT_BINARY_DIR})
-        include_directories(${HIP_PATH}/include)
-        include_directories(/usr/local/cuda/targets/x86_64-linux/include)
-
-        set(HIP_NVCC_FLAGS  "${EIGEN_CUDA_CXX11_FLAG} ${EIGEN_CUDA_RELAXED_CONSTEXPR} -arch compute_${EIGEN_CUDA_COMPUTE_ARCH} -Xcudafe \"--display_error_number\" ${CUDA_NVCC_FLAGS}")
-        #include_directories("${CMAKE_CURRENT_BINARY_DIR}" "${CUDA_TOOLKIT_ROOT_DIR}/include")
-        set(EIGEN_ADD_TEST_FILENAME_EXTENSION "cu")
-
-        ei_add_test(cxx11_tensor_device)
-        #ei_add_test(cxx11_tensor_hip)
-        ei_add_test(cxx11_tensor_contract_hip)
-        ei_add_test(cxx11_tensor_reduction_hip)
-        ei_add_test(cxx11_tensor_argmax_hip)
-        ei_add_test(cxx11_tensor_cast_float16_hip)
-        ei_add_test(cxx11_tensor_scan_hip)
-
-        # The random number generation code requires arch 3.5 or greater.
-        if (${EIGEN_CUDA_COMPUTE_ARCH} GREATER 34)
-          #ei_add_test(cxx11_tensor_random_hip)
-        endif()
-
-        ei_add_test(cxx11_tensor_of_float16_hip)
-
-        unset(EIGEN_ADD_TEST_FILENAME_EXTENSION)
-
-      else()
-        message(FATAL_ERROR "UNKNOWN HIP_PLATFORM=" ${HIP_PLATFORM})
-      endif()
-
-      #restore back the original g++ settings
-      set(CMAKE_CXX_COMPILER ${CPU_CMAKE_COMPILER_SETTINGS} CACHE FILEPATH "CXX Compiler" FORCE)
-      set(CMAKE_CXX_FLAGS ${CPU_CMAKE_FLAGS})
-    endif()
-    
+  if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+    set(CUDA_NVCC_FLAGS "-ccbin ${CMAKE_C_COMPILER}" CACHE STRING "nvcc flags" FORCE)
   endif()
+  if(EIGEN_TEST_CUDA_CLANG)
+   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 --cuda-gpu-arch=sm_${EIGEN_CUDA_COMPUTE_ARCH}")
+  endif()
+
+  set(EIGEN_CUDA_RELAXED_CONSTEXPR "--expt-relaxed-constexpr")
+  if (${CUDA_VERSION} STREQUAL "7.0")
+    set(EIGEN_CUDA_RELAXED_CONSTEXPR "--relaxed-constexpr")
+  endif()
+
+  if( (NOT EIGEN_TEST_CXX11) OR (CMAKE_VERSION VERSION_LESS 3.3))
+    set(EIGEN_CUDA_CXX11_FLAG "-std=c++11")
+  else()
+    # otherwise the flag has already been added because of the above set(CMAKE_CXX_STANDARD 11)
+    set(EIGEN_CUDA_CXX11_FLAG "")
+  endif()
+
+  set(CUDA_NVCC_FLAGS  "${EIGEN_CUDA_CXX11_FLAG} ${EIGEN_CUDA_RELAXED_CONSTEXPR} -arch compute_${EIGEN_CUDA_COMPUTE_ARCH} -Xcudafe \"--display_error_number\" ${CUDA_NVCC_FLAGS}")
+  cuda_include_directories("${CMAKE_CURRENT_BINARY_DIR}" "${CUDA_TOOLKIT_ROOT_DIR}/include")
+  set(EIGEN_ADD_TEST_FILENAME_EXTENSION "cu")
+
+  ei_add_test(cxx11_tensor_complex_cuda)
+  ei_add_test(cxx11_tensor_complex_cwise_ops_cuda)
+  ei_add_test(cxx11_tensor_reduction_cuda)
+  ei_add_test(cxx11_tensor_argmax_cuda)
+  ei_add_test(cxx11_tensor_cast_float16_cuda)
+  ei_add_test(cxx11_tensor_scan_cuda)
+
+  # Contractions require arch 3.0 or higher
+  if (${EIGEN_CUDA_COMPUTE_ARCH} GREATER 29)
+    ei_add_test(cxx11_tensor_device)
+    ei_add_test(cxx11_tensor_cuda)
+    ei_add_test(cxx11_tensor_contract_cuda)
+    ei_add_test(cxx11_tensor_of_float16_cuda)
+  endif()
+
+  # The random number generation code requires arch 3.5 or greater.
+  if (${EIGEN_CUDA_COMPUTE_ARCH} GREATER 34)
+    ei_add_test(cxx11_tensor_random_cuda)
+  endif()
+
+
+  unset(EIGEN_ADD_TEST_FILENAME_EXTENSION)
 endif()

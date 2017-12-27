@@ -121,9 +121,9 @@ template <>
 struct lgamma_impl<float> {
   EIGEN_DEVICE_FUNC
   static EIGEN_STRONG_INLINE float run(float x) {
-#if !defined(__HIP_DEVICE_COMPILE__) && (defined(_BSD_SOURCE) || defined(_SVID_SOURCE)) && !defined(__APPLE__)
-    int signgam;
-    return ::lgammaf_r(x, &signgam);
+#if !defined(EIGEN_CUDA_ARCH) && (defined(_BSD_SOURCE) || defined(_SVID_SOURCE)) && !defined(__APPLE__)
+    int dummy;
+    return ::lgammaf_r(x, &dummy);
 #else
     return ::lgammaf(x);
 #endif
@@ -134,9 +134,9 @@ template <>
 struct lgamma_impl<double> {
   EIGEN_DEVICE_FUNC
   static EIGEN_STRONG_INLINE double run(double x) {
-#if !defined(__HIP_DEVICE_COMPILE__) && (defined(_BSD_SOURCE) || defined(_SVID_SOURCE)) && !defined(__APPLE__)
-    int signgam;
-    return ::lgamma_r(x, &signgam);
+#if !defined(EIGEN_CUDA_ARCH) && (defined(_BSD_SOURCE) || defined(_SVID_SOURCE)) && !defined(__APPLE__)
+    int dummy;
+    return ::lgamma_r(x, &dummy);
 #else
     return ::lgamma(x);
 #endif
@@ -573,7 +573,7 @@ struct igammac_impl {
     Scalar ans, ax, c, yc, r, t, y, z;
     Scalar pk, pkm1, pkm2, qk, qkm1, qkm2;
 
-    if (x == inf) return zero;  // std::isinf crashes on HIP
+    if (x == inf) return zero;  // std::isinf crashes on CUDA
 
     /* Compute  x**a * exp(-x) / gamma(a)  */
     ax = a * numext::log(x) - x - lgamma_impl<Scalar>::run(a);

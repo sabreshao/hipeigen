@@ -201,7 +201,7 @@ class TensorExecutor<Expression, GpuDevice, Vectorizable> {
 };
 
 
-#if defined(__HIPCC__) || defined(__NVCC__) || defined(__HCC__)
+#if defined(EIGEN_CUDACC)
 template <typename Evaluator, typename Index, bool Vectorizable>
 struct EigenMetaKernelEval {
   static __device__ EIGEN_ALWAYS_INLINE
@@ -231,17 +231,13 @@ struct EigenMetaKernelEval<Evaluator, Index, true> {
   }
 };
 
-// FIXME - remove this once launch_bounds=1024 is working correctly.
-#define MAX_BLOCK_SIZE 512
-
 template <typename Evaluator, typename Index>
-//FIXME: why add 1 here?
-//__launch_bounds__(1024, 1)
-__launch_bounds__(MAX_BLOCK_SIZE, 1)
 __global__ void
-EigenMetaKernel( Evaluator eval, Index size){
-  const Index first_index = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
-  const Index step_size = hipBlockDim_x * hipGridDim_x;
+__launch_bounds__(1024)
+EigenMetaKernel(Evaluator eval, Index size) {
+
+  const Index first_index = blockIdx.x * blockDim.x + threadIdx.x;
+  const Index step_size = blockDim.x * gridDim.x;
 
   const bool vectorizable = Evaluator::PacketAccess & Evaluator::IsAligned;
   EigenMetaKernelEval<Evaluator, Index, vectorizable>::run(eval, first_index, size, step_size);
@@ -254,21 +250,21 @@ inline void TensorExecutor<Expression, GpuDevice, Vectorizable>::run(
   TensorEvaluator<Expression, GpuDevice> evaluator(expr, device);
   const bool needs_assign = evaluator.evalSubExprsIfNeeded(NULL);
   if (needs_assign) {
-    //const int block_size = device.maxHipThreadsPerBlock();
-    const int block_size = MAX_BLOCK_SIZE;
-    const int max_blocks = device.getNumHipMultiProcessors() *
-                           device.maxHipThreadsPerMultiProcessor() / block_size;
+    const int block_size = device.maxCudaThreadsPerBlock();
+    const int max_blocks = device.getNumCudaMultiProcessors() *
+                           device.maxCudaThreadsPerMultiProcessor() / block_size;
     const Index size = array_prod(evaluator.dimensions());
     // Create a least one block to ensure we won't crash when tensorflow calls with tensors of size 0.
     const int num_blocks = numext::maxi<int>(numext::mini<int>(max_blocks, divup<int>(size, block_size)), 1);
 
-    hipLaunchKernelGGL(HIP_KERNEL_NAME(EigenMetaKernel<TensorEvaluator<Expression, GpuDevice>, Index>),
-        dim3(num_blocks), dim3(block_size), 0, device.stream(), evaluator, size);
+    LAUNCH_CUDA_KERNEL(
+        (EigenMetaKernel<TensorEvaluator<Expression, GpuDevice>, Index>),
+        num_blocks, block_size, 0, device, evaluator, size);
   }
   evaluator.cleanup();
 }
 
-#endif  // __HIPCC__ || __NVCC__ || __HCC__
+#endif  // EIGEN_CUDACC
 #endif  // EIGEN_USE_GPU
 
 // SYCL Executor policy

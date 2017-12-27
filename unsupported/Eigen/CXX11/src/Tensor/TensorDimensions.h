@@ -33,7 +33,7 @@ namespace Eigen {
 namespace internal {
 
 template<std::size_t n, typename Dimension> struct dget {
-  static const std::size_t value = get<n, Dimension>::value;
+  static const std::ptrdiff_t value = get<n, Dimension>::value;
 };
 
 
@@ -90,9 +90,11 @@ struct fixed_size_tensor_index_extraction_helper<Index, 0>
 // Fixed size
 #ifndef EIGEN_EMULATE_CXX11_META_H
 template <typename std::ptrdiff_t... Indices>
-struct Sizes : internal::numeric_list<std::ptrdiff_t, Indices...> {
+struct Sizes {
   typedef internal::numeric_list<std::ptrdiff_t, Indices...> Base;
+  const Base t = Base();
   static const std::ptrdiff_t total_size = internal::arg_prod(Indices...);
+  static const size_t count = Base::count;
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE std::ptrdiff_t rank() const {
     return Base::count;
@@ -120,16 +122,16 @@ struct Sizes : internal::numeric_list<std::ptrdiff_t, Indices...> {
   }
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE std::ptrdiff_t operator[] (const std::size_t index) const {
-    return internal::fixed_size_tensor_index_extraction_helper<std::ptrdiff_t, Base::count>::run(index, *this);
+    return internal::fixed_size_tensor_index_extraction_helper<std::ptrdiff_t, Base::count>::run(index, t);
   }
 
   template <typename DenseIndex> EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE
   size_t IndexOfColMajor(const array<DenseIndex, Base::count>& indices) const {
-    return internal::fixed_size_tensor_index_linearization_helper<DenseIndex, Base::count, Base::count, false>::run(indices, *static_cast<const Base*>(this));
+    return internal::fixed_size_tensor_index_linearization_helper<DenseIndex, Base::count, Base::count, false>::run(indices, t);
   }
   template <typename DenseIndex> EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE
   size_t IndexOfRowMajor(const array<DenseIndex, Base::count>& indices) const {
-    return internal::fixed_size_tensor_index_linearization_helper<DenseIndex, Base::count, Base::count, true>::run(indices, *static_cast<const Base*>(this));
+    return internal::fixed_size_tensor_index_linearization_helper<DenseIndex, Base::count, Base::count, true>::run(indices, t);
   }
 };
 
@@ -287,24 +289,7 @@ struct DSizes : array<DenseIndex, NumDims> {
   EIGEN_STRONG_INLINE explicit DSizes(DenseIndex firstDimension, DenseIndex secondDimension, IndexTypes... otherDimensions) : Base({{firstDimension, secondDimension, otherDimensions...}}) {
     EIGEN_STATIC_ASSERT(sizeof...(otherDimensions) + 2 == NumDims, YOU_MADE_A_PROGRAMMING_MISTAKE)
   }
-
-#if defined(__HCC_HC__)
-  EIGEN_DEVICE_FUNC explicit DSizes(DenseIndex i0, DenseIndex i1) : Base(i0, i1) {}
-
-  EIGEN_DEVICE_FUNC explicit DSizes(DenseIndex i0, DenseIndex i1, DenseIndex i2) : Base(i0, i1, i2) {}
-
-  EIGEN_DEVICE_FUNC explicit DSizes(DenseIndex i0, DenseIndex i1, DenseIndex i2, DenseIndex i3) : Base(i0, i1, i2, i3) {}
-
-  EIGEN_DEVICE_FUNC explicit DSizes(DenseIndex i0, DenseIndex i1, DenseIndex i2, DenseIndex i3, DenseIndex i4) : Base(i0, i1, i2, i3, i4) {}
-  
-  EIGEN_DEVICE_FUNC explicit DSizes(DenseIndex i0, DenseIndex i1, DenseIndex i2, DenseIndex i3, DenseIndex i4, DenseIndex i5) : Base(i0, i1, i2, i3, i4, i5) {}
-  
-  EIGEN_DEVICE_FUNC explicit ~DSizes() {}
-#endif
-
 #else
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE ~DSizes() {}
-
   EIGEN_DEVICE_FUNC DSizes(const DenseIndex i0, const DenseIndex i1) {
     eigen_assert(NumDims == 2);
     (*this)[0] = i0;

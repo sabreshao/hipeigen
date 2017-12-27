@@ -105,8 +105,6 @@ template<typename PlainObjectType, int Options_, template <class> class MakePoin
       : m_data(tensor.data()), m_dimensions(tensor.dimensions())
     { }
 
-    EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE ~TensorMap() {}
-
     EIGEN_DEVICE_FUNC
     EIGEN_STRONG_INLINE Index rank() const { return m_dimensions.rank(); }
     EIGEN_DEVICE_FUNC

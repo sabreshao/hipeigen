@@ -44,16 +44,14 @@ namespace Eigen {
 }
 
 #include "src/SpecialFunctions/SpecialFunctionsImpl.h"
-
-#if defined EIGEN_VECTORIZE_HIP
-  #include "src/SpecialFunctions/arch/HIP/HipSpecialFunctions.h"
-#endif
-
-
 #include "src/SpecialFunctions/SpecialFunctionsPacketMath.h"
 #include "src/SpecialFunctions/SpecialFunctionsHalf.h"
 #include "src/SpecialFunctions/SpecialFunctionsFunctors.h"
 #include "src/SpecialFunctions/SpecialFunctionsArrayAPI.h"
+
+#if defined EIGEN_VECTORIZE_CUDA
+  #include "src/SpecialFunctions/arch/CUDA/CudaSpecialFunctions.h"
+#endif
 
 namespace Eigen {
 //@}

@@ -37,6 +37,8 @@ struct traits<TensorConcatenationOp<Axis, LhsXprType, RhsXprType> >
   static const int NumDimensions = traits<LhsXprType>::NumDimensions;
   static const int Layout = traits<LhsXprType>::Layout;
   enum { Flags = 0 };
+  typedef typename conditional<Pointer_type_promotion<typename LhsXprType::Scalar, Scalar>::val,
+                               typename traits<LhsXprType>::PointerType, typename traits<RhsXprType>::PointerType>::type PointerType;
 };
 
 template<typename Axis, typename LhsXprType, typename RhsXprType>
@@ -173,8 +175,6 @@ struct TensorEvaluator<const TensorConcatenationOp<Axis, LeftArgType, RightArgTy
       }
     }
   }
- 
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE ~TensorEvaluator() {}
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE const Dimensions& dimensions() const { return m_dimensions; }
 
@@ -274,10 +274,16 @@ struct TensorEvaluator<const TensorConcatenationOp<Axis, LeftArgType, RightArgTy
                m_leftImpl.costPerCoeff(vectorized) +
            (rhs_size / (lhs_size + rhs_size)) *
                m_rightImpl.costPerCoeff(vectorized) +
-           TensorOpCost(0, 0, compute_cost, 0);
+           TensorOpCost(0, 0, compute_cost);
   }
 
-  EIGEN_DEVICE_FUNC Scalar* data() const { return NULL; }
+  EIGEN_DEVICE_FUNC typename Eigen::internal::traits<XprType>::PointerType data() const { return NULL; }
+  /// required by sycl in order to extract the accessor
+  const TensorEvaluator<LeftArgType, Device>& left_impl() const { return m_leftImpl; }
+  /// required by sycl in order to extract the accessor
+  const TensorEvaluator<RightArgType, Device>& right_impl() const { return m_rightImpl; }
+  /// required by sycl in order to extract the accessor
+  const Axis& axis() const { return m_axis; }
 
   protected:
     Dimensions m_dimensions;
@@ -309,8 +315,6 @@ template<typename Axis, typename LeftArgType, typename RightArgType, typename De
   {
     EIGEN_STATIC_ASSERT((static_cast<int>(Layout) == static_cast<int>(ColMajor)), YOU_MADE_A_PROGRAMMING_MISTAKE);
   }
- 
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE ~TensorEvaluator() {}
 
   typedef typename XprType::Index Index;
   typedef typename XprType::Scalar Scalar;

@@ -34,6 +34,7 @@ struct traits<TensorAssignOp<LhsXprType, RhsXprType> >
   typedef typename remove_reference<RhsNested>::type _RhsNested;
   static const std::size_t NumDimensions = internal::traits<LhsXprType>::NumDimensions;
   static const int Layout = internal::traits<LhsXprType>::Layout;
+  typedef typename traits<LhsXprType>::PointerType PointerType;
 
   enum {
     Flags = 0
@@ -109,8 +110,6 @@ struct TensorEvaluator<const TensorAssignOp<LeftArgType, RightArgType>, Device>
   {
     EIGEN_STATIC_ASSERT((static_cast<int>(TensorEvaluator<LeftArgType, Device>::Layout) == static_cast<int>(TensorEvaluator<RightArgType, Device>::Layout)), YOU_MADE_A_PROGRAMMING_MISTAKE);
   }
- 
-  EIGEN_DEVICE_FUNC ~TensorEvaluator() {}
 
   EIGEN_DEVICE_FUNC const Dimensions& dimensions() const
   {
@@ -120,8 +119,7 @@ struct TensorEvaluator<const TensorAssignOp<LeftArgType, RightArgType>, Device>
     return m_rightImpl.dimensions();
   }
 
-  //EIGEN_DEVICE_FUNC
-  EIGEN_STRONG_INLINE bool evalSubExprsIfNeeded(Scalar*) {
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE bool evalSubExprsIfNeeded(Scalar*) {
     eigen_assert(dimensions_match(m_leftImpl.dimensions(), m_rightImpl.dimensions()));
     m_leftImpl.evalSubExprsIfNeeded(NULL);
     // If the lhs provides raw access to its storage area (i.e. if m_leftImpl.data() returns a non
@@ -162,7 +160,7 @@ struct TensorEvaluator<const TensorAssignOp<LeftArgType, RightArgType>, Device>
     return m_rightImpl.costPerCoeff(vectorized) +
            TensorOpCost(
                numext::maxi(0.0, left.bytes_loaded() - sizeof(CoeffReturnType)),
-               left.bytes_stored(), left.compute_cycles(), 0) +
+               left.bytes_stored(), left.compute_cycles()) +
            TensorOpCost(0, sizeof(CoeffReturnType), 0, vectorized, PacketSize);
   }
 
@@ -171,7 +169,7 @@ struct TensorEvaluator<const TensorAssignOp<LeftArgType, RightArgType>, Device>
   /// required by sycl in order to extract the accessor
   const TensorEvaluator<RightArgType, Device>& right_impl() const { return m_rightImpl; }
 
-  EIGEN_DEVICE_FUNC CoeffReturnType* data() const { return m_leftImpl.data(); }
+  EIGEN_DEVICE_FUNC typename Eigen::internal::traits<XprType>::PointerType data() const { return m_leftImpl.data(); }
 
  private:
   TensorEvaluator<LeftArgType, Device> m_leftImpl;

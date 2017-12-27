@@ -46,6 +46,7 @@ struct traits<TensorLayoutSwapOp<XprType> > : public traits<XprType>
   typedef typename remove_reference<Nested>::type _Nested;
   static const int NumDimensions = traits<XprType>::NumDimensions;
   static const int Layout = (traits<XprType>::Layout == ColMajor) ? RowMajor : ColMajor;
+  typedef typename XprTraits::PointerType PointerType;
 };
 
 template<typename XprType>
@@ -130,8 +131,6 @@ struct TensorEvaluator<const TensorLayoutSwapOp<ArgType>, Device>
       m_dimensions[i] = m_impl.dimensions()[NumDims-1-i];
     }
   }
- 
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE ~TensorEvaluator() {}
 
   typedef typename XprType::Scalar Scalar;
   typedef typename XprType::CoeffReturnType CoeffReturnType;
@@ -161,7 +160,7 @@ struct TensorEvaluator<const TensorLayoutSwapOp<ArgType>, Device>
     return m_impl.costPerCoeff(vectorized);
   }
 
-  EIGEN_DEVICE_FUNC Scalar* data() const { return m_impl.data(); }
+  EIGEN_DEVICE_FUNC typename Eigen::internal::traits<XprType>::PointerType data() const { return m_impl.data(); }
 
   const TensorEvaluator<ArgType, Device>& impl() const { return m_impl; }
 
@@ -189,8 +188,6 @@ template<typename ArgType, typename Device>
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE TensorEvaluator(const XprType& op, const Device& device)
     : Base(op, device)
   { }
- 
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE ~TensorEvaluator() {}
 
   typedef typename XprType::Index Index;
   typedef typename XprType::Scalar Scalar;

@@ -32,6 +32,7 @@ struct traits<TensorConversionOp<TargetType, XprType> >
   static const int NumDimensions = traits<XprType>::NumDimensions;
   static const int Layout = traits<XprType>::Layout;
   enum { Flags = 0 };
+   typedef typename TypeConversion<Scalar, typename traits<XprType>::PointerType>::type PointerType;
 };
 
 template<typename TargetType, typename XprType>
@@ -203,8 +204,6 @@ struct TensorEvaluator<const TensorConversionOp<TargetType, ArgType>, Device>
   {
   }
 
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE ~TensorEvaluator() {}
-
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE const Dimensions& dimensions() const { return m_impl.dimensions(); }
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE bool evalSubExprsIfNeeded(Scalar* data)
@@ -240,13 +239,16 @@ struct TensorEvaluator<const TensorConversionOp<TargetType, ArgType>, Device>
       const double TgtCoeffRatio =
           internal::type_casting_traits<SrcType, TargetType>::TgtCoeffRatio;
       return m_impl.costPerCoeff(vectorized) * (SrcCoeffRatio / PacketSize) +
-          TensorOpCost(0, 0, TgtCoeffRatio * (cast_cost / PacketSize), 0);
+          TensorOpCost(0, 0, TgtCoeffRatio * (cast_cost / PacketSize));
     } else {
-      return m_impl.costPerCoeff(vectorized) + TensorOpCost(0, 0, cast_cost, 0);
+      return m_impl.costPerCoeff(vectorized) + TensorOpCost(0, 0, cast_cost);
     }
   }
 
-  EIGEN_DEVICE_FUNC Scalar* data() const { return NULL; }
+  EIGEN_DEVICE_FUNC typename Eigen::internal::traits<XprType>::PointerType data() const { return NULL; }
+
+  /// required by sycl in order to extract the sycl accessor
+  const TensorEvaluator<ArgType, Device>& impl() const { return m_impl; }
 
   protected:
   template <int LoadMode, bool ActuallyVectorize>

@@ -112,13 +112,13 @@ struct scalar_conj_product_op  : binary_op_base<LhsScalar,RhsScalar>
   enum {
     Conj = NumTraits<LhsScalar>::IsComplex
   };
-
+  
   typedef typename ScalarBinaryOpTraits<LhsScalar,RhsScalar,scalar_conj_product_op>::ReturnType result_type;
-
+  
   EIGEN_EMPTY_STRUCT_CTOR(scalar_conj_product_op)
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE const result_type operator() (const LhsScalar& a, const RhsScalar& b) const
   { return conj_helper<LhsScalar,RhsScalar,Conj,false>().pmul(a,b); }
-
+  
   template<typename Packet>
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE const Packet packetOp(const Packet& a, const Packet& b) const
   { return conj_helper<Packet,Packet,Conj,false>().pmul(a,b); }
@@ -462,8 +462,6 @@ template<typename BinaryOp> struct bind2nd_op : BinaryOp {
   typedef typename BinaryOp::second_argument_type second_argument_type;
   typedef typename BinaryOp::result_type          result_type;
 
-  EIGEN_DEVICE_FUNC
-  explicit
   bind2nd_op(const second_argument_type &val) : m_value(val) {}
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE const result_type operator() (const first_argument_type& a) const { return BinaryOp::operator()(a,m_value); }

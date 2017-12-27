@@ -32,6 +32,7 @@ struct TensorEvaluator
   typedef typename Derived::Scalar CoeffReturnType;
   typedef typename PacketType<CoeffReturnType, Device>::type PacketReturnType;
   typedef typename Derived::Dimensions Dimensions;
+  typedef Derived XprType;
 
   // NumDimensions is -1 for variable dim tensors
   static const int NumCoords = internal::traits<Derived>::NumDimensions > 0 ?
@@ -48,7 +49,6 @@ struct TensorEvaluator
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE TensorEvaluator(const Derived& m, const Device& device)
       : m_data(const_cast<typename internal::traits<Derived>::template MakePointer<Scalar>::Type>(m.data())), m_dims(m.dimensions()), m_device(device), m_impl(m)
   { }
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE ~TensorEvaluator() {}
 
   // Used for accessor extraction in SYCL Managed TensorMap:
   const Derived& derived() const { return m_impl; }
@@ -69,7 +69,9 @@ struct TensorEvaluator
     return m_data[index];
   }
 
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE Scalar& coeffRef(Index index) {
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE
+  typename internal::traits<Derived>::template MakePointer<Scalar>::RefType
+   coeffRef(Index index) {
     eigen_assert(m_data);
     return m_data[index];
   }
@@ -95,7 +97,9 @@ struct TensorEvaluator
     }
   }
 
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE Scalar& coeffRef(const array<DenseIndex, NumCoords>& coords) {
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE
+  typename internal::traits<Derived>::template MakePointer<Scalar>::RefType
+  coeffRef(const array<DenseIndex, NumCoords>& coords) {
     eigen_assert(m_data);
     if (static_cast<int>(Layout) == static_cast<int>(ColMajor)) {
       return m_data[m_dims.IndexOfColMajor(coords)];
@@ -126,23 +130,19 @@ template <typename T> EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE
 T loadConstant(const T* address) {
   return *address;
 }
-// Use the texture cache on HIP devices whenever possible
-#if defined(__HIP_DEVICE_COMPILE__)  && \
-    defined(__HIP_ARCH_HAS_WARP_FUNNEL_SHIFT__) && defined(__HIP_ARCH_HAS_DYNAMIC_PARALLEL__)
+// Use the texture cache on CUDA devices whenever possible
+#if defined(EIGEN_CUDA_ARCH) && EIGEN_CUDA_ARCH >= 350
 template <> EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE
 float loadConstant(const float* address) {
-  //TODO:return __ldg(address);
-  return *address;
+  return __ldg(address);
 }
 template <> EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE
 double loadConstant(const double* address) {
-  //TODO:return __ldg(address);
-  return *address;
+  return __ldg(address);
 }
 template <> EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE
 Eigen::half loadConstant(const Eigen::half* address) {
-  //TODO:return Eigen::half(half_impl::raw_uint16_to_half(__ldg(&address->x)));
-  return Eigen::half(half_impl::raw_uint16_to_half(address->x));
+  return Eigen::half(half_impl::raw_uint16_to_half(__ldg(&address->x)));
 }
 #endif
 }
@@ -157,6 +157,8 @@ struct TensorEvaluator<const Derived, Device>
   typedef typename Derived::Scalar CoeffReturnType;
   typedef typename PacketType<CoeffReturnType, Device>::type PacketReturnType;
   typedef typename Derived::Dimensions Dimensions;
+  typedef const Derived XprType;
+
 
   // NumDimensions is -1 for variable dim tensors
   static const int NumCoords = internal::traits<Derived>::NumDimensions > 0 ?
@@ -176,7 +178,6 @@ struct TensorEvaluator<const Derived, Device>
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE TensorEvaluator(const Derived& m, const Device& device)
       : m_data(m.data()), m_dims(m.dimensions()), m_device(device), m_impl(m)
   { }
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE ~TensorEvaluator() {}
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE const Dimensions& dimensions() const { return m_dims; }
 
@@ -192,7 +193,12 @@ struct TensorEvaluator<const Derived, Device>
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE CoeffReturnType coeff(Index index) const {
     eigen_assert(m_data);
+#ifndef __SYCL_DEVICE_ONLY__
     return loadConstant(m_data+index);
+#else
+    CoeffReturnType tmp = m_data[index];
+    return tmp;
+#endif
   }
 
   template<int LoadMode> EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE
@@ -247,7 +253,6 @@ struct TensorEvaluator<const TensorCwiseNullaryOp<NullaryOp, ArgType>, Device>
   TensorEvaluator(const XprType& op, const Device& device)
       : m_functor(op.functor()), m_argImpl(op.nestedExpression(), device), m_wrapper()
   { }
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE ~TensorEvaluator() {}
 
   typedef typename XprType::Index Index;
   typedef typename XprType::Scalar Scalar;
@@ -278,7 +283,7 @@ struct TensorEvaluator<const TensorCwiseNullaryOp<NullaryOp, ArgType>, Device>
                         internal::unpacket_traits<PacketReturnType>::size);
   }
 
-  EIGEN_DEVICE_FUNC CoeffReturnType* data() const { return NULL; }
+  EIGEN_DEVICE_FUNC  typename Eigen::internal::traits<XprType>::PointerType  data() const { return NULL; }
 
   /// required by sycl in order to extract the accessor
   const TensorEvaluator<ArgType, Device>& impl() const { return m_argImpl; }
@@ -313,7 +318,6 @@ struct TensorEvaluator<const TensorCwiseUnaryOp<UnaryOp, ArgType>, Device>
     : m_functor(op.functor()),
       m_argImpl(op.nestedExpression(), device)
   { }
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE ~TensorEvaluator() {}
 
   typedef typename XprType::Index Index;
   typedef typename XprType::Scalar Scalar;
@@ -349,7 +353,7 @@ struct TensorEvaluator<const TensorCwiseUnaryOp<UnaryOp, ArgType>, Device>
         TensorOpCost(0, 0, functor_cost, vectorized, PacketSize);
   }
 
-  EIGEN_DEVICE_FUNC CoeffReturnType* data() const { return NULL; }
+  EIGEN_DEVICE_FUNC typename Eigen::internal::traits<XprType>::PointerType data() const { return NULL; }
 
   /// required by sycl in order to extract the accessor
   const TensorEvaluator<ArgType, Device> & impl() const { return m_argImpl; }
@@ -387,7 +391,6 @@ struct TensorEvaluator<const TensorCwiseBinaryOp<BinaryOp, LeftArgType, RightArg
     EIGEN_STATIC_ASSERT((static_cast<int>(TensorEvaluator<LeftArgType, Device>::Layout) == static_cast<int>(TensorEvaluator<RightArgType, Device>::Layout) || internal::traits<XprType>::NumDimensions <= 1), YOU_MADE_A_PROGRAMMING_MISTAKE);
     eigen_assert(dimensions_match(m_leftImpl.dimensions(), m_rightImpl.dimensions()));
   }
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE ~TensorEvaluator() {}
 
   typedef typename XprType::Index Index;
   typedef typename XprType::Scalar Scalar;
@@ -430,7 +433,7 @@ struct TensorEvaluator<const TensorCwiseBinaryOp<BinaryOp, LeftArgType, RightArg
            TensorOpCost(0, 0, functor_cost, vectorized, PacketSize);
   }
 
-  EIGEN_DEVICE_FUNC CoeffReturnType* data() const { return NULL; }
+  EIGEN_DEVICE_FUNC typename Eigen::internal::traits<XprType>::PointerType data() const { return NULL; }
   /// required by sycl in order to extract the accessor
   const TensorEvaluator<LeftArgType, Device>& left_impl() const { return m_leftImpl; }
   /// required by sycl in order to extract the accessor
@@ -483,7 +486,6 @@ struct TensorEvaluator<const TensorCwiseTernaryOp<TernaryOp, Arg1Type, Arg2Type,
 
     eigen_assert(dimensions_match(m_arg1Impl.dimensions(), m_arg2Impl.dimensions()) && dimensions_match(m_arg1Impl.dimensions(), m_arg3Impl.dimensions()));
   }
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE ~TensorEvaluator() {}
 
   typedef typename XprType::Index Index;
   typedef typename XprType::Scalar Scalar;
@@ -531,7 +533,7 @@ struct TensorEvaluator<const TensorCwiseTernaryOp<TernaryOp, Arg1Type, Arg2Type,
            TensorOpCost(0, 0, functor_cost, vectorized, PacketSize);
   }
 
-  EIGEN_DEVICE_FUNC CoeffReturnType* data() const { return NULL; }
+  EIGEN_DEVICE_FUNC typename Eigen::internal::traits<XprType>::PointerType data() const { return NULL; }
 
   /// required by sycl in order to extract the accessor
   const TensorEvaluator<Arg1Type, Device> & arg1Impl() const { return m_arg1Impl; }
@@ -575,7 +577,6 @@ struct TensorEvaluator<const TensorSelectOp<IfArgType, ThenArgType, ElseArgType>
     eigen_assert(dimensions_match(m_condImpl.dimensions(), m_thenImpl.dimensions()));
     eigen_assert(dimensions_match(m_thenImpl.dimensions(), m_elseImpl.dimensions()));
   }
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE ~TensorEvaluator() {}
 
   typedef typename XprType::Index Index;
   typedef typename internal::traits<XprType>::Scalar CoeffReturnType;
@@ -624,7 +625,7 @@ struct TensorEvaluator<const TensorSelectOp<IfArgType, ThenArgType, ElseArgType>
         .cwiseMax(m_elseImpl.costPerCoeff(vectorized));
   }
 
-  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE CoeffReturnType* data() const { return NULL; }
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE typename Eigen::internal::traits<XprType>::PointerType data() const { return NULL; }
   /// required by sycl in order to extract the accessor
   const TensorEvaluator<IfArgType, Device> & cond_impl() const { return m_condImpl; }
   /// required by sycl in order to extract the accessor
