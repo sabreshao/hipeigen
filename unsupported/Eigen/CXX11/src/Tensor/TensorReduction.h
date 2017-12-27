@@ -334,7 +334,7 @@ struct OuterReducer {
 };
 
 
-#if defined(EIGEN_USE_GPU) && defined(EIGEN_CUDACC)
+#if defined(EIGEN_USE_GPU) && (defined(EIGEN_CUDACC) || defined(__HIPCC__))
 template <int B, int N, typename S, typename R, typename I>
 __global__ void FullReductionKernel(R, const S, I, typename S::CoeffReturnType*, unsigned int*);
 
@@ -487,15 +487,20 @@ struct TensorEvaluator<const TensorReductionOp<Op, Dims, ArgType, MakePointer_>,
       }
     }
 
-    // Special case for full reductions
-    if (NumOutputDims == 0) {
-      m_preservedStrides[0] = internal::array_prod(input_dims);
-    }
+    // XXX FIXME HACK!
+    //// Special case for full reductions
+    //if (NumOutputDims == 0) {
+    //  m_preservedStrides[0] = internal::array_prod(input_dims);
+    //}
   }
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE const Dimensions& dimensions() const { return m_dimensions; }
 
-  EIGEN_STRONG_INLINE EIGEN_DEVICE_FUNC bool evalSubExprsIfNeeded(typename MakePointer_<CoeffReturnType>::Type data) {
+  EIGEN_STRONG_INLINE
+#if !defined(__HIPCC__)
+  EIGEN_DEVICE_FUNC
+#endif
+  bool evalSubExprsIfNeeded(typename MakePointer_<CoeffReturnType>::Type data) {
     m_impl.evalSubExprsIfNeeded(NULL);
 
     // Use the FullReducer if possible.
@@ -526,7 +531,7 @@ struct TensorEvaluator<const TensorReductionOp<Op, Dims, ArgType, MakePointer_>,
     }
 
     // Attempt to use an optimized reduction.
-    else if (RunningOnGPU && (m_device.majorDeviceVersion() >= 3)) {
+    if (RunningOnGPU && (m_device.majorDeviceVersion() >= 3)) {
       bool reducing_inner_dims = true;
       for (int i = 0; i < NumReducedDims; ++i) {
         if (static_cast<int>(Layout) == static_cast<int>(ColMajor)) {
@@ -694,7 +699,7 @@ struct TensorEvaluator<const TensorReductionOp<Op, Dims, ArgType, MakePointer_>,
 #ifdef EIGEN_USE_THREADS
   template <typename S, typename O, bool V> friend struct internal::FullReducerShard;
 #endif
-#if defined(EIGEN_USE_GPU) && defined(EIGEN_CUDACC)
+#if defined(EIGEN_USE_GPU) && (defined(EIGEN_CUDACC) || defined(__HIPCC__))
   template <int B, int N, typename S, typename R, typename I> KERNEL_FRIEND void internal::FullReductionKernel(R, const S, I, typename S::CoeffReturnType*, unsigned int*);
 #ifdef EIGEN_HAS_CUDA_FP16
   template <typename S, typename R, typename I> KERNEL_FRIEND void internal::ReductionInitFullReduxKernelHalfFloat(R, const S, I, half2*);
@@ -774,14 +779,21 @@ struct TensorEvaluator<const TensorReductionOp<Op, Dims, ArgType, MakePointer_>,
   // Indexed by reduced dimensions.
   array<Index, NumReducedDims> m_reducedDims;
 
+  // make m_impl public so ReductionKErnel functions have visibility to it
+#if defined(__HIPCC__)
+public:
+#endif
   // Evaluator for the input expression.
   TensorEvaluator<ArgType, Device> m_impl;
 
+#if defined(__HIPCC__)
+private:
+#endif
   // Operation to apply for computing the reduction.
   Op m_reducer;
 
   // For full reductions
-#if defined(EIGEN_USE_GPU) && defined(EIGEN_CUDACC)
+#if defined(EIGEN_USE_GPU) && (defined(EIGEN_CUDACC) || defined(__HIPCC__))
   static const bool RunningOnGPU = internal::is_same<Device, Eigen::GpuDevice>::value;
   static const bool RunningOnSycl = false;
 #elif defined(EIGEN_USE_SYCL)

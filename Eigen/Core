@@ -31,8 +31,8 @@
 #define EIGEN_CUDACC_VER 0
 #endif
 
-// Handle NVCC/CUDA/SYCL
-#if defined(EIGEN_CUDACC) || defined(__SYCL_DEVICE_ONLY__)
+// Handle NVCC/CUDA/SYCL/ROCm
+#if defined(EIGEN_CUDACC) || defined(__SYCL_DEVICE_ONLY__) || defined(__HIPCC__)
   // Do not try asserts on CUDA and SYCL!
   #ifndef EIGEN_NO_DEBUG
   #define EIGEN_NO_DEBUG
@@ -57,6 +57,16 @@
     // We need math_functions.hpp to ensure that that EIGEN_USING_STD_MATH macro
     // works properly on the device side
     #include <math_functions.hpp>
+  #elif defined(__HIPCC__)
+    // Do not try to vectorize on ROCm
+    #ifndef EIGEN_DONT_VECTORIZE
+    #define EIGEN_DONT_VECTORIZE
+    #endif
+
+    #define EIGEN_DEVICE_FUNC __host__ __device__
+    // We need math_functions.h to ensure that that EIGEN_USING_STD_MATH macro
+    // works properly on the device side
+    #include <hip/math_functions.h>
   #else
     #define EIGEN_DEVICE_FUNC
   #endif
@@ -68,16 +78,16 @@
 #define EIGEN_DONT_VECTORIZE
 #endif
 
-// When compiling CUDA device code with NVCC, pull in math functions from the
-// global namespace.  In host mode, and when device doee with clang, use the
-// std versions.
-#if defined(EIGEN_CUDA_ARCH) && defined(__NVCC__)
+// When compiling CUDA device code with NVCC, or HIP device code with HIPCC,
+// pull in math functions from the global namespace.  In host mode, and when
+// device doee with clang, use the std versions.
+#if (defined(EIGEN_CUDA_ARCH) && defined(__NVCC__)) || (defined(__HIP_DEVICE_COMPILE__) && defined(__HIPCC__))
   #define EIGEN_USING_STD_MATH(FUNC) using ::FUNC;
 #else
   #define EIGEN_USING_STD_MATH(FUNC) using std::FUNC;
 #endif
 
-#if (defined(_CPPUNWIND) || defined(__EXCEPTIONS)) && !defined(EIGEN_CUDA_ARCH) && !defined(EIGEN_EXCEPTIONS) && !defined(EIGEN_USE_SYCL)
+#if (defined(_CPPUNWIND) || defined(__EXCEPTIONS)) && !defined(EIGEN_CUDA_ARCH) && !defined(EIGEN_EXCEPTIONS) && !defined(EIGEN_USE_SYCL) && !defined(__HIP_DEVICE_COMPILE__)
   #define EIGEN_EXCEPTIONS
 #endif
 

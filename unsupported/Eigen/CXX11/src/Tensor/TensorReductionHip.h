@@ -139,8 +139,8 @@ __global__ void ReductionInitKernel(const CoeffType val, Index num_preserved_coe
 
 template <int BlockSize, int NumPerThread, typename Self,
           typename Reducer, typename Index>
-__global__ void FullReductionKernel(Reducer reducer, const Self input, Index num_coeffs,
-                                    typename Self::CoeffReturnType* output, unsigned int* semaphore) {
+__global__ void FullReductionKernel(const Self input, Index num_coeffs,
+                                    typename Self::CoeffReturnType* output, unsigned int* semaphore, Reducer reducer) {
 #if defined(__HIP_DEVICE_COMPILE__) && (__HIP_DEVICE_COMPILE__ == 1) &&\
     defined(__HIP_ARCH_HAS_WARP_SHUFFLE__)
   // Initialize the output value
@@ -321,7 +321,7 @@ struct FullReductionLauncher<
     }
 
     hipLaunchKernelGGL(HIP_KERNEL_NAME(FullReductionKernel<block_size, num_per_thread, Self, Op, Index>),
-                       dim3(num_blocks), dim3(block_size), 0, device.stream(), reducer, self, num_coeffs, output, semaphore);
+                       dim3(num_blocks), dim3(block_size), 0, device.stream(), self, num_coeffs, output, semaphore, reducer);
   }
 };
 
