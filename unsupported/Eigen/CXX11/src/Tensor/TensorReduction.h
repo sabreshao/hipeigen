@@ -489,9 +489,9 @@ struct TensorEvaluator<const TensorReductionOp<Op, Dims, ArgType, MakePointer_>,
 
     // XXX FIXME HACK!
     //// Special case for full reductions
-    //if (NumOutputDims == 0) {
-    //  m_preservedStrides[0] = internal::array_prod(input_dims);
-    //}
+    if (NumOutputDims == 0) {
+      m_preservedStrides[0] = internal::array_prod(input_dims);
+    }
   }
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE const Dimensions& dimensions() const { return m_dimensions; }
