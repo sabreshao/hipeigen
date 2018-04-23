@@ -732,7 +732,7 @@ struct OuterReducer<Self, Op, GpuDevice> {
                                                   internal::is_same<typename Self::CoeffReturnType, double>::value);
   template <typename Device, typename OutputType>
   static bool run(const Self&, Op&, const Device&, OutputType*, typename Self::Index, typename Self::Index) {
-    assert(false && "Should only be called to reduce doubles or floats on a gpu device");
+    //assert(false && "Should only be called to reduce doubles or floats on a gpu device");
     return true;
   }
 
