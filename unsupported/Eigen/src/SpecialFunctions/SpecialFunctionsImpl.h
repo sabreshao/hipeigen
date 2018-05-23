@@ -9,6 +9,7 @@
 
 #ifndef EIGEN_SPECIAL_FUNCTIONS_H
 #define EIGEN_SPECIAL_FUNCTIONS_H
+#include <math.h>
 
 namespace Eigen {
 namespace internal {
@@ -121,7 +122,7 @@ template <>
 struct lgamma_impl<float> {
   EIGEN_DEVICE_FUNC
   static EIGEN_STRONG_INLINE float run(float x) {
-#if !defined(EIGEN_CUDA_ARCH) && (defined(_BSD_SOURCE) || defined(_SVID_SOURCE)) && !defined(__APPLE__)
+#if !defined(EIGEN_CUDA_ARCH) && (defined(_BSD_SOURCE) || defined(_SVID_SOURCE)) && !defined(__APPLE__) && !defined(__HIP_DEVICE_COMPILE__)
     int dummy;
     return ::lgammaf_r(x, &dummy);
 #else
@@ -134,7 +135,7 @@ template <>
 struct lgamma_impl<double> {
   EIGEN_DEVICE_FUNC
   static EIGEN_STRONG_INLINE double run(double x) {
-#if !defined(EIGEN_CUDA_ARCH) && (defined(_BSD_SOURCE) || defined(_SVID_SOURCE)) && !defined(__APPLE__)
+#if !defined(EIGEN_CUDA_ARCH) && (defined(_BSD_SOURCE) || defined(_SVID_SOURCE)) && !defined(__APPLE__) && !defined(__HIP_DEVICE_COMPILE__)
     int dummy;
     return ::lgamma_r(x, &dummy);
 #else
