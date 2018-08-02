@@ -16,6 +16,11 @@
 #include <math_constants.h>
 #endif
 
+#if defined(__HIP_DEVICE_COMPILE__)
+#include <cfloat>
+#include "Eigen/src/Core/arch/HIP/hcc/intrinsics.h"
+#endif
+
 #if EIGEN_COMP_ICC>=1600 &&  __cplusplus >= 201103L
 #include <cstdint>
 #endif
@@ -169,7 +174,7 @@ template<bool Condition, typename T=void> struct enable_if;
 template<typename T> struct enable_if<true,T>
 { typedef T type; };
 
-#if defined(EIGEN_CUDA_ARCH)
+#if defined(EIGEN_CUDA_ARCH) || defined(__HIP_DEVICE_COMPILE__)
 #if !defined(__FLT_EPSILON__)
 #define __FLT_EPSILON__ FLT_EPSILON
 #define __DBL_EPSILON__ DBL_EPSILON
@@ -191,13 +196,31 @@ template<> struct numeric_limits<float>
   EIGEN_DEVICE_FUNC
   static float epsilon() { return __FLT_EPSILON__; }
   EIGEN_DEVICE_FUNC
-  static float (max)() { return CUDART_MAX_NORMAL_F; }
+  static float (max)() {
+#if defined(EIGEN_CUDA_ARCH)
+    return CUDART_MAX_NORMAL_F;
+#else
+    return HIPRT_MAX_NORMAL_F;
+#endif
+  }
   EIGEN_DEVICE_FUNC
   static float (min)() { return FLT_MIN; }
   EIGEN_DEVICE_FUNC
-  static float infinity() { return CUDART_INF_F; }
+  static float infinity() {
+#if defined(EIGEN_CUDA_ARCH)
+    return CUDART_INF_F;
+#else
+    return HIPRT_INF_F;
+#endif
+  }
   EIGEN_DEVICE_FUNC
-  static float quiet_NaN() { return CUDART_NAN_F; }
+  static float quiet_NaN() {
+#if defined(EIGEN_CUDA_ARCH)
+    return CUDART_NAN_F;
+#else
+    return HIPRT_NAN_F;
+#endif
+  }
 };
 template<> struct numeric_limits<double>
 {
@@ -208,9 +231,21 @@ template<> struct numeric_limits<double>
   EIGEN_DEVICE_FUNC
   static double (min)() { return DBL_MIN; }
   EIGEN_DEVICE_FUNC
-  static double infinity() { return CUDART_INF; }
+  static double infinity() {
+#if defined(EIGEN_CUDA_ARCH)
+    return CUDART_INF;
+#else
+    return HIPRT_INF;
+#endif
+  }
   EIGEN_DEVICE_FUNC
-  static double quiet_NaN() { return CUDART_NAN; }
+  static double quiet_NaN() {
+#if defined(EIGEN_CUDA_ARCH)
+    return CUDART_NAN;
+#else
+    return HIPRT_NAN;
+#endif
+  }
 };
 template<> struct numeric_limits<int>
 {
@@ -523,13 +558,13 @@ template<typename T, typename U> struct scalar_product_traits
 
 namespace numext {
   
-#if defined(EIGEN_CUDA_ARCH)
+#if defined(EIGEN_CUDA_ARCH) || defined(__HIP_DEVICE_COMPILE__)
 template<typename T> EIGEN_DEVICE_FUNC   void swap(T &a, T &b) { T tmp = b; b = a; a = tmp; }
 #else
 template<typename T> EIGEN_STRONG_INLINE void swap(T &a, T &b) { std::swap(a,b); }
 #endif
 
-#if defined(EIGEN_CUDA_ARCH)
+#if defined(EIGEN_CUDA_ARCH) || defined(__HIP_DEVICE_COMPILE__)
 using internal::device::numeric_limits;
 #else
 using std::numeric_limits;
