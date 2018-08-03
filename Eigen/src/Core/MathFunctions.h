@@ -413,6 +413,7 @@ inline NewType cast(const OldType& x)
 #if EIGEN_HAS_CXX11_MATH
   template<typename Scalar>
   struct round_impl {
+    EIGEN_DEVICE_FUNC
     static inline Scalar run(const Scalar& x)
     {
       EIGEN_STATIC_ASSERT((!NumTraits<Scalar>::IsComplex), NUMERIC_TYPE_MUST_BE_REAL)
@@ -424,6 +425,7 @@ inline NewType cast(const OldType& x)
   template<typename Scalar>
   struct round_impl
   {
+    EIGEN_DEVICE_FUNC
     static inline Scalar run(const Scalar& x)
     {
       EIGEN_STATIC_ASSERT((!NumTraits<Scalar>::IsComplex), NUMERIC_TYPE_MUST_BE_REAL)

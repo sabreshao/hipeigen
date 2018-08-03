@@ -443,6 +443,10 @@ template<typename BinaryOp> struct bind1st_op : BinaryOp {
   typedef typename BinaryOp::second_argument_type second_argument_type;
   typedef typename BinaryOp::result_type          result_type;
 
+#if defined(__HIPCC__)
+  EIGEN_DEVICE_FUNC
+  explicit
+#endif
   bind1st_op(const first_argument_type &val) : m_value(val) {}
 
   EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE const result_type operator() (const second_argument_type& b) const { return BinaryOp::operator()(m_value,b); }
