@@ -736,6 +736,39 @@ struct OuterReducer<Self, Op, GpuDevice> {
     return true;
   }
 
+  static bool run(const Self& self, Op& reducer, const GpuDevice& device, double* output, typename Self::Index num_coeffs_to_reduce, typename Self::Index num_preserved_vals) {
+    typedef typename Self::Index Index;
+
+    // It's faster to use the usual code.
+    if (num_coeffs_to_reduce <= 32) {
+      return true;
+    }
+
+    const Index num_coeffs = num_coeffs_to_reduce * num_preserved_vals;
+    const int block_size = 256;
+    const int num_per_thread = 16;
+    const int dyn_blocks = divup<int>(num_coeffs, block_size * num_per_thread);
+    const int max_blocks = device.getNumHipMultiProcessors() *
+                           device.maxHipThreadsPerMultiProcessor() / block_size;
+    const int num_blocks = numext::mini<int>(max_blocks, dyn_blocks);
+
+    if (num_blocks > 1) {
+      // We initialize the outputs in the reduction kernel itself when we don't have to worry
+      // about race conditions between multiple thread blocks.
+      const int dyn_blocks = divup<int>(num_preserved_vals, 1024);
+      const int max_blocks = device.getNumHipMultiProcessors() *
+                             device.maxHipThreadsPerMultiProcessor() / 1024;
+      const int num_blocks = numext::mini<int>(max_blocks, dyn_blocks);
+      hipLaunchKernelGGL(HIP_KERNEL_NAME(ReductionInitKernel<double, Index>),
+                         dim3(num_blocks), dim3(1024), 0, device.stream(),
+                         reducer.initialize(), num_preserved_vals, output);
+    }
+
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(OuterReductionKernel<num_per_thread, Self, Op, Index>),
+                       dim3(num_blocks), dim3(block_size), 0, device.stream(), reducer, self, num_coeffs_to_reduce, num_preserved_vals, output);
+
+    return false;
+  }
   static bool run(const Self& self, Op& reducer, const GpuDevice& device, float* output, typename Self::Index num_coeffs_to_reduce, typename Self::Index num_preserved_vals) {
     typedef typename Self::Index Index;
 
