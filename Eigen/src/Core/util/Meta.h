@@ -301,7 +301,42 @@ template<> struct numeric_limits<unsigned long long>
   EIGEN_DEVICE_FUNC
   static unsigned long long (min)() { return 0; }
 };
-
+template<> struct numeric_limits<short>
+{
+  EIGEN_DEVICE_FUNC
+  static short epsilon() { return 0; }
+  EIGEN_DEVICE_FUNC
+  static short (max)() { return SHRT_MAX; }
+  EIGEN_DEVICE_FUNC
+  static short (min)() { return SHRT_MIN; }
+};
+template<> struct numeric_limits<unsigned short>
+{
+  EIGEN_DEVICE_FUNC
+  static unsigned short epsilon() { return 0; }
+  EIGEN_DEVICE_FUNC
+  static unsigned short (max)() { return USHRT_MAX; }
+  EIGEN_DEVICE_FUNC
+  static unsigned short (min)() { return 0; }
+};
+template<> struct numeric_limits<char>
+{
+  EIGEN_DEVICE_FUNC
+  static char epsilon() { return 0; }
+  EIGEN_DEVICE_FUNC
+  static char (max)() { return CHAR_MAX; }
+  EIGEN_DEVICE_FUNC
+  static char (min)() { return CHAR_MIN; }
+};
+template<> struct numeric_limits<unsigned char>
+{
+  EIGEN_DEVICE_FUNC
+  static unsigned char epsilon() { return 0; }
+  EIGEN_DEVICE_FUNC
+  static unsigned char (max)() { return UCHAR_MAX; }
+  EIGEN_DEVICE_FUNC
+  static unsigned char (min)() { return 0; }
+};
 }
 
 #endif
