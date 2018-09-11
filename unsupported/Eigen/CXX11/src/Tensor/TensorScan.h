@@ -251,6 +251,10 @@ struct ScanLauncher {
 #if defined(EIGEN_CUDACC) || defined(__HIPCC__)
 template <typename Self, typename Reducer>
 __global__ void 
+<<<<<<< HEAD
+=======
+__launch_bounds__(1024)
+>>>>>>> 2ae69706bd868c380c6db9a8aafef8cde139d4d6
 ScanKernel(Self self, Index total_size, typename Self::CoeffReturnType* data) {
   // Compute offset as in the CPU version
   Index val = threadIdx.x + blockIdx.x * blockDim.x;
